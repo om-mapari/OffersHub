@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.connection import SessionLocal
+from database.connection import get_db
 from schemas.offer_schema import OfferCreate, OfferResponse
 from typing import List
 import controllers.offer_controller as offer_controller
 
 router = APIRouter(prefix="/offers", tags=["Offers"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.get("/", response_model=List[OfferResponse])
 def get_all_offers(db: Session = Depends(get_db)):

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, Numeric
-from database.base import Base
+from database.connection import Base
 
 class Campaign(Base):
     __tablename__ = "campaign"

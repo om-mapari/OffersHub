@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey
-from database.base import Base
+from database.connection import Base
 
 class OfferCampaign(Base):
     __tablename__ = "offer_campaign"

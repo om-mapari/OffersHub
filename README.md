@@ -51,6 +51,7 @@ Build and run all containers in the background:
 
 ```bash
 docker-compose up -d --build
+docker-compose up --build
 ```
 
 🛑 Stop All Services

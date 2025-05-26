@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from database.base import Base
+from database.connection import Base
 
 class TargetCustomer(Base):
     __tablename__ = "target_customers"
