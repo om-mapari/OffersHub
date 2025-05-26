@@ -107,7 +107,7 @@ docker-compose logs -f
     |-- views
       |-- user_view.py
   |-- myenv
-database-init
+|-- database-init
   |-- init.sql
 |-- frontend-app
   |-- .eslintrc.cjs
