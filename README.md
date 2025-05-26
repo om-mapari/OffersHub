@@ -1,19 +1,67 @@
-# OfferHub
+# 💼 OfferHub
 
-## Overview
-OfferHub is a purpose-built platform for financial services companies designed to create, manage, and optimize personalized offers. It helps banks and financial institutions deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
+## 📖 Overview
 
-## Features
-- Centralized dashboard for managing offers and promotions
-- Personalized offer creation tailored to customer segments
-- Real-time monitoring of offer performance and conversion rates
-- Insights to help refine marketing strategies and customer outreach
+**OfferHub** is a purpose-built platform for financial services companies to create, manage, and optimize personalized offers. It enables banks and financial institutions to deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
 
-## Use Case
-Financial institutions use OfferHub to accurately craft and deliver offers that resonate with individual customers, improving the overall customer experience and increasing customer lifetime value.
+---
 
-## Getting Started
-*Instructions for users or teams on how to onboard or access the platform (optional).*
+## ✨ Features
+
+- 📊 Centralized dashboard for managing offers and promotions  
+- 🧩 Personalized offer creation tailored to customer segments  
+- 📈 Real-time monitoring of offer performance and conversion rates  
+- 🧠 Actionable insights to refine marketing strategies and outreach  
+
+---
+
+## 🏦 Use Case
+
+Financial institutions leverage **OfferHub** to craft and deliver highly relevant offers that resonate with individual customers. This improves the overall customer experience and increases customer lifetime value (CLTV).
+
+---
+
+## 🚀 Getting Started
+
+This repository contains a full-stack web application with the following components:
+
+- 🐘 **PostgreSQL** – Relational database for storing offer data  
+- 🧠 **FastAPI** – Backend API service  
+- 🌐 **Frontend App** – User interface for managing offers (e.g., React)
+
+All services are containerized using **Docker Compose**.
+
+---
+
+## 🧰 Available Services
+
+| Service        | Description           | Port |
+|----------------|-----------------------|------|
+| `postgres-db`  | PostgreSQL database   | 5432 |
+| `backend-apis` | FastAPI backend APIs  | 8000 |
+| `frontend-app` | Frontend web client   | 3000 |
+
+---
+
+## ⚙️ Usage
+
+### ▶️ Start All Services
+
+Build and run all containers in the background:
+
+```bash
+docker-compose up -d --build
+```
+
+🛑 Stop All Services
+```
+docker-compose down
+```
+📄 View Live Logs
+
+```
+docker-compose logs -f
+```
 
 ## Folder stracture
 |-- backend-apis
