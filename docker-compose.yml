@@ -1,38 +1,33 @@
 version: '3.9'
 
 services:
-  db:
+  postgres-db:
     image: postgres:13
+    container_name: postgres-db
     environment:
-      POSTGRES_DB: users  # Creates the default database
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: secret
+      POSTGRES_DB: myappdb
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./postgres/init:/docker-entrypoint-initdb.d  # Mount init scripts
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
 
-  api:
-    build: .
+  backend-apis:
+    build: ./backend-app
+    container_name: backend-apis
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - postgres-db
     environment:
-      DB_URL: postgresql://admin:secret@db:5432/offers
-      USER_DB_URL: postgresql://admin:secret@db:5432/users
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    depends_on:
-      - api
-    environment:
-      VITE_API_URL: http://localhost:8000
+      DB_URL: postgresql://admin:secret@postgres-db:5432/myappdb
+      USER_DB_URL: postgresql://admin:secret@postgres-db:5432/myappdb
+    volumes:
+      - ./backend-app:/app
+    restart: unless-stopped
 
 volumes:
   pgdata:
