@@ -1,7 +1,13 @@
 from pydantic import BaseModel
-from typing import Optional
 
-class CustomerResponse(BaseModel):
+class CustomerCreate(BaseModel):
+    customer_id: int
+    name: str
+    age: int
+    income: float
+    credit_score: int
+
+class CustomerRead(BaseModel):
     customer_id: int
     name: str
     age: int
