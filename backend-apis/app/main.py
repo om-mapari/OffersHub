@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from views import offer_view, customer_view, campaign_view 
+from views import selection_criteria_view
 
 app = FastAPI()
+app.include_router(selection_criteria_view.router)
 
 app.include_router(offer_view.router)
 app.include_router(customer_view.router)
