@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from views import offer_view
+from views import customer_view
 
 app = FastAPI()
 
 app.include_router(offer_view.router)
+app.include_router(customer_view.router)
 
 @app.get("/")
 def root():
