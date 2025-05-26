@@ -64,6 +64,8 @@ docker-compose logs -f
 ```
 
 ## Folder stracture
+
+``` bash
 |-- backend-apis
   |-- .env
   |-- README.md
@@ -135,8 +137,7 @@ database-init
       |-- data.ts
     |-- components
     |-- features
-
-
+``` 
 
 ## Contribution
 *Guidelines on contributing to the project if applicable.*
