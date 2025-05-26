@@ -1,12 +1,17 @@
-FROM node:19-bullseye
+FROM node:18
 
 WORKDIR /app
 
-COPY . . 
+COPY package.json package-lock.json ./
 
-RUN npm i 
+RUN npm install
 
-EXPOSE 5173
+COPY . .
 
-ENTRYPOINT [ "npm", "run" ]
-CMD [ "dev:docker" ]
+# Fix permissions if needed
+RUN chown -R node:node /app
+USER node
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev:docker"]

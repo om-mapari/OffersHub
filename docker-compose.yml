@@ -41,6 +41,7 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend-app:/app
+      - /app/node_modules  # Prevent host node_modules override
     restart: unless-stopped
 
 volumes:
