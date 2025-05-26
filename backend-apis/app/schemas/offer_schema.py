@@ -1,9 +1,8 @@
 from pydantic import BaseModel
-from datetime import date
 from typing import Optional
+from datetime import date
 
-class OfferResponse(BaseModel):
-    offer_id: int
+class OfferCreate(BaseModel):
     offer_name: str
     offer_type: str
     cashback_percentage: Optional[float]
@@ -16,6 +15,9 @@ class OfferResponse(BaseModel):
     valid_from: Optional[date]
     valid_to: Optional[date]
     status: Optional[str]
+
+class OfferResponse(OfferCreate):
+    offer_id: int
 
     class Config:
         orm_mode = True
