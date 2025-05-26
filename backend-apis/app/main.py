@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-from views import offer_view
-from views import customer_view
+from views import offer_view, customer_view
 
 app = FastAPI()
 
