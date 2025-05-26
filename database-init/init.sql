@@ -81,3 +81,11 @@ CREATE TABLE target_customers (
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
     FOREIGN KEY (offer_id) REFERENCES offer(offer_id)
 );
+
+-- Create users table for authentication
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    hashed_password TEXT NOT NULL
+);
