@@ -67,77 +67,91 @@ docker-compose logs -f
 ## Folder stracture
 
 ``` bash
-|-- backend-apis
-  |-- .env
-  |-- README.md
-  |-- requirements.txt
-  |-- setup_project.sh
-  |-- app
-    |-- main.py
-    |-- __init__.py
-    |-- auth
-      |-- dependencies.py
-      |-- token_handler.py
-    |-- controllers
-      |-- admin_controller.py
-      |-- auth_controller.py
-      |-- tenant_controller.py
-      |-- user_controller.py
-    |-- crud
-      |-- user_crud.py
-    |-- database
-      |-- connection.py
-    |-- db
-      |-- base.py
-      |-- session.py
-    |-- middlewares
-      |-- logging_middleware.py
-    |-- models
-      |-- tenant.py
-      |-- user.py
-    |-- schemas
-      |-- tenant_schema.py
-      |-- user_schema.py
-    |-- services
-      |-- admin_service.py
-      |-- auth_service.py
-      |-- tenant_service.py
-      |-- user_service.py
-    |-- utils
-      |-- logger.py
-    |-- views
-      |-- user_view.py
-  |-- myenv
-|-- database-init
-  |-- init.sql
-|-- frontend-app
-  |-- .eslintrc.cjs
-  |-- .gitignore
-  |-- compose.yml
-  |-- dockerfile
-  |-- index.html
-  |-- LICENSE
-  |-- package-lock.json
-  |-- package.json
-  |-- postcss.config.js
-  |-- tailwind.config.js
-  |-- tsconfig.json
-  |-- tsconfig.node.json
-  |-- vite.config.ts
-  |-- src
-    |-- App.tsx
-    |-- index.css
-    |-- main.tsx
-    |-- store.ts
-    |-- vite-env.d.ts
-    |-- assets
-    |-- pages
-    |-- hooks
-      |-- index.ts
-    |-- utils
-      |-- data.ts
-    |-- components
-    |-- features
+Directory structure:
+└── OffersHub/
+     ├── backend-apis/
+     │    ├── app/
+     │    │    ├── controllers/
+     │    │    │    ├── campaign_controller.py
+     │    │    │    ├── customer_controller.py
+     │    │    │    ├── offer_campaign_controller.py
+     │    │    │    ├── offer_controller.py
+     │    │    │    ├── selection_criteria_controller.py
+     │    │    │    ├── target_customers_controller.py
+     │    │    │    └── transaction_controller.py
+     │    │    ├── crud/
+     │    │    │    ├── campaign_crud.py
+     │    │    │    ├── customer_crud.py
+     │    │    │    ├── offer_campaign_crud.py
+     │    │    │    ├── offer_crud.py
+     │    │    │    ├── selection_criteria_crud.py
+     │    │    │    ├── target_customers_crud.py
+     │    │    │    └── transaction_crud.py
+     │    │    ├── database/
+     │    │    │    └── connection.py
+     │    │    ├── main.py
+     │    │    ├── middlewares/
+     │    │    │    └── logging_middleware.py
+     │    │    ├── models/
+     │    │    │    ├── campaign.py
+     │    │    │    ├── customer.py
+     │    │    │    ├── offer.py
+     │    │    │    ├── offer_campaign.py
+     │    │    │    ├── selection_criteria.py
+     │    │    │    ├── target_customers.py
+     │    │    │    └── transaction.py
+     │    │    ├── schemas/
+     │    │    │    ├── campaign_schema.py
+     │    │    │    ├── customer_schema.py
+     │    │    │    ├── offer_campaign_schema.py
+     │    │    │    ├── offer_schema.py
+     │    │    │    ├── selection_criteria_schema.py
+     │    │    │    ├── target_customers_schema.py
+     │    │    │    └── transaction_schema.py
+     │    │    ├── services/
+     │    │    │    ├── admin_service.py
+     │    │    │    └── auth_service.py
+     │    │    ├── views/
+     │    │    │    ├── campaign_view.py
+     │    │    │    ├── customer_view.py
+     │    │    │    ├── offer_view.py
+     │    │    │    ├── selection_criteria_view.py
+     │    │    │    ├── target_customers_view.py
+     │    │    │    └── transaction_view.py
+     │    │    └── __init__.py
+     │    ├── Dockerfile
+     │    ├── README.md
+     │    └── requirements.txt
+     ├── database-init/
+     │    └── init.sql
+     ├── docker-compose.yml
+     ├── frontend-app/
+     │    ├── compose.yml
+     │    ├── dockerfile
+     │    ├── index.html
+     │    ├── LICENSE
+     │    ├── package-lock.json
+     │    ├── package.json
+     │    ├── postcss.config.js
+     │    ├── src/
+     │    │    ├── App.tsx
+     │    │    ├── assets/
+     │    │    ├── components/
+     │    │    ├── features/
+     │    │    ├── hooks/
+     │    │    ├── index.css
+     │    │    ├── main.tsx
+     │    │    ├── pages/
+     │    │    ├── store.ts
+     │    │    ├── utils/
+     │    │    │    └── data.ts
+     │    │    └── vite-env.d.ts
+     │    ├── tailwind.config.js
+     │    ├── tsconfig.json
+     │    ├── tsconfig.node.json
+     │    └── vite.config.ts
+     ├── prompt.md
+     └── README.md
 ``` 
 
 ## Contribution
