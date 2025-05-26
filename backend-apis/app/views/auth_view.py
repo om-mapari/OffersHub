@@ -1,16 +1,13 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
-from schemas.user_schema import UserCreate, UserLogin
-from database.connection import get_db
-from crud.user_crud import create_user
-from auth.auth_service import authenticate_user
+from fastapi import APIRouter, Depends
+from app.schemas.user_schema import UserCreate, UserLogin
+from app.controllers import auth_controller
 
-router = APIRouter(tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db, user)
+@router.post("/register")
+def register(user: UserCreate):
+    return auth_controller.register(user)
 
 @router.post("/login")
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    return {"access_token": authenticate_user(db, credentials), "token_type": "bearer"}
+def login(user: UserLogin):
+    return auth_controller.login(user)
