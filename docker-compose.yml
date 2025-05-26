@@ -11,22 +11,36 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
   backend-apis:
-    build: ./backend-app
+    build:
+      context: ./backend-apis
+      dockerfile: Dockerfile
     container_name: backend-apis
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     depends_on:
       - postgres-db
     environment:
       DB_URL: postgresql://admin:secret@postgres-db:5432/myappdb
-      USER_DB_URL: postgresql://admin:secret@postgres-db:5432/myappdb
     volumes:
-      - ./backend-app:/app
+      - ./backend-apis/app:/app/app
+      - ./backend-apis/.env:/app/.env # Optional, if used
+    restart: unless-stopped
+
+  frontend-app:
+    build:
+      context: ./frontend-app
+      dockerfile: Dockerfile
+    container_name: frontend-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend-app:/app
     restart: unless-stopped
 
 volumes:
