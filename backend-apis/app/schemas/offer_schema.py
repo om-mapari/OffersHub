@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional
 from datetime import date
+from typing import Optional
 
-class OfferBase(BaseModel):
+class OfferResponse(BaseModel):
     offer_id: int
     offer_name: str
     offer_type: str
@@ -18,4 +18,4 @@ class OfferBase(BaseModel):
     status: Optional[str]
 
     class Config:
-        from_attributes = True
+        orm_mode = True

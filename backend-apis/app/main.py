@@ -1,12 +1,10 @@
 from fastapi import FastAPI
-from controllers import offer_controller
-from db.base import Base
-from database.connection import engine
+from views import offer_view
 
 app = FastAPI()
 
-# Create tables if not exists
-Base.metadata.create_all(bind=engine)
+app.include_router(offer_view.router)
 
-# Include routers
-app.include_router(offer_controller.router)
+@app.get("/")
+def root():
+    return {"message": "Offer API is running"}
