@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from schemas.user_schema import UserLogin
 from crud.user_crud import get_user_by_username
 from utils.password_utils import verify_password
-from .auth_handler import create_access_token
+from auth_handler import create_access_token
 
 def authenticate_user(db: Session, credentials: UserLogin):
     user = get_user_by_username(db, credentials.username)
