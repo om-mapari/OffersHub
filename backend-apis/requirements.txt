@@ -1,9 +1,18 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
 psycopg2-binary
-python-dotenv
+pydantic[email]
+pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
-python-multipart
-pydantic[email]
+python-dotenv
+alembic
+greenlet # Required by SQLAlchemy for async ORM features, good to have if future plans involve asyncpg
+python-multipart # Required for form data handling
+
+# Testing dependencies
+pytest
+pytest-asyncio
+httpx
+pytest-cov
