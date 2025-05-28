@@ -52,6 +52,18 @@ services:
         limits:
           memory: 256M
 
+  frontend-app:
+    build:
+      context: ./frontend-app
+      dockerfile: Dockerfile
+    container_name: frontend-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend-app:/app
+      - /app/node_modules  # Prevent host node_modules override
+    restart: unless-stopped
+
   # Service to clean up the database (run with --profile cleanup)
   db-cleanup:
     image: alpine:latest
@@ -63,4 +75,4 @@ services:
       - cleanup
 
 volumes:
-  postgres-data: 
+  postgres-data:

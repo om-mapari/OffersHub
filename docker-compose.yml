@@ -1,36 +1,56 @@
-version: '3.9'
-
 services:
-  postgres-db:
-    image: postgres:13
-    container_name: postgres-db
+  postgres-offer-db:
+    image: postgres:15-alpine
+    container_name: offer-management-db
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: myappdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: offer_management
+    command: postgres
     ports:
       - "5432:5432"
     volumes:
-      - ./database-init/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - pgdata:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+      - ./database-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   backend-apis:
     build:
       context: ./backend-apis
       dockerfile: Dockerfile
-    container_name: backend-apis
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    container_name: offer-management-api
+    depends_on:
+      postgres-offer-db:
+        condition: service_healthy
     ports:
       - "8000:8000"
-    depends_on:
-      - postgres-db
     environment:
-      DB_URL: postgresql://admin:secret@postgres-db:5432/myappdb
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-offer-db:5432/offer_management
+      - PROJECT_NAME=Offer Management Platform
+      - SECRET_KEY=supersecretkey123notforproduction
     volumes:
-      - ./backend-apis/app:/app/app
-      - ./backend-apis/.env:/app/.env # Optional, if used
+      - ./app:/app/app
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   frontend-app:
     build:
@@ -44,5 +64,15 @@ services:
       - /app/node_modules  # Prevent host node_modules override
     restart: unless-stopped
 
+  # Service to clean up the database (run with --profile cleanup)
+  db-cleanup:
+    image: alpine:latest
+    container_name: db-cleanup
+    command: sh -c "echo 'Removing database volume' && rm -rf /data/* && echo 'Database volume cleaned'"
+    volumes:
+      - postgres-data:/data
+    profiles:
+      - cleanup
+
 volumes:
-  pgdata:
+  postgres-data:

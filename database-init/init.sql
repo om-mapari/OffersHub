@@ -9,12 +9,13 @@ CREATE TABLE users (
     is_super_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
 );
+CREATE INDEX idx_users_full_name ON users(full_name);
 
 -- TENANTS
 CREATE TABLE tenants (
     name TEXT PRIMARY KEY, -- e.g., 'credit_card', 'loan'
     description TEXT,
-    created_by TEXT REFERENCES users(username),
+    created_by_username TEXT REFERENCES users(username),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -30,8 +31,8 @@ CREATE TABLE user_tenant_roles (
 -- OFFERS
 CREATE TABLE offers (
     id SERIAL PRIMARY KEY,
-    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE,
-    created_by TEXT REFERENCES users(username),
+    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
+    created_by_username TEXT REFERENCES users(username),
     status TEXT CHECK (status IN ('draft', 'submitted', 'approved', 'rejected')) NOT NULL DEFAULT 'draft',
     comments TEXT,
     data JSONB NOT NULL,
@@ -57,9 +58,9 @@ EXECUTE FUNCTION update_updated_at_column();
 -- OFFER AUDIT LOGS
 CREATE TABLE offer_audit_logs (
     id SERIAL PRIMARY KEY,
-    offer_id INT REFERENCES offers(id) ON DELETE CASCADE,
+    offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
     action TEXT NOT NULL, -- 'create', 'update', 'status_change', 'comment'
-    performed_by TEXT REFERENCES users(username),
+    performed_by_username TEXT REFERENCES users(username),
     old_data JSONB,
     new_data JSONB,
     comment TEXT,
@@ -71,7 +72,7 @@ CREATE TABLE customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name TEXT NOT NULL,
     email TEXT UNIQUE,
-    phone TEXT,
+    phone TEXT UNIQUE,
     dob DATE,
     gender TEXT CHECK (gender IN ('male', 'female', 'other')),
     kyc_status TEXT CHECK (kyc_status IN ('verified', 'pending', 'rejected')),
@@ -88,18 +89,20 @@ CREATE TABLE customers (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW()
 );
+CREATE INDEX idx_customers_email ON customers(email);
+CREATE INDEX idx_customers_phone ON customers(phone);
 
 -- CAMPAIGNS
 CREATE TABLE campaigns (
     id SERIAL PRIMARY KEY,
-    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE,
+    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     offer_id INT REFERENCES offers(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     description TEXT,
     selection_criteria JSONB,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    created_by TEXT REFERENCES users(username),
+    created_by_username TEXT REFERENCES users(username),
     status TEXT CHECK (status IN ('draft', 'active', 'paused', 'completed')) DEFAULT 'draft',
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -108,7 +111,7 @@ CREATE TABLE campaigns (
 CREATE TABLE campaign_customers (
     campaign_id INT REFERENCES campaigns(id) ON DELETE CASCADE,
     customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-    offer_id INT REFERENCES offers(id) ON DELETE CASCADE,
+    offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
     delivery_status TEXT CHECK (delivery_status IN ('pending', 'sent', 'failed')) DEFAULT 'pending',
     sent_at TIMESTAMP,
     PRIMARY KEY (campaign_id, customer_id)
@@ -119,10 +122,10 @@ CREATE INDEX idx_offer_audit_logs_offer_id ON offer_audit_logs (offer_id);
 CREATE INDEX idx_user_tenant_roles_username ON user_tenant_roles (username);
 CREATE INDEX idx_user_tenant_roles_tenant_name ON user_tenant_roles (tenant_name);
 CREATE INDEX idx_offers_tenant_name ON offers (tenant_name);
-CREATE INDEX idx_offers_created_by ON offers (created_by);
+CREATE INDEX idx_offers_created_by_username ON offers (created_by_username);
 CREATE INDEX idx_campaigns_tenant_name ON campaigns (tenant_name);
 CREATE INDEX idx_campaigns_offer_id ON campaigns (offer_id);
-CREATE INDEX idx_campaigns_created_by ON campaigns (created_by);
+CREATE INDEX idx_campaigns_created_by_username ON campaigns (created_by_username);
 CREATE INDEX idx_campaign_customers_campaign_id ON campaign_customers (campaign_id);
 CREATE INDEX idx_campaign_customers_customer_id ON campaign_customers (customer_id);
 CREATE INDEX idx_campaign_customers_offer_id ON campaign_customers (offer_id);
