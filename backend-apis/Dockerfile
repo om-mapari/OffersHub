@@ -43,12 +43,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY app/ ./app/
 COPY minimal_app.py .
 
-# Copy scripts
-COPY app/startup.sh /app/
-COPY app/healthcheck.sh /app/
-
 # Make scripts executable
-RUN chmod +x /app/healthcheck.sh /app/startup.sh
+RUN chmod +x /app/app/startup.sh /app/app/healthcheck.sh
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos "" appuser && \
@@ -59,7 +55,7 @@ USER appuser
 EXPOSE 8000
 
 # Set healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD [ "/app/healthcheck.sh" ]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD [ "/app/app/healthcheck.sh" ]
 
 # Run the application with Uvicorn
-CMD ["/app/startup.sh"] 
+CMD ["/app/app/startup.sh"] 
