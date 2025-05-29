@@ -18,7 +18,7 @@ if [[ $USER_TABLE_EXISTS == *"f"* ]]; then
     # Create a default admin user and initial tenant setup
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOSQL
 INSERT INTO users (username, password_hash, full_name, is_super_admin) 
-VALUES ('admin', '\$2b\$12\$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'System Administrator', true)
+VALUES ('admin', '\$2b\$12\$07G.lvOLA/QMFd1WL/PfNOay0.Z3Q6mcHebZs/ZIzTSOw7FsLgHtK', 'System Administrator', true)
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO tenants (name, description, created_by_username)

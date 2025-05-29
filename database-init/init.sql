@@ -33,7 +33,7 @@ CREATE TABLE offers (
     id SERIAL PRIMARY KEY,
     tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     created_by_username TEXT REFERENCES users(username),
-    status TEXT CHECK (status IN ('draft', 'submitted', 'approved', 'rejected')) NOT NULL DEFAULT 'draft',
+    status TEXT CHECK (status IN ('draft', 'submitted', 'approved', 'rejected', 'retired')) NOT NULL DEFAULT 'draft',
     comments TEXT,
     data JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -112,7 +112,7 @@ CREATE TABLE campaign_customers (
     campaign_id INT REFERENCES campaigns(id) ON DELETE CASCADE,
     customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
     offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
-    delivery_status TEXT CHECK (delivery_status IN ('pending', 'sent', 'failed')) DEFAULT 'pending',
+    delivery_status TEXT CHECK (delivery_status IN ('pending', 'sent', 'declined', 'accepted')) DEFAULT 'pending',
     sent_at TIMESTAMP,
     PRIMARY KEY (campaign_id, customer_id)
 );
