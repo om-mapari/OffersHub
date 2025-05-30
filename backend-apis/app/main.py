@@ -54,3 +54,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME}"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
