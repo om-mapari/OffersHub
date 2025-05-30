@@ -41,7 +41,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application code
 COPY app/ ./app/
-COPY minimal_app.py .
 
 # Make scripts executable
 RUN chmod +x /app/app/startup.sh /app/app/healthcheck.sh
