@@ -189,8 +189,8 @@ def submit_offer(
     # Store old data for audit log
     old_status = offer.status
     
-    # Update status to PENDING_APPROVAL
-    offer.status = models.OfferStatus.SUBMITTED
+    # Update status to PENDING_REVIEW
+    offer.status = models.OfferStatus.PENDING_REVIEW
     db.add(offer)
     db.commit()
     db.refresh(offer)
@@ -229,10 +229,10 @@ def approve_offer(
             detail=f"Offer with ID {offer_id} not found in tenant {tenant.name}"
         )
     
-    if offer.status != models.OfferStatus.SUBMITTED:
+    if offer.status != models.OfferStatus.PENDING_REVIEW:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Offer with ID {offer_id} is not in SUBMITTED status and cannot be approved"
+            detail=f"Offer with ID {offer_id} is not in PENDING_REVIEW status and cannot be approved"
         )
     
     # Store old data for audit log
@@ -279,10 +279,10 @@ def reject_offer(
             detail=f"Offer with ID {offer_id} not found in tenant {tenant.name}"
         )
     
-    if offer.status != models.OfferStatus.SUBMITTED:
+    if offer.status != models.OfferStatus.PENDING_REVIEW:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Offer with ID {offer_id} is not in SUBMITTED status and cannot be rejected"
+            detail=f"Offer with ID {offer_id} is not in PENDING_REVIEW status and cannot be rejected"
         )
     
     # Store old data for audit log

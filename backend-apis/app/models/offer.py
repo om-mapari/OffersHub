@@ -7,9 +7,20 @@ from app.db.session import Base
 
 class OfferStatus(str, enum.Enum):
     DRAFT = "draft"
-    SUBMITTED = "submitted"
+    PENDING_REVIEW = "pending_review"
     APPROVED = "approved"
     REJECTED = "rejected"
+    RETIRED = "retired"
+
+class OfferType(str, enum.Enum):
+    BALANCE_TRANSFER = "balance_transfer"
+    PRICING = "pricing"
+    CASHBACK = "cashback"
+    REWARD_POINTS = "reward_points"
+    NO_COST_EMI = "no_cost_emi"
+    FEE_WAIVER = "fee_waiver"
+    PARTNER_OFFER = "partner_offer"
+    MILESTONE_OFFER = "milestone_offer"
 
 class Offer(Base):
     __tablename__ = "offers"
@@ -18,6 +29,8 @@ class Offer(Base):
     tenant_name = Column(String, ForeignKey("tenants.name", ondelete="CASCADE"), nullable=False)
     created_by_username = Column(String, ForeignKey("users.username"))
     
+    offer_description = Column(Text)
+    offer_type = Column(Enum(OfferType), nullable=False, default=OfferType.BALANCE_TRANSFER)
     status = Column(Enum(OfferStatus), nullable=False, default=OfferStatus.DRAFT)
     comments = Column(Text)
     # Use JSON type for SQLite and JSONB for PostgreSQL

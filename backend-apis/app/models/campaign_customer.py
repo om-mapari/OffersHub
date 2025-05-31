@@ -7,7 +7,8 @@ from app.db.session import Base
 class DeliveryStatus(str, enum.Enum):
     PENDING = "pending"
     SENT = "sent"
-    FAILED = "failed"
+    DECLINED = "declined"
+    ACCEPTED = "accepted"
 
 class CampaignCustomer(Base):
     __tablename__ = "campaign_customers"

@@ -27,7 +27,7 @@ class Customer(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True)
-    phone = Column(String, unique=True, index=True) # Assuming phone should be unique too
+    mobile = Column(String, unique=True, index=True)  # Changed from phone to mobile to match schema
     dob = Column(Date)
     gender = Column(Enum(GenderEnum))
     kyc_status = Column(Enum(KYCStatusEnum))
@@ -35,14 +35,25 @@ class Customer(Base):
     occupation = Column(String)
     annual_income = Column(Numeric)
     credit_score = Column(Integer)
+    address = Column(Text)  # Added address field
     state = Column(String)
     city = Column(String)
     pin_code = Column(String)
     marital_status = Column(Enum(MaritalStatusEnum))
     account_age_months = Column(Integer)
+    coomunication_preference = Column(String)  # Added communication preference
+    deceased_marker = Column(String)  # Added deceased marker
+    sanctions_marker = Column(String)  # Added sanctions marker
     preferred_language = Column(String)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
+    account_id = Column(String)  # Added account ID
+    account_status = Column(String)  # Added account status
+    account_openend_date = Column(String)  # Added account opened date
+    credit_limit = Column(Numeric)  # Added credit limit
+    account_current_balance = Column(Numeric)  # Added current balance
+    available_credit = Column(Numeric)  # Added available credit
+    delinquency = Column(Boolean, default=False)  # Added delinquency status
 
     # Relationships
     campaign_associations = relationship("CampaignCustomer", back_populates="customer")
