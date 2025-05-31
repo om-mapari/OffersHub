@@ -2,18 +2,17 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- USERS
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     username TEXT PRIMARY KEY,
     password_hash TEXT NOT NULL,
     full_name TEXT,
     is_super_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
 );
-CREATE INDEX idx_users_full_name ON users(full_name);
 
 -- TENANTS
-CREATE TABLE tenants (
-    name TEXT PRIMARY KEY, -- e.g., 'credit_card', 'loan'
+CREATE TABLE IF NOT EXISTS tenants (
+    name TEXT PRIMARY KEY,
     description TEXT,
     created_by_username TEXT REFERENCES users(username),
     created_at TIMESTAMP DEFAULT NOW()
@@ -21,7 +20,7 @@ CREATE TABLE tenants (
 
 -- USER TENANT ROLES
 -- role: 'admin', 'create', 'approver', 'read_only'
-CREATE TABLE user_tenant_roles (
+CREATE TABLE IF NOT EXISTS user_tenant_roles (
     username TEXT REFERENCES users(username) ON DELETE CASCADE,
     tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE,
     role TEXT NOT NULL,
@@ -29,7 +28,7 @@ CREATE TABLE user_tenant_roles (
 );
 
 -- OFFERS
-CREATE TABLE offers (
+CREATE TABLE IF NOT EXISTS offers (
     id SERIAL PRIMARY KEY,
     tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     created_by_username TEXT REFERENCES users(username),
@@ -52,13 +51,24 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to call function before update on offers
-CREATE TRIGGER trg_update_offers_updated_at
-BEFORE UPDATE ON offers
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'trg_update_offers_updated_at'
+    ) THEN
+        CREATE TRIGGER trg_update_offers_updated_at
+        BEFORE UPDATE ON offers
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END
+$$;
+
 
 -- OFFER AUDIT LOGS
-CREATE TABLE offer_audit_logs (
+CREATE TABLE IF NOT EXISTS offer_audit_logs (
     id SERIAL PRIMARY KEY,
     offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
     action TEXT NOT NULL, -- 'create', 'update', 'status_change', 'comment'
@@ -70,7 +80,7 @@ CREATE TABLE offer_audit_logs (
 );
 
 -- CUSTOMERS
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name TEXT NOT NULL,
     email TEXT UNIQUE,
@@ -90,7 +100,7 @@ CREATE TABLE customers (
     account_age_months INT,
     coomunication_preference TEXT,
     deceased_marker TEXT,
-    sanctions_marker TINYTEXT,
+    sanctions_marker TEXT,
     preferred_language TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -106,7 +116,7 @@ CREATE INDEX idx_customers_email ON customers(email);
 CREATE INDEX idx_customers_mobile ON customers(mobile);
 
 -- CAMPAIGNS
-CREATE TABLE campaigns (
+CREATE TABLE IF NOT EXISTS campaigns (
     id SERIAL PRIMARY KEY,
     tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     offer_id INT REFERENCES offers(id) ON DELETE SET NULL,
@@ -121,7 +131,7 @@ CREATE TABLE campaigns (
 );
 
 -- CAMPAIGN CUSTOMERS
-CREATE TABLE campaign_customers (
+CREATE TABLE IF NOT EXISTS campaign_customers (
     campaign_id INT REFERENCES campaigns(id) ON DELETE CASCADE,
     customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
     offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,

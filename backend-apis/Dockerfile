@@ -42,6 +42,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY app/ ./app/
 
+# Fix potential line endings
+RUN sed -i 's/\r$//' /app/app/startup.sh
+
 # Make scripts executable
 RUN chmod +x /app/app/startup.sh /app/app/healthcheck.sh
 
@@ -57,4 +60,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD [ "/app/app/healthcheck.sh" ]
 
 # Run the application with Uvicorn
-CMD ["/app/app/startup.sh"] 
+CMD ["sh", "-c", "set -e && python -m app.wait_for_db && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
