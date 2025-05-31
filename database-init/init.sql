@@ -34,7 +34,7 @@ CREATE TABLE offers (
     tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     created_by_username TEXT REFERENCES users(username),
     offer_description TEXT,
-    offer_type TEXT CHECK ( offer_type IN ( 'balance_transfer', 'pricing', 'cashback', 'reward_points', 'no_cost_emi', 'fee_waiver', 'partner_offer','milestone_offer' ) ) NOT NULL DEFAULT 'other',    offer_description TEXT,
+    offer_type TEXT CHECK ( offer_type IN ( 'balance_transfer', 'pricing', 'cashback', 'reward_points', 'no_cost_emi', 'fee_waiver', 'partner_offer','milestone_offer' ) ) NOT NULL DEFAULT 'other',
     status TEXT CHECK (status IN ('draft', 'pending_review', 'approved', 'rejected', 'retired')) NOT NULL DEFAULT 'draft',
     comments TEXT,
     data JSONB NOT NULL,
