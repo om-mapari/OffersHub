@@ -33,7 +33,9 @@ CREATE TABLE offers (
     id SERIAL PRIMARY KEY,
     tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     created_by_username TEXT REFERENCES users(username),
-    status TEXT CHECK (status IN ('draft', 'submitted', 'approved', 'rejected', 'retired')) NOT NULL DEFAULT 'draft',
+    offer_description TEXT,
+    offer_type TEXT CHECK ( offer_type IN ( 'balance_transfer', 'pricing', 'cashback', 'reward_points', 'no_cost_emi', 'fee_waiver', 'partner_offer','milestone_offer' ) ) NOT NULL DEFAULT 'other',    offer_description TEXT,
+    status TEXT CHECK (status IN ('draft', 'pending_review', 'approved', 'rejected', 'retired')) NOT NULL DEFAULT 'draft',
     comments TEXT,
     data JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -72,7 +74,7 @@ CREATE TABLE customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name TEXT NOT NULL,
     email TEXT UNIQUE,
-    phone TEXT UNIQUE,
+    mobile TEXT UNIQUE,
     dob DATE,
     gender TEXT CHECK (gender IN ('male', 'female', 'other')),
     kyc_status TEXT CHECK (kyc_status IN ('verified', 'pending', 'rejected')),
@@ -80,17 +82,28 @@ CREATE TABLE customers (
     occupation TEXT, -- e.g., 'salaried', 'self-employed', 'student', 'retired'
     annual_income NUMERIC, -- income in INR/USD
     credit_score INT, -- e.g., 300–900
+    address TEXT,
     state TEXT,
     city TEXT,
     pin_code TEXT,
     marital_status TEXT CHECK (marital_status IN ('single', 'married', 'divorced', 'widowed')),
     account_age_months INT,
+    coomunication_preference TEXT,
+    deceased_marker TEXT,
+    sanctions_marker TINYTEXT,
     preferred_language TEXT,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    account_id TEXT,
+    account_status TEXT,
+    account_openend_date TEXT,
+    credit_limit NUMERIC,
+    account_current_balance NUMERIC,
+    available_credit NUMERIC,
+    delinquency BOOLEAN DEFAULT FALSE
 );
 CREATE INDEX idx_customers_email ON customers(email);
-CREATE INDEX idx_customers_phone ON customers(phone);
+CREATE INDEX idx_customers_mobile ON customers(mobile);
 
 -- CAMPAIGNS
 CREATE TABLE campaigns (
