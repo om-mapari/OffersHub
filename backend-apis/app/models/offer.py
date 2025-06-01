@@ -6,10 +6,11 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 class OfferStatus(str, enum.Enum):
-    DRAFT = "draft"
-    SUBMITTED = "submitted"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    draft = "draft"
+    pending_review = "pending_review"
+    approved = "approved"
+    rejected = "rejected"
+    retired = "retired"
 
 class Offer(Base):
     __tablename__ = "offers"
@@ -18,7 +19,9 @@ class Offer(Base):
     tenant_name = Column(String, ForeignKey("tenants.name", ondelete="CASCADE"), nullable=False)
     created_by_username = Column(String, ForeignKey("users.username"))
     
-    status = Column(Enum(OfferStatus), nullable=False, default=OfferStatus.DRAFT)
+    offer_description = Column(Text)
+    offer_type = Column(String, nullable=False, default="other")
+    status = Column(Enum(OfferStatus), nullable=False, default=OfferStatus.draft)
     comments = Column(Text)
     # Use JSON type for SQLite and JSONB for PostgreSQL
     data = Column(JSON if os.environ.get("TESTING") == "true" else JSONB, nullable=False) # Flexible custom attributes

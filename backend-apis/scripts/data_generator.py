@@ -153,30 +153,6 @@ def generate_tenants(conn, usernames: List[str], count: int = 5) -> List[str]:
     except Exception as e:
         conn.rollback()
         print(f"Error inserting tenants: {e}")
-        
-        # Try to check if tenants table exists
-        try:
-            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tenants')")
-            table_exists = cursor.fetchone()[0]
-            if not table_exists:
-                print("Tenants table does not exist! Creating it...")
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS tenants (
-                        name TEXT PRIMARY KEY,
-                        description TEXT,
-                        created_by_username TEXT REFERENCES users(username),
-                        created_at TIMESTAMP DEFAULT NOW()
-                    )
-                """)
-                conn.commit()
-                # Try insert again
-                execute_values(cursor, insert_query, tenant_data, fetch=True)
-                tenant_names = [row[0] for row in cursor.fetchall()]
-                conn.commit()
-                print(f"Successfully inserted {len(tenant_names)} tenants after creating table")
-        except Exception as e2:
-            conn.rollback()
-            print(f"Failed to fix tenants table: {e2}")
     
     # Fetch all tenant names for reference in other tables
     cursor.execute("SELECT name FROM tenants")
@@ -278,17 +254,9 @@ def generate_offers(conn, usernames: List[str], tenant_names: List[str], count: 
         cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'offers'")
         columns = [row[0] for row in cursor.fetchall()]
         print(f"Existing columns in offers table: {columns}")
-        
-        # Make sure offer_description column exists
-        if 'offer_description' not in columns:
-            print("Adding missing offer_description column")
-            cursor.execute("ALTER TABLE offers ADD COLUMN offer_description TEXT")
-            conn.commit()
     except Exception as e:
-        conn.rollback()
         print(f"Error checking offers table structure: {e}")
     
-    # Fixed SQL query to remove the duplicate offer_description column
     insert_query = """
         INSERT INTO offers (
             tenant_name, created_by_username, offer_description, 
@@ -315,22 +283,6 @@ def generate_offers(conn, usernames: List[str], tenant_names: List[str], count: 
     except Exception as e:
         conn.rollback()
         print(f"Error inserting offers: {e}")
-        # If we get an error, try to fix the schema issue
-        try:
-            print("Attempting to fix schema issue with offers table...")
-            cursor.execute("ALTER TABLE offers DROP COLUMN IF EXISTS offer_description CASCADE;")
-            cursor.execute("ALTER TABLE offers ADD COLUMN IF NOT EXISTS offer_description TEXT;")
-            conn.commit()
-            print("Schema fixed. Retrying offer insertion...")
-            
-            # Try inserting again
-            execute_values(cursor, insert_query, offer_data, fetch=True)
-            offer_ids = [row[0] for row in cursor.fetchall()]
-            conn.commit()
-            print(f"Successfully inserted {len(offer_ids)} offers after schema fix")
-        except Exception as e2:
-            conn.rollback()
-            print(f"Failed to fix schema and insert offers: {e2}")
     
     # If no offers were inserted, try to get existing ones
     if not offer_ids:
@@ -451,19 +403,6 @@ def generate_customers(conn, count: int = 100) -> List[str]:
     except Exception as e:
         print(f"Error checking customers table structure: {e}")
     
-    # Check if the sanctions_marker column has the correct data type
-    try:
-        cursor.execute("SELECT data_type FROM information_schema.columns WHERE table_name = 'customers' AND column_name = 'sanctions_marker'")
-        data_type = cursor.fetchone()
-        if data_type and data_type[0] == 'tinytext':
-            # Fix the data type if it's tinytext (not supported in PostgreSQL)
-            cursor.execute("ALTER TABLE customers ALTER COLUMN sanctions_marker TYPE TEXT")
-            conn.commit()
-            print("Fixed sanctions_marker column type from TINYTEXT to TEXT")
-    except Exception as e:
-        conn.rollback()
-        print(f"Error checking/fixing sanctions_marker column: {e}")
-    
     insert_query = """
         INSERT INTO customers (
             full_name, email, mobile, dob, gender, kyc_status, segment, occupation,
@@ -500,59 +439,6 @@ def generate_customers(conn, count: int = 100) -> List[str]:
     except Exception as e:
         conn.rollback()
         print(f"Error inserting customers: {e}")
-        
-        # Try to check if customers table exists
-        try:
-            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'customers')")
-            table_exists = cursor.fetchone()[0]
-            if not table_exists:
-                print("Customers table does not exist! Creating it...")
-                # Create the customers table based on the schema in init.sql
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS customers (
-                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                        full_name TEXT NOT NULL,
-                        email TEXT UNIQUE,
-                        mobile TEXT UNIQUE,
-                        dob DATE,
-                        gender TEXT CHECK (gender IN ('male', 'female', 'other')),
-                        kyc_status TEXT CHECK (kyc_status IN ('verified', 'pending', 'rejected')),
-                        segment TEXT,
-                        occupation TEXT,
-                        annual_income NUMERIC,
-                        credit_score INT,
-                        address TEXT,
-                        state TEXT,
-                        city TEXT,
-                        pin_code TEXT,
-                        marital_status TEXT CHECK (marital_status IN ('single', 'married', 'divorced', 'widowed')),
-                        account_age_months INT,
-                        coomunication_preference TEXT,
-                        deceased_marker TEXT,
-                        sanctions_marker TEXT,
-                        preferred_language TEXT,
-                        is_active BOOLEAN DEFAULT TRUE,
-                        created_at TIMESTAMP DEFAULT NOW(),
-                        account_id TEXT,
-                        account_status TEXT,
-                        account_openend_date TEXT,
-                        credit_limit NUMERIC,
-                        account_current_balance NUMERIC,
-                        available_credit NUMERIC,
-                        delinquency BOOLEAN DEFAULT FALSE
-                    )
-                """)
-                conn.commit()
-                print("Created customers table")
-                
-                # Try inserting again
-                execute_values(cursor, insert_query, customer_data, fetch=True)
-                customer_ids = [row[0] for row in cursor.fetchall()]
-                conn.commit()
-                print(f"Successfully inserted {len(customer_ids)} customers after creating table")
-        except Exception as e2:
-            conn.rollback()
-            print(f"Failed to fix customers table: {e2}")
     
     # Fetch all customer IDs if we didn't get enough from the insert
     if len(customer_ids) < count / 2:
@@ -641,39 +527,6 @@ def generate_campaigns(conn, tenant_names: List[str], offer_ids: List[int],
     except Exception as e:
         conn.rollback()
         print(f"Error inserting campaigns: {e}")
-        
-        # Try to check if campaigns table exists
-        try:
-            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'campaigns')")
-            table_exists = cursor.fetchone()[0]
-            if not table_exists:
-                print("Campaigns table does not exist! Creating it...")
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS campaigns (
-                        id SERIAL PRIMARY KEY,
-                        tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
-                        offer_id INT REFERENCES offers(id) ON DELETE SET NULL,
-                        name TEXT NOT NULL,
-                        description TEXT,
-                        selection_criteria JSONB,
-                        start_date DATE NOT NULL,
-                        end_date DATE NOT NULL,
-                        created_by_username TEXT REFERENCES users(username),
-                        status TEXT CHECK (status IN ('draft', 'active', 'paused', 'completed')) DEFAULT 'draft',
-                        created_at TIMESTAMP DEFAULT NOW()
-                    )
-                """)
-                conn.commit()
-                print("Created campaigns table")
-                
-                # Try inserting again
-                execute_values(cursor, insert_query, campaign_data, fetch=True)
-                campaign_ids = [row[0] for row in cursor.fetchall()]
-                conn.commit()
-                print(f"Successfully inserted {len(campaign_ids)} campaigns after creating table")
-        except Exception as e2:
-            conn.rollback()
-            print(f"Failed to fix campaigns table: {e2}")
     
     # If no campaigns were inserted, try to get existing ones
     if not campaign_ids:
@@ -774,34 +627,7 @@ def generate_campaign_customers(conn, campaign_ids: List[int], customer_ids: Lis
     except Exception as e:
         conn.rollback()
         print(f"Error inserting campaign customers: {e}")
-        
-        # Try to check if campaign_customers table exists
-        try:
-            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'campaign_customers')")
-            table_exists = cursor.fetchone()[0]
-            if not table_exists:
-                print("Campaign_customers table does not exist! Creating it...")
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS campaign_customers (
-                        campaign_id INT REFERENCES campaigns(id) ON DELETE CASCADE,
-                        customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-                        offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
-                        delivery_status TEXT CHECK (delivery_status IN ('pending', 'sent', 'declined', 'accepted')) DEFAULT 'pending',
-                        sent_at TIMESTAMP,
-                        PRIMARY KEY (campaign_id, customer_id)
-                    )
-                """)
-                conn.commit()
-                print("Created campaign_customers table")
-                
-                # Try inserting again
-                execute_values(cursor, insert_query, cc_data)
-                conn.commit()
-                print(f"Successfully inserted {cursor.rowcount} campaign customers after creating table")
-        except Exception as e2:
-            conn.rollback()
-            print(f"Failed to fix campaign_customers table: {e2}")
-            
+    
     # Check how many campaign customers exist
     try:
         cursor.execute("SELECT COUNT(*) FROM campaign_customers")
@@ -820,40 +646,10 @@ def main():
     parser.add_argument("--customers", type=int, default=100, help="Number of customers to generate")
     parser.add_argument("--campaigns", type=int, default=15, help="Number of campaigns to generate")
     parser.add_argument("--campaign-customers", type=int, default=200, help="Number of campaign customers to generate")
-    parser.add_argument("--fix-schema", action="store_true", help="Attempt to fix schema issues before generating data")
     
     args = parser.parse_args()
     
     conn = connect_to_db()
-    
-    # Fix schema issues if requested
-    if args.fix_schema:
-        cursor = conn.cursor()
-        try:
-            print("Attempting to fix schema issues...")
-            # Fix duplicate offer_description column
-            cursor.execute("""
-                DO $$
-                BEGIN
-                    BEGIN
-                        ALTER TABLE offers DROP COLUMN offer_description;
-                        ALTER TABLE offers ADD COLUMN offer_description TEXT;
-                    EXCEPTION WHEN OTHERS THEN
-                        RAISE NOTICE 'Error fixing offer_description column: %', SQLERRM;
-                    END;
-                    
-                    BEGIN
-                        ALTER TABLE customers ALTER COLUMN sanctions_marker TYPE TEXT;
-                    EXCEPTION WHEN OTHERS THEN
-                        RAISE NOTICE 'Error fixing sanctions_marker column: %', SQLERRM;
-                    END;
-                END $$;
-            """)
-            conn.commit()
-            print("Schema fixes attempted.")
-        except Exception as e:
-            conn.rollback()
-            print(f"Error fixing schema: {e}")
     
     print("Starting data generation...")
     

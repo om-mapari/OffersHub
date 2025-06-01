@@ -8,10 +8,14 @@ from app.api.v1.endpoints import (
     sa_user_roles,
     offers, # Will be mounted under tenants
     campaigns, # Will be mounted under tenants
-    customers
+    customers,
+    test
 )
 
 api_router = APIRouter()
+
+# Test endpoint
+api_router.include_router(test.router, prefix="/test", tags=["Test"])
 
 # Authentication
 api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])

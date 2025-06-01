@@ -6,20 +6,20 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 class GenderEnum(str, enum.Enum):
-    MALE = "male"
-    FEMALE = "female"
-    OTHER = "other"
+    male = "male"
+    female = "female"
+    other = "other"
 
 class KYCStatusEnum(str, enum.Enum):
-    VERIFIED = "verified"
-    PENDING = "pending"
-    REJECTED = "rejected"
+    verified = "verified"
+    pending = "pending"
+    rejected = "rejected"
 
 class MaritalStatusEnum(str, enum.Enum):
-    SINGLE = "single"
-    MARRIED = "married"
-    DIVORCED = "divorced"
-    WIDOWED = "widowed"
+    single = "single"
+    married = "married"
+    divorced = "divorced"
+    widowed = "widowed"
 
 class Customer(Base):
     __tablename__ = "customers"
@@ -27,7 +27,7 @@ class Customer(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True)
-    phone = Column(String, unique=True, index=True) # Assuming phone should be unique too
+    mobile = Column(String, unique=True, index=True)
     dob = Column(Date)
     gender = Column(Enum(GenderEnum))
     kyc_status = Column(Enum(KYCStatusEnum))
@@ -35,14 +35,25 @@ class Customer(Base):
     occupation = Column(String)
     annual_income = Column(Numeric)
     credit_score = Column(Integer)
+    address = Column(Text)
     state = Column(String)
     city = Column(String)
     pin_code = Column(String)
     marital_status = Column(Enum(MaritalStatusEnum))
     account_age_months = Column(Integer)
+    coomunication_preference = Column(String)
+    deceased_marker = Column(String)
+    sanctions_marker = Column(String)
     preferred_language = Column(String)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
+    account_id = Column(String)
+    account_status = Column(String)
+    account_openend_date = Column(String)
+    credit_limit = Column(Numeric)
+    account_current_balance = Column(Numeric)
+    available_credit = Column(Numeric)
+    delinquency = Column(Boolean, default=False)
 
     # Relationships
     campaign_associations = relationship("CampaignCustomer", back_populates="customer")
