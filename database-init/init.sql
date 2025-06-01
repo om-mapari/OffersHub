@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS campaign_customers CASCADE;
 
 DROP TABLE IF EXISTS campaigns CASCADE;
 
-DROP TABLE IF EXISTS customer CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
 
 DROP TABLE IF EXISTS offer_audit_logs CASCADE;
 
@@ -133,7 +133,7 @@ CREATE TABLE offer_audit_logs (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE customer (
+CREATE TABLE customers (
     customer_id TEXT PRIMARY KEY,
     full_name TEXT NOT NULL,
     email TEXT NOT NULL,
@@ -207,7 +207,7 @@ CREATE TABLE campaigns (
 
 CREATE TABLE campaign_customers (
     campaign_id INTEGER REFERENCES campaigns (campaign_id),
-    customer_id TEXT REFERENCES customer (customer_id),
+    customer_id TEXT REFERENCES customers (customer_id),
     offer_id INTEGER REFERENCES offers (offer_id),
     acceptance_status TEXT CHECK (
         acceptance_status IN (
@@ -292,7 +292,7 @@ WITH (FORMAT csv, HEADER true);
 
 SELECT COUNT(*) AS offer_audit_logs_loaded FROM offer_audit_logs;
 
-COPY customer (
+COPY customers (
     customer_id,
     full_name,
     email,
@@ -327,7 +327,7 @@ COPY customer (
 FROM '/tmp/data/customers.csv'
 WITH (FORMAT csv, HEADER true);
 
-SELECT COUNT(*) AS customers_loaded FROM customer;
+SELECT COUNT(*) AS customers_loaded FROM customers;
 
 COPY campaigns (
     campaign_id,
