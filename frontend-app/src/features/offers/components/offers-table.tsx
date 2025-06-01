@@ -1,14 +1,7 @@
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
-  getFilteredRowModel,
-} from '@tanstack/react-table'
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { tenantOffersApi, Offer } from "@/services/api";
+import { useTenant } from "@/context/TenantContext";
 import {
   Table,
   TableBody,
@@ -16,196 +9,208 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { useState } from 'react'
-import { Offer } from '../data/schema'
-import { useTenant } from '@/context/TenantContext'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/utils/format-date";
+import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
+import { PlusCircle } from "lucide-react";
 
-interface OffersTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-}
+export function OffersTable() {
+  const { currentTenant } = useTenant();
+  const { hasPermission } = useAuth();
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-export function OffersTable<TData, TValue>({
-  columns,
-  data,
-}: OffersTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const { currentTenant } = useTenant()
+  // Reset pagination when tenant changes
+  useEffect(() => {
+    setPage(1);
+  }, [currentTenant?.id]);
 
-  const table = useReactTable({
+  const {
     data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      sorting,
-      columnFilters,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["offers", currentTenant?.id, page],
+    queryFn: () => {
+      if (!currentTenant) return Promise.resolve([]);
+      return tenantOffersApi.listOffers(
+        currentTenant.id,
+        (page - 1) * limit,
+        limit
+      );
     },
-  })
-
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value)
-    if (value === 'all') {
-      table.getColumn('status')?.setFilterValue(undefined)
-    } else {
-      table.getColumn('status')?.setFilterValue(value)
-    }
-  }
+    enabled: !!currentTenant,
+  });
 
   if (!currentTenant) {
     return (
-      <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed">
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="text-lg font-medium">No Tenant Selected</div>
-          <div className="text-sm text-muted-foreground">
-            Please select a tenant to view offers
-          </div>
-        </div>
-      </div>
-    )
+      <Card>
+        <CardHeader>
+          <CardTitle>Offers</CardTitle>
+          <CardDescription>
+            Please select a tenant to view offers.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
-  if (data.length === 0) {
+  if (error) {
     return (
-      <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed">
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="text-lg font-medium">No Offers Found</div>
-          <div className="text-sm text-muted-foreground">
-            No offers exist for this tenant yet.
-          </div>
-        </div>
-      </div>
-    )
+      <Card>
+        <CardHeader>
+          <CardTitle>Offers</CardTitle>
+          <CardDescription>
+            Error loading offers. Please try again.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "draft":
+        return "bg-gray-200 text-gray-800";
+      case "submitted":
+        return "bg-blue-100 text-blue-800";
+      case "approved":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-200 text-gray-800";
+    }
+  };
 
   return (
-    <div className='space-y-4'>
-      <div className='flex items-center gap-4'>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <Input
-            placeholder='Filter offers...'
-            value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-            onChange={(event) =>
-              table.getColumn('name')?.setFilterValue(event.target.value)
-            }
-            className='max-w-sm'
-          />
+          <CardTitle>Offers</CardTitle>
+          <CardDescription>
+            Manage offers for {currentTenant.name}
+          </CardDescription>
         </div>
-        <div>
-          <Select 
-            value={statusFilter} 
-            onValueChange={handleStatusFilterChange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="submitted">Submitted</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className='rounded-md border'>
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
+        {hasPermission("create", currentTenant.id) && (
+          <Button asChild>
+            <Link to={`/tenants/${currentTenant.id}/offers/new`}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Offer
+            </Link>
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-full" />
+              </div>
             ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+          </div>
+        ) : (
+          <>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created At</TableHead>
+                    <TableHead>Updated At</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data && data.length > 0 ? (
+                    data.map((offer: Offer) => (
+                      <TableRow key={offer.id}>
+                        <TableCell className="font-medium">
+                          <Link
+                            to={`/tenants/${currentTenant.id}/offers/${offer.id}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {offer.id.substring(0, 8)}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={getStatusBadgeColor(offer.status)}
+                            variant="outline"
+                          >
+                            {offer.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(new Date(offer.created_at))}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(new Date(offer.updated_at))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                          >
+                            <Link
+                              to={`/tenants/${currentTenant.id}/offers/${offer.id}`}
+                            >
+                              View
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="h-24 text-center"
+                      >
+                        No offers found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            {data && data.length > 0 && (
+              <div className="flex items-center justify-end space-x-2 py-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page === 1}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className='h-24 text-center'
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={data.length < limit}
                 >
-                  No results.
-                </TableCell>
-              </TableRow>
+                  Next
+                </Button>
+              </div>
             )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className='flex items-center justify-end space-x-2 py-4'>
-        <div className='flex-1 text-sm text-muted-foreground'>
-          Showing{' '}
-          <span className='font-medium'>
-            {table.getFilteredRowModel().rows.length}
-          </span>{' '}
-          of{' '}
-          <span className='font-medium'>{data.length}</span>{' '}
-          offer(s)
-        </div>
-        <div className='space-x-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
 } 

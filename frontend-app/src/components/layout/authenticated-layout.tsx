@@ -1,10 +1,12 @@
 import Cookies from 'js-cookie'
-import { Outlet } from '@tanstack/react-router'
+import { Outlet, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import { SearchProvider } from '@/context/search-context'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import SkipToMain from '@/components/skip-to-main'
+import { useAuth } from '@/context/AuthContext'
+import { useEffect } from 'react'
 
 interface Props {
   children?: React.ReactNode
@@ -12,6 +14,30 @@ interface Props {
 
 export function AuthenticatedLayout({ children }: Props) {
   const defaultOpen = Cookies.get('sidebar_state') !== 'false'
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: '/sign-in' })
+    }
+  }, [user, loading, navigate])
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated
+  if (!user) {
+    return null
+  }
+
   return (
     <SearchProvider>
       <SidebarProvider defaultOpen={defaultOpen}>

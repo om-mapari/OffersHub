@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronsUpDown, Plus } from 'lucide-react'
+import { ChevronsUpDown, Plus, Building } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,18 +15,23 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { useTenant } from '@/context/TenantContext'
+import { useAuth } from '@/context/AuthContext'
 
-export function TeamSwitcher({
-  teams,
-}: {
-  teams: {
-    name: string
-    logo: React.ElementType
-    plan: string
-  }[]
-}) {
+export function TeamSwitcher() {
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
+  const { currentTenant, userTenants, setCurrentTenant } = useTenant()
+  const { user } = useAuth()
+
+  // Don't render if there's no current tenant or user isn't logged in
+  if (!currentTenant || !user) {
+    return null
+  }
+
+  // Don't render if super admin (they use the tenant selector in header)
+  if (user.isSuperAdmin) {
+    return null
+  }
 
   return (
     <SidebarMenu>
@@ -38,16 +43,13 @@ export function TeamSwitcher({
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
             >
               <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-              <img
-                  src="/images/barclays2.png"
-                  alt={activeTeam.name}
-                  className='size-6 object-contain'
-                />              </div>
+                <Building className="h-5 w-5" />
+              </div>
               <div className='grid flex-1 text-left text-sm leading-tight'>
                 <span className='truncate font-semibold'>
-                  {activeTeam.name}
+                  {currentTenant.name}
                 </span>
-                <span className='truncate text-xs'>{activeTeam.plan}</span>
+                <span className='truncate text-xs'>Financial Product</span>
               </div>
               <ChevronsUpDown className='ml-auto' />
             </SidebarMenuButton>
@@ -59,32 +61,23 @@ export function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className='text-muted-foreground text-xs'>
-              Teams
+              Tenants
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
+            {userTenants.map((tenant, index) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
+                key={tenant.id}
+                onClick={() => setCurrentTenant(tenant)}
                 className='gap-2 p-2'
               >
-                <div className='flex size-6 items-center justify-center rounded-sm border overflow-hidden'>
-                  <img
-                  src="/images/barclays2.png"
-                  alt={team.name}
-                    className='size-4 object-contain'
-                  />
+                <div className='flex size-6 items-center justify-center rounded-sm border'>
+                  <Building className="h-4 w-4" />
                 </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                {tenant.name}
+                {currentTenant.id === tenant.id && (
+                  <span className="ml-auto text-xs text-primary">Active</span>
+                )}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className='gap-2 p-2'>
-              <div className='bg-background flex size-6 items-center justify-center rounded-md border'>
-                <Plus className='size-4' />
-              </div>
-              <div className='text-muted-foreground font-medium'>Add team</div>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

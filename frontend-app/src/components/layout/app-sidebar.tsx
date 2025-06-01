@@ -8,21 +8,24 @@ import {
 import { NavGroup } from '@/components/layout/nav-group'
 import { NavUser } from '@/components/layout/nav-user'
 import { TeamSwitcher } from '@/components/layout/team-switcher'
-import { sidebarData } from './data/sidebar-data'
+import { useDynamicSidebarData } from './hooks/use-dynamic-sidebar-data'
+import { NavGroup as NavGroupType } from './types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { navGroups } = useDynamicSidebarData()
+  
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={sidebarData.teams} />
+        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        {sidebarData.navGroups.map((props) => (
-          <NavGroup key={props.title} {...props} />
+        {navGroups.map((groupProps: NavGroupType) => (
+          <NavGroup key={groupProps.title} {...groupProps} />
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={sidebarData.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

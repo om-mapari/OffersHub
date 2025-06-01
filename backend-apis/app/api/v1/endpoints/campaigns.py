@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
+from app.models.campaign import CampaignStatus
 from app.api.v1 import deps
 
 router = APIRouter()
@@ -32,7 +33,7 @@ def create_campaign(
     campaign_data["tenant_name"] = tenant.name
     campaign_data["created_by_username"] = current_user.username
     
-    db_campaign = models.Campaign(**campaign_data, status=models.CampaignStatus.DRAFT)
+    db_campaign = models.Campaign(**campaign_data, status=CampaignStatus.draft)
     db.add(db_campaign)
     db.commit()
     db.refresh(db_campaign)
