@@ -85,12 +85,21 @@ export interface Campaign {
 
 // Auth API
 export const authApi = {
-  login: (username: string, password: string) => 
-    request<Token>({
+  login: (username: string, password: string) => {
+    // Create URLSearchParams for form data
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    
+    return request<Token>({
       url: '/api/v1/auth/token',
       method: 'POST',
-      data: { username, password },
-    }),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      data: formData,
+    });
+  },
   
   getCurrentUser: () => 
     request<User>({

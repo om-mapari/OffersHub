@@ -2,12 +2,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChangePasswordForm } from '@/features/auth/change-password/components/change-password-form'
 import { useAuth } from '@/context/AuthContext'
+import { useTenant } from '@/context/TenantContext'
+import { useEffect, useState } from 'react'
+import { Tenant } from '@/context/TenantContext'
 
 export function Profile() {
   const { user } = useAuth()
+  const { userTenants, fetchTenantDetails } = useTenant()
+  const [tenantMap, setTenantMap] = useState<Record<string, Tenant>>({})
+  const [loading, setLoading] = useState(false)
+
+  // Fetch tenant details for all user groups
+  useEffect(() => {
+    if (!user || !fetchTenantDetails) return
+
+    const loadTenantDetails = async () => {
+      setLoading(true)
+      const tenantDetailsMap: Record<string, Tenant> = {}
+      
+      for (const group of user.groups) {
+        const tenantDetails = await fetchTenantDetails(group.tenantId)
+        if (tenantDetails) {
+          tenantDetailsMap[group.tenantId] = tenantDetails
+        }
+      }
+      
+      setTenantMap(tenantDetailsMap)
+      setLoading(false)
+    }
+    
+    loadTenantDetails()
+  }, [user, fetchTenantDetails])
 
   if (!user) {
     return <div>Loading...</div>
+  }
+
+  // Get tenant name from ID
+  const getTenantName = (tenantId: string): string => {
+    if (tenantMap[tenantId]) {
+      return tenantMap[tenantId].name
+    }
+    
+    // Fallback to ID if name not found
+    return tenantId
   }
 
   return (
@@ -54,11 +92,16 @@ export function Profile() {
                   <CardDescription>Tenants you have access to and your roles</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {user.groups.length > 0 ? (
+                  {loading ? (
+                    <div className="flex justify-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : user.groups.length > 0 ? (
                     <div className="space-y-4">
                       {user.groups.map((group) => (
                         <div key={group.tenantId} className="border rounded-md p-4">
-                          <h3 className="font-medium">{group.tenantId}</h3>
+                          <h3 className="font-medium">{getTenantName(group.tenantId)}</h3>
+                          <p className="text-xs text-muted-foreground mb-2">ID: {group.tenantId}</p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {group.roles.map((role) => (
                               <span 
