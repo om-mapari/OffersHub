@@ -538,4 +538,4 @@ async def delete_campaign_customer(campaign_id: int, customer_id: str, db: Sessi
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting campaign_customer: {str(e)}")
 
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------------------
