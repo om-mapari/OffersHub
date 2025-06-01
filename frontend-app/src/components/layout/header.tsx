@@ -3,7 +3,9 @@ import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { TenantSelector } from '@/components/tenant-selector'
+import { UserMenu } from '@/components/user-menu'
 import { useAuth } from '@/context/AuthContext'
+import { useTenant } from '@/context/TenantContext'
 
 interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   fixed?: boolean
@@ -18,6 +20,7 @@ export const Header = ({
 }: HeaderProps) => {
   const [offset, setOffset] = React.useState(0)
   const { user } = useAuth();
+  const { userTenants } = useTenant();
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -41,16 +44,26 @@ export const Header = ({
       )}
       {...props}
     >
-      <SidebarTrigger variant='outline' className='scale-125 sm:scale-100' />
-      <Separator orientation='vertical' className='h-6' />
-      {/* Only show tenant selector if user is not a Super Admin and has access to multiple tenants */}
-      {user && !user.isSuperAdmin && (
-        <>
-          <TenantSelector />
-          <Separator orientation='vertical' className='h-6' />
-        </>
-      )}
-      {children}
+      <div className="flex items-center gap-3">
+        <SidebarTrigger variant='outline' className='scale-125 sm:scale-100' />
+        <Separator orientation='vertical' className='h-6' />
+        
+        {/* Show tenant selector if user has access to any tenants */}
+        {user && userTenants.length > 0 && (
+          <>
+            <TenantSelector />
+            <Separator orientation='vertical' className='h-6' />
+          </>
+        )}
+      </div>
+      
+      {/* Main navigation items */}
+      <div className="flex-1 flex items-center">
+        {children}
+      </div>
+      
+      {/* User menu at the end */}
+      <UserMenu />
     </header>
   )
 }

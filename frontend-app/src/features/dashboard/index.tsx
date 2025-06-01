@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { TopNav } from '@/components/layout/top-nav'
-import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Overview } from './components/overview'
@@ -27,10 +26,9 @@ export default function Dashboard() {
       {/* ===== Top Heading ===== */}
       <Header>
         <TopNav links={topNav} />
-        <div className='ml-auto flex items-center space-x-4'>
+        <div className='ml-auto flex items-center gap-4'>
           <Search />
           <ThemeSwitch />
-          <ProfileDropdown />
         </div>
       </Header>
 
@@ -204,25 +202,25 @@ export default function Dashboard() {
 const topNav = [
   {
     title: 'Overview',
-    href: 'dashboard/overview',
+    href: '/',
     isActive: true,
     disabled: false,
   },
   {
     title: 'Offers',
-    href: '/offers',
+    href: '/_authenticated/offers',
     isActive: false,
     disabled: false,
   },
   {
     title: 'Campaigns',
-    href: '/campaigns',
+    href: '/_authenticated/campaigns',
     isActive: false,
     disabled: false,
   },
   {
     title: 'Settings',
-    href: '/settings',
+    href: '/_authenticated/settings',
     isActive: false,
     disabled: false,
   },

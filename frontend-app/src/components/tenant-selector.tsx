@@ -13,14 +13,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/context/TenantContext";
 import { useState } from "react";
-import { useTenant, Tenant } from "@/context/TenantContext";
 
 export function TenantSelector() {
-  const [open, setOpen] = useState(false);
   const { currentTenant, userTenants, setCurrentTenant } = useTenant();
+  const [open, setOpen] = useState(false);
 
-  if (!userTenants.length) return null;
+  if (!currentTenant || userTenants.length === 0) {
+    return null;
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -29,16 +31,16 @@ export function TenantSelector() {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[240px] justify-between"
+          className="w-[200px] justify-between"
         >
           <div className="flex items-center gap-2">
             <Building className="h-4 w-4" />
-            {currentTenant ? currentTenant.name : "Select tenant..."}
+            {currentTenant.name}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[240px] p-0">
+      <PopoverContent className="w-[200px] p-0">
         <Command>
           <CommandInput placeholder="Search tenant..." />
           <CommandEmpty>No tenant found.</CommandEmpty>
@@ -55,7 +57,7 @@ export function TenantSelector() {
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    currentTenant?.id === tenant.id ? "opacity-100" : "opacity-0"
+                    currentTenant.id === tenant.id ? "opacity-100" : "opacity-0"
                   )}
                 />
                 {tenant.name}
