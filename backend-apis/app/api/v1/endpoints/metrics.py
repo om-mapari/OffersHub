@@ -11,7 +11,7 @@ async def get_active_customers(db: Session = Depends(get_db)):
     try:
         # SQL query to count active customers
         query = text("SELECT COUNT(*) FROM customers WHERE is_active = true")
-        result = db.execute(query).scalar()  # scalar() fetches the first column of the first row
+        result = db.execute(query).scalar() 
         if result is None:
             raise HTTPException(status_code=404, detail="No active customers found")
         return result
@@ -19,29 +19,32 @@ async def get_active_customers(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
 
-# Endpoint to get the Current Active Offers Definition: Count of offers where status = 'active'.
-@router.get("/active-offers", response_model=int)
-async def get_active_offers(db: Session = Depends(get_db)):
+# Endpoint to get the Current Offers Definition
+@router.get("/offers-metrics", response_model=dict)
+async def get_offers_metrics(db: Session = Depends(get_db)):
     try:
-        # SQL query to count active offers
-        query = text("SELECT COUNT(*) AS active_offers FROM offers WHERE status = 'active'")
-        result = db.execute(query).scalar()  # scalar() fetches the first column of the first row
+        # SQL query to count offers
+        query = text("SELECT status, COUNT(*) AS offer_count FROM offers GROUP BY status")
+        result = db.execute(query).fetchall() # fetchall() returns a list of tuples
         if result is None:
-            raise HTTPException(status_code=404, detail="No active offers found")
-        return result
+            raise HTTPException(status_code=404, detail="No offers found")
+        offers_summary = {row[0]: row[1] for row in result }
+        return offers_summary
+ 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-# Endpoint to get the number of active campaigns
-@router.get("/active-campaigns", response_model=int)
-async def get_active_campaigns(db: Session = Depends(get_db)):
+# Endpoint to get the number of campaigns
+@router.get("/campaigns-metrics", response_model=dict)
+async def get_campaigns_metrics(db: Session = Depends(get_db)):
     try:
         # SQL query to count active campaigns
-        query = text("SELECT COUNT(*) AS active_campaigns FROM campaigns WHERE status = 'active' AND end_date >= CURRENT_DATE")
-        result = db.execute(query).scalar()  # scalar() fetches the first column of the first row
+        query = text("SELECT status, COUNT(*) AS campaigns_count FROM campaigns GROUP BY status")
+        result = db.execute(query).fetchall() # fetchall() returns a list of tuples
         if result is None:
-            raise HTTPException(status_code=404, detail="No active campaigns found")
-        return result
+            raise HTTPException(status_code=404, detail="No campaigns found")
+        campaigns_summary = {row[0]: row[1] for row in result }
+        return campaigns_summary
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
