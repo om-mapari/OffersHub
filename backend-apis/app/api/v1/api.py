@@ -8,7 +8,8 @@ from app.api.v1.endpoints import (
     sa_user_roles,
     offers, # Will be mounted under tenants
     campaigns, # Will be mounted under tenants
-    customers
+    customers,
+    metrics
 )
 
 api_router = APIRouter()
@@ -27,6 +28,8 @@ api_router.include_router(sa_user_roles.router, prefix="/sa/user-tenant-roles", 
 # General Customer Management (could be Super Admin or specific role)
 api_router.include_router(customers.router, prefix="/customers", tags=["Customers"])
 
+# Metrics endpoint
+api_router.include_router(metrics.router, prefix="/metrics", tags=["Metrics"])
 
 # Tenant-scoped routes
 # These routers (offers, campaigns) will expect tenant_name in their path operations
