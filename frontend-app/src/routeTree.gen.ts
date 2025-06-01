@@ -26,10 +26,14 @@ import { Route as authOtpImport } from './routes/(auth)/otp'
 import { Route as authForgotPasswordImport } from './routes/(auth)/forgot-password'
 import { Route as ClerkAuthenticatedRouteImport } from './routes/clerk/_authenticated/route'
 import { Route as ClerkauthRouteImport } from './routes/clerk/(auth)/route'
+import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants/route'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings/route'
+import { Route as AuthenticatedOffersRouteImport } from './routes/_authenticated/offers/route'
+import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns/route'
 import { Route as AuthenticatedUsersIndexImport } from './routes/_authenticated/users/index'
 import { Route as AuthenticatedTasksIndexImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSettingsIndexImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedOffersIndexImport } from './routes/_authenticated/offers/index'
 import { Route as AuthenticatedHelpCenterIndexImport } from './routes/_authenticated/help-center/index'
 import { Route as AuthenticatedChatsIndexImport } from './routes/_authenticated/chats/index'
 import { Route as AuthenticatedAppsIndexImport } from './routes/_authenticated/apps/index'
@@ -130,6 +134,12 @@ const ClerkauthRouteRoute = ClerkauthRouteImport.update({
   getParentRoute: () => ClerkRouteRoute,
 } as any)
 
+const AuthenticatedTenantsRouteRoute = AuthenticatedTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+
 const AuthenticatedSettingsRouteRoute = AuthenticatedSettingsRouteImport.update(
   {
     id: '/settings',
@@ -137,6 +147,19 @@ const AuthenticatedSettingsRouteRoute = AuthenticatedSettingsRouteImport.update(
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any,
 )
+
+const AuthenticatedOffersRouteRoute = AuthenticatedOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+
+const AuthenticatedCampaignsRouteRoute =
+  AuthenticatedCampaignsRouteImport.update({
+    id: '/campaigns',
+    path: '/campaigns',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 const AuthenticatedUsersIndexRoute = AuthenticatedUsersIndexImport.update({
   id: '/users/',
@@ -157,6 +180,12 @@ const AuthenticatedSettingsIndexRoute = AuthenticatedSettingsIndexImport.update(
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any,
 )
+
+const AuthenticatedOffersIndexRoute = AuthenticatedOffersIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedOffersRouteRoute,
+} as any)
 
 const AuthenticatedHelpCenterIndexRoute =
   AuthenticatedHelpCenterIndexImport.update({
@@ -242,11 +271,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClerkRouteImport
       parentRoute: typeof rootRoute
     }
+    '/_authenticated/campaigns': {
+      id: '/_authenticated/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/offers': {
+      id: '/_authenticated/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof AuthenticatedOffersRouteImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/tenants': {
+      id: '/_authenticated/tenants'
+      path: '/tenants'
+      fullPath: '/tenants'
+      preLoaderRoute: typeof AuthenticatedTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteImport
     }
     '/clerk/(auth)': {
@@ -410,6 +460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpCenterIndexImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/offers/': {
+      id: '/_authenticated/offers/'
+      path: '/'
+      fullPath: '/offers/'
+      preLoaderRoute: typeof AuthenticatedOffersIndexImport
+      parentRoute: typeof AuthenticatedOffersRouteImport
+    }
     '/_authenticated/settings/': {
       id: '/_authenticated/settings/'
       path: '/'
@@ -436,6 +493,20 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
+interface AuthenticatedOffersRouteRouteChildren {
+  AuthenticatedOffersIndexRoute: typeof AuthenticatedOffersIndexRoute
+}
+
+const AuthenticatedOffersRouteRouteChildren: AuthenticatedOffersRouteRouteChildren =
+  {
+    AuthenticatedOffersIndexRoute: AuthenticatedOffersIndexRoute,
+  }
+
+const AuthenticatedOffersRouteRouteWithChildren =
+  AuthenticatedOffersRouteRoute._addFileChildren(
+    AuthenticatedOffersRouteRouteChildren,
+  )
+
 interface AuthenticatedSettingsRouteRouteChildren {
   AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
@@ -460,7 +531,10 @@ const AuthenticatedSettingsRouteRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCampaignsRouteRoute: typeof AuthenticatedCampaignsRouteRoute
+  AuthenticatedOffersRouteRoute: typeof AuthenticatedOffersRouteRouteWithChildren
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
+  AuthenticatedTenantsRouteRoute: typeof AuthenticatedTenantsRouteRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
@@ -470,7 +544,10 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCampaignsRouteRoute: AuthenticatedCampaignsRouteRoute,
+  AuthenticatedOffersRouteRoute: AuthenticatedOffersRouteRouteWithChildren,
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
+  AuthenticatedTenantsRouteRoute: AuthenticatedTenantsRouteRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
@@ -528,7 +605,10 @@ const ClerkRouteRouteWithChildren = ClerkRouteRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '': typeof AuthenticatedRouteRouteWithChildren
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
+  '/campaigns': typeof AuthenticatedCampaignsRouteRoute
+  '/offers': typeof AuthenticatedOffersRouteRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/tenants': typeof AuthenticatedTenantsRouteRoute
   '/clerk/': typeof ClerkauthRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/otp': typeof authOtpRoute
@@ -551,12 +631,15 @@ export interface FileRoutesByFullPath {
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
+  '/offers/': typeof AuthenticatedOffersIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
 }
 
 export interface FileRoutesByTo {
+  '/campaigns': typeof AuthenticatedCampaignsRouteRoute
+  '/tenants': typeof AuthenticatedTenantsRouteRoute
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/otp': typeof authOtpRoute
@@ -579,6 +662,7 @@ export interface FileRoutesByTo {
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
+  '/offers': typeof AuthenticatedOffersIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
@@ -588,7 +672,10 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/clerk': typeof ClerkRouteRouteWithChildren
+  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRouteRoute
+  '/_authenticated/offers': typeof AuthenticatedOffersRouteRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/_authenticated/tenants': typeof AuthenticatedTenantsRouteRoute
   '/clerk/(auth)': typeof ClerkauthRouteRouteWithChildren
   '/clerk/_authenticated': typeof ClerkAuthenticatedRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
@@ -612,6 +699,7 @@ export interface FileRoutesById {
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
+  '/_authenticated/offers/': typeof AuthenticatedOffersIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
@@ -622,7 +710,10 @@ export interface FileRouteTypes {
   fullPaths:
     | ''
     | '/clerk'
+    | '/campaigns'
+    | '/offers'
     | '/settings'
+    | '/tenants'
     | '/clerk/'
     | '/forgot-password'
     | '/otp'
@@ -645,11 +736,14 @@ export interface FileRouteTypes {
     | '/apps'
     | '/chats'
     | '/help-center'
+    | '/offers/'
     | '/settings/'
     | '/tasks'
     | '/users'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/campaigns'
+    | '/tenants'
     | '/clerk'
     | '/forgot-password'
     | '/otp'
@@ -672,6 +766,7 @@ export interface FileRouteTypes {
     | '/apps'
     | '/chats'
     | '/help-center'
+    | '/offers'
     | '/settings'
     | '/tasks'
     | '/users'
@@ -679,7 +774,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/clerk'
+    | '/_authenticated/campaigns'
+    | '/_authenticated/offers'
     | '/_authenticated/settings'
+    | '/_authenticated/tenants'
     | '/clerk/(auth)'
     | '/clerk/_authenticated'
     | '/(auth)/forgot-password'
@@ -703,6 +801,7 @@ export interface FileRouteTypes {
     | '/_authenticated/apps/'
     | '/_authenticated/chats/'
     | '/_authenticated/help-center/'
+    | '/_authenticated/offers/'
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
@@ -766,7 +865,10 @@ export const routeTree = rootRoute
     "/_authenticated": {
       "filePath": "_authenticated/route.tsx",
       "children": [
+        "/_authenticated/campaigns",
+        "/_authenticated/offers",
         "/_authenticated/settings",
+        "/_authenticated/tenants",
         "/_authenticated/",
         "/_authenticated/apps/",
         "/_authenticated/chats/",
@@ -782,6 +884,17 @@ export const routeTree = rootRoute
         "/clerk/_authenticated"
       ]
     },
+    "/_authenticated/campaigns": {
+      "filePath": "_authenticated/campaigns/route.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/offers": {
+      "filePath": "_authenticated/offers/route.tsx",
+      "parent": "/_authenticated",
+      "children": [
+        "/_authenticated/offers/"
+      ]
+    },
     "/_authenticated/settings": {
       "filePath": "_authenticated/settings/route.tsx",
       "parent": "/_authenticated",
@@ -792,6 +905,10 @@ export const routeTree = rootRoute
         "/_authenticated/settings/notifications",
         "/_authenticated/settings/"
       ]
+    },
+    "/_authenticated/tenants": {
+      "filePath": "_authenticated/tenants/route.tsx",
+      "parent": "/_authenticated"
     },
     "/clerk/(auth)": {
       "filePath": "clerk/(auth)/route.tsx",
@@ -881,6 +998,10 @@ export const routeTree = rootRoute
     "/_authenticated/help-center/": {
       "filePath": "_authenticated/help-center/index.tsx",
       "parent": "/_authenticated"
+    },
+    "/_authenticated/offers/": {
+      "filePath": "_authenticated/offers/index.tsx",
+      "parent": "/_authenticated/offers"
     },
     "/_authenticated/settings/": {
       "filePath": "_authenticated/settings/index.tsx",

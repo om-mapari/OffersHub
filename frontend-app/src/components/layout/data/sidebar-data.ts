@@ -18,6 +18,11 @@ import {
   IconUserCog,
   IconUserOff,
   IconUsers,
+  IconBuildingStore,
+  IconTags,
+  IconPhone,
+  IconDashboard,
+  IconVolume,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
@@ -31,20 +36,20 @@ export const sidebarData: SidebarData = {
   },
   teams: [
     {
-      name: 'Shadcn Admin',
+      name: 'Barclays',
       logo: Command,
-      plan: 'Vite + ShadcnUI',
+      plan: 'Offer Management',
     },
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
-    },
+    // {
+    //   name: 'Acme Inc',
+    //   logo: GalleryVerticalEnd,
+    //   plan: 'Enterprise',
+    // },
+    // {
+    //   name: 'Acme Corp.',
+    //   logo: AudioWaveform,
+    //   plan: 'Startup',
+    // },
   ],
   navGroups: [
     {
@@ -53,47 +58,46 @@ export const sidebarData: SidebarData = {
         {
           title: 'Dashboard',
           url: '/',
-          icon: IconLayoutDashboard,
+          icon: IconDashboard,
         },
         {
-          title: 'Tasks',
-          url: '/tasks',
-          icon: IconChecklist,
+          title: 'Tenants',
+          url: '/tenants',
+          icon: IconBuildingStore,
         },
         {
-          title: 'Apps',
-          url: '/apps',
-          icon: IconPackages,
+          title: 'Offers',
+          url: '/offers',
+          icon: IconTags,
         },
         {
-          title: 'Chats',
-          url: '/chats',
-          badge: '3',
-          icon: IconMessages,
+          title: 'Campaigns',
+          url: '/campaigns',
+          icon: IconVolume,
         },
         {
           title: 'Users',
           url: '/users',
           icon: IconUsers,
         },
-        {
-          title: 'Secured by Clerk',
-          icon: ClerkLogo,
-          items: [
-            {
-              title: 'Sign In',
-              url: '/clerk/sign-in',
-            },
-            {
-              title: 'Sign Up',
-              url: '/clerk/sign-up',
-            },
-            {
-              title: 'User Management',
-              url: '/clerk/user-management',
-            },
-          ],
-        },
+        // {
+        //   title: 'Secured by Clerk',
+        //   icon: ClerkLogo,
+        //   items: [
+        //     {
+        //       title: 'Sign In',
+        //       url: '/clerk/sign-in',
+        //     },
+        //     {
+        //       title: 'Sign Up',
+        //       url: '/clerk/sign-up',
+        //     },
+        //     {
+        //       title: 'User Management',
+        //       url: '/clerk/user-management',
+        //     },
+        //   ],
+        // },
       ],
     },
     {
@@ -107,10 +111,10 @@ export const sidebarData: SidebarData = {
               title: 'Sign In',
               url: '/sign-in',
             },
-            {
-              title: 'Sign In (2 Col)',
-              url: '/sign-in-2',
-            },
+            // {
+            //   title: 'Sign In (2 Col)',
+            //   url: '/sign-in-2',
+            // },
             {
               title: 'Sign Up',
               url: '/sign-up',

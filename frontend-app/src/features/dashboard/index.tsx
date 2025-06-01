@@ -15,8 +15,13 @@ import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Overview } from './components/overview'
 import { RecentSales } from './components/recent-sales'
+import { useTenant } from '@/context/TenantContext'
+import { useAuth } from '@/context/AuthContext'
 
 export default function Dashboard() {
+  const { currentTenant } = useTenant();
+  const { user } = useAuth();
+
   return (
     <>
       {/* ===== Top Heading ===== */}
@@ -32,7 +37,13 @@ export default function Dashboard() {
       {/* ===== Main ===== */}
       <Main>
         <div className='mb-2 flex items-center justify-between space-y-2'>
-          <h1 className='text-2xl font-bold tracking-tight'>Dashboard</h1>
+          <h1 className='text-2xl font-bold tracking-tight'>
+            {currentTenant 
+              ? `${currentTenant.name} Dashboard` 
+              : user?.isSuperAdmin 
+                ? "Admin Dashboard" 
+                : "Dashboard"}
+          </h1>
           <div className='flex items-center space-x-2'>
             <Button>Download</Button>
           </div>
@@ -86,7 +97,7 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                   <CardTitle className='text-sm font-medium'>
-                    Subscriptions
+                    {currentTenant ? "Active Offers" : "Subscriptions"}
                   </CardTitle>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
@@ -112,7 +123,9 @@ export default function Dashboard() {
               </Card>
               <Card>
                 <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                  <CardTitle className='text-sm font-medium'>Sales</CardTitle>
+                  <CardTitle className='text-sm font-medium'>
+                    {currentTenant ? "Active Campaigns" : "Sales"}
+                  </CardTitle>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     viewBox='0 0 24 24'
@@ -137,7 +150,7 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                   <CardTitle className='text-sm font-medium'>
-                    Active Now
+                    {currentTenant ? "Campaign Engagement" : "Active Now"}
                   </CardTitle>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
@@ -196,21 +209,21 @@ const topNav = [
     disabled: false,
   },
   {
-    title: 'Customers',
-    href: 'dashboard/customers',
+    title: 'Offers',
+    href: '/offers',
     isActive: false,
-    disabled: true,
+    disabled: false,
   },
   {
-    title: 'Products',
-    href: 'dashboard/products',
+    title: 'Campaigns',
+    href: '/campaigns',
     isActive: false,
-    disabled: true,
+    disabled: false,
   },
   {
     title: 'Settings',
-    href: 'dashboard/settings',
+    href: '/settings',
     isActive: false,
-    disabled: true,
+    disabled: false,
   },
 ]

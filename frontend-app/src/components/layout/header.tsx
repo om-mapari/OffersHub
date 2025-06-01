@@ -2,6 +2,8 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { TenantSelector } from '@/components/tenant-selector'
+import { useAuth } from '@/context/AuthContext'
 
 interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   fixed?: boolean
@@ -15,6 +17,7 @@ export const Header = ({
   ...props
 }: HeaderProps) => {
   const [offset, setOffset] = React.useState(0)
+  const { user } = useAuth();
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -40,6 +43,13 @@ export const Header = ({
     >
       <SidebarTrigger variant='outline' className='scale-125 sm:scale-100' />
       <Separator orientation='vertical' className='h-6' />
+      {/* Only show tenant selector if user is not a Super Admin and has access to multiple tenants */}
+      {user && !user.isSuperAdmin && (
+        <>
+          <TenantSelector />
+          <Separator orientation='vertical' className='h-6' />
+        </>
+      )}
       {children}
     </header>
   )
