@@ -1,15 +1,15 @@
-offer_id,description,tenant_name,created_by_username,updated_by_username,status,comments,offer_type,cashback_percentage,discount_amount,rewards_points,interest_rate,created_at,updated_at
-1,5% Cashback Offer,CREDIT_CARD,user1,user1,draft,Initial draft,cashback,5,NULL,NULL,NULL,2025-05-30T11:00:00,2025-05-30T11:05:00
-1,5% Cashback Offer,CREDIT_CARD,user1,user1,submitted,Submitted,cashback,5,NULL,NULL,NULL,2025-05-30T11:05:00,2025-05-30T11:10:00
-1,5% Cashback Offer,CREDIT_CARD,user1,user3,active,Approved,cashback,5,NULL,NULL,NULL,2025-05-30T11:10:00,2025-05-30T12:00:00
-2,10% Discount Offer,CREDIT_CARD,user2,user2,draft,Initial draft,discount,NULL,10,NULL,NULL,2025-05-30T11:10:00,2025-05-30T11:15:00
-2,10% Discount Offer,CREDIT_CARD,user2,user2,submitted,Submitted,discount,NULL,10,NULL,NULL,2025-05-30T11:15:00,2025-05-30T11:20:00
-2,10% Discount Offer,CREDIT_CARD,user2,user3,active,Approved,discount,NULL,10,NULL,NULL,2025-05-30T11:20:00,2025-05-30T12:10:00
-3,1000 Rewards Points,CREDIT_CARD,user1,user1,draft,Initial draft,rewards,NULL,NULL,1000,NULL,2025-05-30T11:20:00,2025-05-30T11:25:00
-3,1000 Rewards Points,CREDIT_CARD,user1,user1,submitted,Submitted,rewards,NULL,NULL,1000,NULL,2025-05-30T11:25:00,2025-05-30T11:30:00
-3,1000 Rewards Points,CREDIT_CARD,user1,user3,active,Approved,rewards,NULL,NULL,1000,NULL,2025-05-30T11:30:00,2025-05-30T12:20:00
-4,2% APR Offer,CREDIT_CARD,user2,user2,draft,Initial draft,apr,NULL,NULL,NULL,2,2025-05-30T11:30:00,2025-05-30T11:35:00
-5,3% Cashback Offer,CREDIT_CARD,user1,user1,draft,Initial draft,cashback,3,NULL,NULL,NULL,2025-05-30T11:40:00,2025-05-30T11:45:00
-5,3% Cashback Offer,CREDIT_CARD,user1,user1,submitted,Submitted,cashback,3,NULL,NULL,NULL,2025-05-30T11:45:00,2025-05-30T11:50:00
-5,3% Cashback Offer,CREDIT_CARD,user1,user3,active,Approved,cashback,3,NULL,NULL,NULL,2025-05-30T11:50:00,2025-05-30T12:40:00
-5,3% Cashback Offer,CREDIT_CARD,user1,user3,retired,Retired,cashback,3,NULL,NULL,NULL,2025-05-30T12:40:00,2025-05-30T13:10:00
+audit_id,offer_id,description,tenant_name,created_by_username,updated_by_username,status,comments,offer_type,cashback_percentage,discount_amount,rewards_points,interest_rate,created_at,updated_at
+1,1,5% Cashback Offer,CREDIT_CARD,user1,user1,draft,Initial draft,cashback,5,,,,2025-05-30T11:00:00,2025-05-30T11:05:00
+2,1,5% Cashback Offer,CREDIT_CARD,user1,user1,submitted,Submitted,cashback,5,,,,2025-05-30T11:05:00,2025-05-30T11:10:00
+3,1,5% Cashback Offer,CREDIT_CARD,user1,user3,active,Approved,cashback,5,,,,2025-05-30T11:10:00,2025-05-30T12:00:00
+4,2,10% Discount Offer,CREDIT_CARD,user2,user2,draft,Initial draft,discount,,10,,,2025-05-30T11:10:00,2025-05-30T11:15:00
+5,2,10% Discount Offer,CREDIT_CARD,user2,user2,submitted,Submitted,discount,,10,,,2025-05-30T11:15:00,2025-05-30T11:20:00
+6,2,10% Discount Offer,CREDIT_CARD,user2,user3,active,Approved,discount,,10,,,2025-05-30T11:20:00,2025-05-30T12:10:00
+7,3,1000 Rewards Points,CREDIT_CARD,user1,user1,draft,Initial draft,rewards,,,1000,,2025-05-30T11:20:00,2025-05-30T11:25:00
+8,3,1000 Rewards Points,CREDIT_CARD,user1,user1,submitted,Submitted,rewards,,,1000,,2025-05-30T11:25:00,2025-05-30T11:30:00
+9,3,1000 Rewards Points,CREDIT_CARD,user1,user3,active,Approved,rewards,,,1000,,2025-05-30T11:30:00,2025-05-30T12:20:00
+10,4,2% APR Offer,CREDIT_CARD,user2,user2,draft,Initial draft,apr,,,,2,2025-05-30T11:30:00,2025-05-30T11:35:00
+11,5,3% Cashback Offer,CREDIT_CARD,user1,user1,draft,Initial draft,cashback,3,,,,2025-05-30T11:40:00,2025-05-30T11:45:00
+12,5,3% Cashback Offer,CREDIT_CARD,user1,user1,submitted,Submitted,cashback,3,,,,2025-05-30T11:45:00,2025-05-30T11:50:00
+13,5,3% Cashback Offer,CREDIT_CARD,user1,user3,active,Approved,cashback,3,,,,2025-05-30T11:50:00,2025-05-30T12:40:00
+14,5,3% Cashback Offer,CREDIT_CARD,user1,user3,retired,Retired,cashback,3,,,,2025-05-30T12:40:00,2025-05-30T13:10:00

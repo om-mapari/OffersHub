@@ -1,3 +1,3 @@
 campaign_id,tenant_name,offer_id,campaign_name,campaign_description,selection_criteria,start_date,end_date,created_by_username,status,created_at
-1,CREDIT_CARD,1,Cashback Campaign,5% Cashback for Prime Customers,"['segment:prime', 'credit_score:>700']",2025-06-01T00:00:00,2025-12-31T00:00:00,user1,active,2025-05-30T16:20:00
-2,CREDIT_CARD,2,Discount Campaign,10% Discount for High Spending,"['segment:high_spending', 'annual_income:>100000']",2025-06-01T00:00:00,2025-12-31T00:00:00,user2,active,2025-05-30T16:30:00
+1,CREDIT_CARD,1,Cashback Campaign,5% Cashback for Prime Customers,"{segment:prime,credit_score:>700}",2025-06-01T00:00:00,2025-12-31T00:00:00,user1,active,2025-05-30T16:20:00
+2,CREDIT_CARD,2,Discount Campaign,10% Discount for High Spending,"{segment:high_spending,annual_income:>100000}",2025-06-01T00:00:00,2025-12-31T00:00:00,user2,active,2025-05-30T16:30:00
