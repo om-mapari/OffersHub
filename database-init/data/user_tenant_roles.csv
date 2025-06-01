@@ -1,0 +1,5 @@
+username,tenant_name,role
+user1,CREDIT_CARD,creator
+user2,CREDIT_CARD,creator
+user3,CREDIT_CARD,approver
+admin,CREDIT_CARD,admin

@@ -1,0 +1,5 @@
+user_name,password_hash,full_name,is_super_admin,created_at
+user1,hash1,John Doe,False,2025-05-30T10:00:00
+user2,hash2,Jane Smith,False,2025-05-30T10:05:00
+user3,hash3,Alice Brown,False,2025-05-30T10:10:00
+admin,hash4,Admin User,True,2025-05-30T10:15:00
