@@ -6,10 +6,10 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 class CampaignStatus(str, enum.Enum):
-    DRAFT = "draft"
-    ACTIVE = "active"
-    PAUSED = "paused"
-    COMPLETED = "completed"
+    draft = "draft"
+    active = "active"
+    paused = "paused"
+    completed = "completed"
 
 class Campaign(Base):
     __tablename__ = "campaigns"
@@ -24,7 +24,7 @@ class Campaign(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     created_by_username = Column(String, ForeignKey("users.username"))
-    status = Column(Enum(CampaignStatus), default=CampaignStatus.DRAFT)
+    status = Column(Enum(CampaignStatus), default=CampaignStatus.draft)
     created_at = Column(DateTime, default=func.now())
 
     # Relationships

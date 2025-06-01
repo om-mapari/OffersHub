@@ -42,7 +42,7 @@ def create_offer(
     # For now, let's assume CRUDBase.create can handle it if OfferCreate includes these,
     # or we use a custom method in crud_offer.
     # A simple way:
-    db_offer = models.Offer(**offer_data, status=models.OfferStatus.DRAFT) # Explicitly set default status
+    db_offer = models.Offer(**offer_data, status=models.OfferStatus.draft) # Explicitly set default status
     db.add(db_offer)
     
     # Create audit log
@@ -78,7 +78,9 @@ def list_offers(
     """
     List offers for the tenant.
     """
+    print(tenant.name, skip, limit, status_filter, created_by_filter)
     query = db.query(models.Offer).filter(models.Offer.tenant_name == tenant.name)
+    print(type(query))
     if status_filter:
         query = query.filter(models.Offer.status == status_filter)
     if created_by_filter:
@@ -180,7 +182,7 @@ def submit_offer(
             detail=f"Offer with ID {offer_id} not found in tenant {tenant.name}"
         )
     
-    if offer.status != models.OfferStatus.DRAFT:
+    if offer.status != models.OfferStatus.draft:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Offer with ID {offer_id} is not in DRAFT status and cannot be submitted"
@@ -190,7 +192,7 @@ def submit_offer(
     old_status = offer.status
     
     # Update status to PENDING_REVIEW
-    offer.status = models.OfferStatus.PENDING_REVIEW
+    offer.status = models.OfferStatus.pending_review
     db.add(offer)
     db.commit()
     db.refresh(offer)
@@ -229,7 +231,7 @@ def approve_offer(
             detail=f"Offer with ID {offer_id} not found in tenant {tenant.name}"
         )
     
-    if offer.status != models.OfferStatus.PENDING_REVIEW:
+    if offer.status != models.OfferStatus.pending_review:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Offer with ID {offer_id} is not in PENDING_REVIEW status and cannot be approved"
@@ -239,7 +241,7 @@ def approve_offer(
     old_status = offer.status
     
     # Update status to APPROVED
-    offer.status = models.OfferStatus.APPROVED
+    offer.status = models.OfferStatus.approved
     db.add(offer)
     db.commit()
     db.refresh(offer)
@@ -279,7 +281,7 @@ def reject_offer(
             detail=f"Offer with ID {offer_id} not found in tenant {tenant.name}"
         )
     
-    if offer.status != models.OfferStatus.PENDING_REVIEW:
+    if offer.status != models.OfferStatus.pending_review:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Offer with ID {offer_id} is not in PENDING_REVIEW status and cannot be rejected"
@@ -289,7 +291,7 @@ def reject_offer(
     old_status = offer.status
     
     # Update status to REJECTED and add rejection reason to comments
-    offer.status = models.OfferStatus.REJECTED
+    offer.status = models.OfferStatus.rejected
     offer.comments = f"Rejected: {rejection_data.get('rejection_reason', 'No reason provided')}"
     db.add(offer)
     db.commit()

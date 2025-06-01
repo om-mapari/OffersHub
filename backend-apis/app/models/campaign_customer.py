@@ -5,10 +5,10 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 class DeliveryStatus(str, enum.Enum):
-    PENDING = "pending"
-    SENT = "sent"
-    DECLINED = "declined"
-    ACCEPTED = "accepted"
+    pending = "pending"
+    sent = "sent"
+    declined = "declined"
+    accepted = "accepted"
 
 class CampaignCustomer(Base):
     __tablename__ = "campaign_customers"
@@ -17,7 +17,7 @@ class CampaignCustomer(Base):
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"))
     offer_id = Column(Integer, ForeignKey("offers.id", ondelete="CASCADE"), nullable=False) # Which offer was sent
     
-    delivery_status = Column(Enum(DeliveryStatus), default=DeliveryStatus.PENDING)
+    delivery_status = Column(Enum(DeliveryStatus), default=DeliveryStatus.pending)
     sent_at = Column(DateTime, nullable=True)
 
     __table_args__ = (
