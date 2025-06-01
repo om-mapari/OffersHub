@@ -1,154 +1,362 @@
--- EXTENSION FOR UUIDs
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+SELECT 'offer_management' AS schema_name;
 
--- USERS
-CREATE TABLE IF NOT EXISTS users (
-    username TEXT PRIMARY KEY,
+BEGIN;
+--Rollback on error
+ROLLBACK;
+-- Drop tables in dependency order (children first)
+DROP TABLE IF EXISTS campaign_customers CASCADE;
+
+DROP TABLE IF EXISTS campaigns CASCADE;
+
+DROP TABLE IF EXISTS customer CASCADE;
+
+DROP TABLE IF EXISTS offer_audit_logs CASCADE;
+
+DROP TABLE IF EXISTS offers CASCADE;
+
+DROP TABLE IF EXISTS user_tenant_roles CASCADE;
+
+DROP TABLE IF EXISTS tenants CASCADE;
+
+DROP TABLE IF EXISTS users CASCADE;
+-- Create core tables first
+CREATE TABLE users (
+    user_name TEXT PRIMARY KEY,
     password_hash TEXT NOT NULL,
     full_name TEXT,
-    is_super_admin BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT NOW()
+    is_super_admin BOOLEAN,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- TENANTS
-CREATE TABLE IF NOT EXISTS tenants (
-    name TEXT PRIMARY KEY,
+CREATE TABLE tenants (
+    tenant_name TEXT PRIMARY KEY CHECK (
+        tenant_name IN (
+            'CREDIT_CARD',
+            'LOAN',
+            'CURRENT_ACCOUNT',
+            'DEPOSIT'
+        )
+    ),
     description TEXT,
-    created_by_username TEXT REFERENCES users(username),
-    created_at TIMESTAMP DEFAULT NOW()
+    created_by_username TEXT REFERENCES users (user_name),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- USER TENANT ROLES
--- role: 'admin', 'create', 'approver', 'read_only'
-CREATE TABLE IF NOT EXISTS user_tenant_roles (
-    username TEXT REFERENCES users(username) ON DELETE CASCADE,
-    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE,
-    role TEXT NOT NULL,
-    PRIMARY KEY (username, tenant_name, role)
+CREATE TABLE user_tenant_roles (
+    username TEXT REFERENCES users (user_name),
+    tenant_name TEXT REFERENCES tenants (tenant_name),
+    role TEXT CHECK (
+        role IN (
+            'admin',
+            'read_only',
+            'creator',
+            'approver'
+        )
+    ),
+    PRIMARY KEY (username, tenant_name)
 );
 
--- OFFERS
-CREATE TABLE IF NOT EXISTS offers (
-    id SERIAL PRIMARY KEY,
-    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
-    created_by_username TEXT REFERENCES users(username),
-    offer_description TEXT,
-    offer_type TEXT CHECK ( offer_type IN ( 'balance_transfer', 'pricing', 'cashback', 'reward_points', 'no_cost_emi', 'fee_waiver', 'partner_offer','milestone_offer' ) ) NOT NULL DEFAULT 'other',
-    status TEXT CHECK (status IN ('draft', 'pending_review', 'approved', 'rejected', 'retired')) NOT NULL DEFAULT 'draft',
+CREATE TABLE offers (
+    offer_id SERIAL PRIMARY KEY,
+    description TEXT,
+    tenant_name TEXT REFERENCES tenants (tenant_name),
+    created_by_username TEXT REFERENCES users (user_name),
+    updated_by_username TEXT REFERENCES users (user_name),
+    status TEXT CHECK (
+        status IN (
+            'draft',
+            'submitted',
+            'rejected',
+            'active',
+            'retired'
+        )
+    ),
     comments TEXT,
-    data JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    offer_type TEXT CHECK (
+        offer_type IN (
+            'cashback',
+            'discount',
+            'rewards',
+            'apr'
+        )
+    ),
+    cashback_percentage NUMERIC CHECK (
+        cashback_percentage IS NULL
+        OR offer_type = 'cashback'
+    ),
+    discount_amount NUMERIC CHECK (
+        discount_amount IS NULL
+        OR offer_type = 'discount'
+    ),
+    rewards_points NUMERIC CHECK (
+        rewards_points IS NULL
+        OR offer_type = 'rewards'
+    ),
+    interest_rate NUMERIC CHECK (
+        interest_rate IS NULL
+        OR offer_type = 'apr'
+    ),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Trigger function to update updated_at timestamp on offers table
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to call function before update on offers
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_trigger
-        WHERE tgname = 'trg_update_offers_updated_at'
-    ) THEN
-        CREATE TRIGGER trg_update_offers_updated_at
-        BEFORE UPDATE ON offers
-        FOR EACH ROW
-        EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-END
-$$;
-
-
--- OFFER AUDIT LOGS
-CREATE TABLE IF NOT EXISTS offer_audit_logs (
-    id SERIAL PRIMARY KEY,
-    offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
-    action TEXT NOT NULL, -- 'create', 'update', 'status_change', 'comment'
-    performed_by_username TEXT REFERENCES users(username),
-    old_data JSONB,
-    new_data JSONB,
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE offer_audit_logs (
+    audit_id SERIAL PRIMARY KEY,
+    offer_id INTEGER REFERENCES offers (offer_id),
+    description TEXT,
+    tenant_name TEXT REFERENCES tenants (tenant_name),
+    created_by_username TEXT REFERENCES users (user_name),
+    updated_by_username TEXT REFERENCES users (user_name),
+    status TEXT CHECK (
+        status IN (
+            'draft',
+            'submitted',
+            'rejected',
+            'active',
+            'retired'
+        )
+    ),
+    comments TEXT,
+    offer_type TEXT CHECK (
+        offer_type IN (
+            'cashback',
+            'discount',
+            'rewards',
+            'apr'
+        )
+    ),
+    cashback_percentage NUMERIC,
+    discount_amount NUMERIC,
+    rewards_points NUMERIC,
+    interest_rate NUMERIC,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- CUSTOMERS
-CREATE TABLE IF NOT EXISTS customers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE customer (
+    customer_id TEXT PRIMARY KEY,
     full_name TEXT NOT NULL,
-    email TEXT UNIQUE,
-    mobile TEXT UNIQUE,
+    email TEXT NOT NULL,
+    mobile TEXT NOT NULL,
     dob DATE,
-    gender TEXT CHECK (gender IN ('male', 'female', 'other')),
-    kyc_status TEXT CHECK (kyc_status IN ('verified', 'pending', 'rejected')),
-    segment TEXT, -- e.g., 'premium', 'regular', 'corporate'
-    occupation TEXT, -- e.g., 'salaried', 'self-employed', 'student', 'retired'
-    annual_income NUMERIC, -- income in INR/USD
-    credit_score INT, -- e.g., 300–900
+    gender TEXT,
+    kyc_status TEXT,
+    segment TEXT CHECK (
+        segment IN (
+            'prime',
+            'regular',
+            'high_transactions',
+            'high_spending'
+        )
+    ),
+    occupation TEXT,
+    annual_income NUMERIC,
+    credit_score INTEGER,
     address TEXT,
     state TEXT,
     city TEXT,
     pin_code TEXT,
-    marital_status TEXT CHECK (marital_status IN ('single', 'married', 'divorced', 'widowed')),
-    account_age_months INT,
-    coomunication_preference TEXT,
-    deceased_marker TEXT,
-    sanctions_marker TEXT,
-    preferred_language TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    account_id TEXT,
-    account_status TEXT,
-    account_openend_date TEXT,
+    marital_status TEXT,
+    account_age_months INTEGER,
+    communication_preference TEXT CHECK (
+        communication_preference IN (
+            'digital',
+            'paper_only',
+            'digital_paper',
+            'braille',
+            'audio'
+        )
+    ),
+    deceased_marker BOOLEAN,
+    sanctions_marker BOOLEAN,
+    is_active BOOLEAN,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    account_id TEXT UNIQUE,
+    account_status TEXT CHECK (
+        account_status IN ('active', 'open', 'closed')
+    ),
+    account_opened_date DATE,
     credit_limit NUMERIC,
     account_current_balance NUMERIC,
     available_credit NUMERIC,
-    delinquency BOOLEAN DEFAULT FALSE
-);
-CREATE INDEX idx_customers_email ON customers(email);
-CREATE INDEX idx_customers_mobile ON customers(mobile);
-
--- CAMPAIGNS
-CREATE TABLE IF NOT EXISTS campaigns (
-    id SERIAL PRIMARY KEY,
-    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
-    offer_id INT REFERENCES offers(id) ON DELETE SET NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    selection_criteria JSONB,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    created_by_username TEXT REFERENCES users(username),
-    status TEXT CHECK (status IN ('draft', 'active', 'paused', 'completed')) DEFAULT 'draft',
-    created_at TIMESTAMP DEFAULT NOW()
+    delinquency_marker BOOLEAN
 );
 
--- CAMPAIGN CUSTOMERS
-CREATE TABLE IF NOT EXISTS campaign_customers (
-    campaign_id INT REFERENCES campaigns(id) ON DELETE CASCADE,
-    customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-    offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
-    delivery_status TEXT CHECK (delivery_status IN ('pending', 'sent', 'declined', 'accepted')) DEFAULT 'pending',
+CREATE TABLE campaigns (
+    campaign_id SERIAL PRIMARY KEY,
+    tenant_name TEXT REFERENCES tenants (tenant_name),
+    offer_id INTEGER REFERENCES offers (offer_id),
+    campaign_name TEXT,
+    campaign_description TEXT,
+    selection_criteria TEXT [], -- PostgreSQL array of text
+    start_date DATE,
+    end_date DATE,
+    created_by_username TEXT REFERENCES users (user_name),
+    status TEXT CHECK (
+        status IN (
+            'draft',
+            'submitted',
+            'rejected',
+            'active',
+            'retired'
+        )
+    ),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE campaign_customers (
+    campaign_id INTEGER REFERENCES campaigns (campaign_id),
+    customer_id TEXT REFERENCES customer (customer_id),
+    offer_id INTEGER REFERENCES offers (offer_id),
+    acceptance_status TEXT CHECK (
+        acceptance_status IN (
+            'sent',
+            'accepted',
+            'rejected'
+        )
+    ),
     sent_at TIMESTAMP,
     PRIMARY KEY (campaign_id, customer_id)
 );
+-- Load and validate data
+COPY users (
+    user_name,
+    password_hash,
+    full_name,
+    is_super_admin,
+    created_at
+)
+FROM '/tmp/data/users.csv'
+WITH (FORMAT csv, HEADER true);
 
--- INDEXES FOR FK COLUMNS FOR PERFORMANCE
-CREATE INDEX idx_offer_audit_logs_offer_id ON offer_audit_logs (offer_id);
-CREATE INDEX idx_user_tenant_roles_username ON user_tenant_roles (username);
-CREATE INDEX idx_user_tenant_roles_tenant_name ON user_tenant_roles (tenant_name);
-CREATE INDEX idx_offers_tenant_name ON offers (tenant_name);
-CREATE INDEX idx_offers_created_by_username ON offers (created_by_username);
-CREATE INDEX idx_campaigns_tenant_name ON campaigns (tenant_name);
-CREATE INDEX idx_campaigns_offer_id ON campaigns (offer_id);
-CREATE INDEX idx_campaigns_created_by_username ON campaigns (created_by_username);
-CREATE INDEX idx_campaign_customers_campaign_id ON campaign_customers (campaign_id);
-CREATE INDEX idx_campaign_customers_customer_id ON campaign_customers (customer_id);
-CREATE INDEX idx_campaign_customers_offer_id ON campaign_customers (offer_id);
+SELECT COUNT(*) AS users_loaded FROM users;
+
+COPY tenants (
+    tenant_name,
+    description,
+    created_by_username,
+    created_at
+)
+FROM '/tmp/data/tenants.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS tenants_loaded FROM tenants;
+
+COPY user_tenant_roles (username, tenant_name, role)
+FROM '/tmp/data/user_tenant_roles.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS user_tenant_roles_loaded FROM user_tenant_roles;
+
+COPY offers (
+    offer_id,
+    description,
+    tenant_name,
+    created_by_username,
+    updated_by_username,
+    status,
+    comments,
+    offer_type,
+    cashback_percentage,
+    discount_amount,
+    rewards_points,
+    interest_rate,
+    created_at,
+    updated_at
+)
+FROM '/tmp/data/offers.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS offers_loaded FROM offers;
+
+COPY offer_audit_logs (
+    audit_id,
+    offer_id,
+    description,
+    tenant_name,
+    created_by_username,
+    updated_by_username,
+    status,
+    comments,
+    offer_type,
+    cashback_percentage,
+    discount_amount,
+    rewards_points,
+    interest_rate,
+    created_at,
+    updated_at
+)
+FROM '/tmp/data/offer_audit_logs.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS offer_audit_logs_loaded FROM offer_audit_logs;
+
+COPY customer (
+    customer_id,
+    full_name,
+    email,
+    mobile,
+    dob,
+    gender,
+    kyc_status,
+    segment,
+    occupation,
+    annual_income,
+    credit_score,
+    address,
+    state,
+    city,
+    pin_code,
+    marital_status,
+    account_age_months,
+    communication_preference,
+    deceased_marker,
+    sanctions_marker,
+    is_active,
+    created_at,
+    updated_at,
+    account_id,
+    account_status,
+    account_opened_date,
+    credit_limit,
+    account_current_balance,
+    available_credit,
+    delinquency_marker
+)
+FROM '/tmp/data/customers.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS customers_loaded FROM customer;
+
+COPY campaigns (
+    campaign_id,
+    tenant_name,
+    offer_id,
+    campaign_name,
+    campaign_description,
+    selection_criteria,
+    start_date,
+    end_date,
+    created_by_username,
+    status,
+    created_at
+)
+FROM '/tmp/data/campaigns.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS campaigns_loaded FROM campaigns;
+
+COPY campaign_customers (
+    campaign_id,
+    customer_id,
+    offer_id,
+    acceptance_status,
+    sent_at
+)
+FROM '/tmp/data/campaign_customers.csv'
+WITH (FORMAT csv, HEADER true);
+
+SELECT COUNT(*) AS campaign_customers_loaded FROM campaign_customers;
+
+COMMIT;
