@@ -12,6 +12,10 @@ from app.api.v1.endpoints import (
     metrics
 )
 
+from app.crud import (
+    crud_all
+)
+
 api_router = APIRouter()
 
 # Authentication
@@ -46,3 +50,7 @@ api_router.include_router(tenant_scoped_router, prefix="/tenants/{tenant_name}")
 # Note: The actual path parameter {tenant_name} will be handled by FastAPI if defined in
 # the endpoint functions within offers.router and campaigns.router, along with dependencies
 # like get_tenant_by_name from deps.py.
+
+
+# Crud All
+api_router.include_router(crud_all.router, prefix="/api/v1", tags=["v1 CRUD Operations"])
