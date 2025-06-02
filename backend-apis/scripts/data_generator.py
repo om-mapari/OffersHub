@@ -85,11 +85,11 @@ def generate_users(conn, count: int = 10) -> List[str]:
         username = fake.user_name()
         users.append({
             "username": username,
-            "password_hash": pwd_context.hash(fake.password()),
+            "password_hash": pwd_context.hash(username),
             "full_name": fake.name(),
             "is_super_admin": False
         })
-        print("username: ", username, "password: ", pwd_context.hash(fake.password()))
+        print("username: ", username, "password: ", username)
     
     cursor = conn.cursor()
     insert_query = """
