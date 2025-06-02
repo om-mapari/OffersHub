@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { CalendarIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { cn } from '@/lib/utils'
-import { showSubmittedData } from '@/utils/show-submitted-data'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -30,6 +29,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { useAuth } from '@/context/AuthContext'
+import { toast } from 'sonner'
+import { useEffect } from 'react'
 
 const languages = [
   { label: 'English', value: 'en' },
@@ -62,19 +64,31 @@ const accountFormSchema = z.object({
 
 type AccountFormValues = z.infer<typeof accountFormSchema>
 
-// This can come from your database or API.
-const defaultValues: Partial<AccountFormValues> = {
-  name: '',
-}
-
 export function AccountForm() {
+  const { user } = useAuth();
+  
+  // Set default values from user data
+  const defaultValues: Partial<AccountFormValues> = {
+    name: user?.fullName || user?.username || '',
+    language: 'en',
+  }
+  
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
     defaultValues,
   })
+  
+  // Update form values when user data changes
+  useEffect(() => {
+    if (user) {
+      form.setValue('name', user.fullName || user.username || '')
+    }
+  }, [user, form])
 
   function onSubmit(data: AccountFormValues) {
-    showSubmittedData(data)
+    // In a real app, this would call an API to update the user profile
+    console.log('Account form data:', data)
+    toast.success('Account details updated!')
   }
 
   return (
@@ -108,13 +122,10 @@ export function AccountForm() {
                   <FormControl>
                     <Button
                       variant={'outline'}
-                      className={cn(
-                        'w-[240px] pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
+                      className='w-[240px] pl-3 text-left font-normal'
                     >
                       {field.value ? (
-                        format(field.value, 'MMM d, yyyy')
+                        format(field.value, 'PPP')
                       ) : (
                         <span>Pick a date</span>
                       )}
@@ -127,9 +138,10 @@ export function AccountForm() {
                     mode='single'
                     selected={field.value}
                     onSelect={field.onChange}
-                    disabled={(date: Date) =>
+                    disabled={(date) =>
                       date > new Date() || date < new Date('1900-01-01')
                     }
+                    initialFocus
                   />
                 </PopoverContent>
               </Popover>

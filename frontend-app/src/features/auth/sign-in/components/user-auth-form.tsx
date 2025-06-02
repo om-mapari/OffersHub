@@ -1,11 +1,14 @@
+import * as React from 'react'
 import { HTMLAttributes, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { IconBrandFacebook, IconBrandGithub } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
   Form,
   FormControl,
@@ -20,54 +23,74 @@ import { PasswordInput } from '@/components/password-input'
 type UserAuthFormProps = HTMLAttributes<HTMLFormElement>
 
 const formSchema = z.object({
-  email: z
+  username: z // Changed from email to username as per OAuth2 standard for 'password' grant
     .string()
-    .min(1, { message: 'Please enter your email' })
-    .email({ message: 'Invalid email address' }),
+    .min(1, { message: 'Please enter your username or email' }),
   password: z
     .string()
     .min(1, {
       message: 'Please enter your password',
     })
-    .min(7, {
-      message: 'Password must be at least 7 characters long',
+    .max(100, {
+      message: 'Password is too long',
     }),
 })
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const auth = useAuth()
+  const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(auth.loading) // Reflect auth loading state
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
-    // eslint-disable-next-line no-console
-    console.log(data)
-
-    setTimeout(() => {
+    try {
+      // For 'password' grant type, typically username is used.
+      // If your API expects email, ensure 'username' field in form corresponds to that.
+      await auth.login({ username: data.username, password: data.password, grant_type: 'password' })
+      toast.success('Login successful!')
+      
+      // Get the redirect path from the URL query parameters or default to '/'
+      const searchParams = new URLSearchParams(window.location.search)
+      let redirectPath = searchParams.get('redirect') || '/'
+      
+      // Fix the [object Object] issue by ensuring redirectPath is a string
+      if (redirectPath.includes('[object Object]')) {
+        redirectPath = '/'
+      }
+      
+      navigate({ to: redirectPath, replace: true })
+    } catch (error: any) {
+      const errorMsg = error?.detail?.[0]?.msg || error?.detail || 'Login failed. Please check your credentials.'
+      toast.error(errorMsg)
+    } finally {
       setIsLoading(false)
-    }, 3000)
+    }
   }
+
+  // Update isLoading based on auth context's loading state
+  React.useEffect(() => setIsLoading(auth.loading), [auth.loading])
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn('grid gap-3', className)}
+        className={cn('grid gap-6', className)}
         {...props}
       >
         <FormField
           control={form.control}
-          name='email'
+          name='username'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Username or Email</FormLabel>
               <FormControl>
                 <Input placeholder='name@example.com' {...field} />
               </FormControl>
@@ -79,42 +102,36 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           control={form.control}
           name='password'
           render={({ field }) => (
-            <FormItem className='relative'>
+            <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder='********' {...field} />
+                <PasswordInput placeholder='••••••••' {...field} />
               </FormControl>
               <FormMessage />
-              <Link
-                to='/forgot-password'
-                className='text-muted-foreground absolute -top-0.5 right-0 text-sm font-medium hover:opacity-75'
-              >
-                Forgot password?
-              </Link>
             </FormItem>
           )}
         />
-        <Button className='mt-2' disabled={isLoading}>
-          Login
+        <Button type='submit' className='w-full' disabled={isLoading}>
+          {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
-
-        <div className='relative my-2'>
+        <div className='relative'>
           <div className='absolute inset-0 flex items-center'>
             <span className='w-full border-t' />
           </div>
           <div className='relative flex justify-center text-xs uppercase'>
-            <span className='bg-background text-muted-foreground px-2'>
+            <span className='bg-background px-2 text-muted-foreground'>
               Or continue with
             </span>
           </div>
         </div>
-
-        <div className='grid grid-cols-2 gap-2'>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconBrandGithub className='h-4 w-4' /> GitHub
+        <div className='grid grid-cols-2 gap-4'>
+          <Button variant='outline' type='button'>
+            <IconBrandGithub className='mr-2 size-4' />
+            Github
           </Button>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconBrandFacebook className='h-4 w-4' /> Facebook
+          <Button variant='outline' type='button'>
+            <IconBrandFacebook className='mr-2 size-4' />
+            Facebook
           </Button>
         </div>
       </form>

@@ -36,7 +36,34 @@ DB_PARAMS = {
 }
 
 # Constants for data generation
-OFFER_TYPES = [
+OFFER_TYPES_BY_TENANT = {
+    "credit_card": [
+        "balance_transfer", "pricing", "cashback", "reward_points",
+        "no_cost_emi", "fee_waiver", "partner_offer", "milestone_offer"
+    ],
+    "loan": [
+        "interest_rate_discount", "zero_processing_fee", "prepayment_offer",
+        "instant_disbursal", "flexible_tenure", "top_up_offer"
+    ],
+    "savings": [
+        "high_interest_rate", "zero_balance_offer", "reward_points",
+        "referral_bonus", "bill_pay_cashback", "auto_sweep_feature"
+    ],
+    "mortgage": [
+        "interest_rate_reduction", "processing_fee_waiver", "home_insurance_bundle",
+        "quick_approval", "loan_to_value_boost", "emi_holiday_offer"
+    ],
+    "insurance": [
+        "premium_discount", "bundle_offer", "no_claim_bonus_boost",
+        "free_addon_cover", "wellness_rewards", "multi_year_discount"
+    ],
+    "investment": [
+        "zero_brokerage", "welcome_bonus", "portfolio_review_offer",
+        "tax_saver_plan", "sip_boost_offer", "goal_based_advisory"
+    ]
+}
+# For backward compatibility and for tenants not in OFFER_TYPES_BY_TENANT
+DEFAULT_OFFER_TYPES = [
     'balance_transfer', 'pricing', 'cashback', 'reward_points', 
     'no_cost_emi', 'fee_waiver', 'partner_offer', 'milestone_offer'
 ]
@@ -208,7 +235,11 @@ def generate_offers(conn, usernames: List[str], tenant_names: List[str], count: 
     offers = []
     
     for _ in range(count):
-        offer_type = random.choice(OFFER_TYPES)
+        tenant_name = random.choice(tenant_names)
+        
+        # Get offer types for this tenant, or use defaults if not found
+        offer_types = OFFER_TYPES_BY_TENANT.get(tenant_name, DEFAULT_OFFER_TYPES)
+        offer_type = random.choice(offer_types)
         status = random.choice(OFFER_STATUSES)
         
         # Generate different data based on offer type
@@ -221,13 +252,31 @@ def generate_offers(conn, usernames: List[str], tenant_names: List[str], count: 
                 "max_amount": random.randint(50001, 1000000),
                 "tenure_months": random.choice([3, 6, 9, 12, 18, 24])
             }
-        elif offer_type == 'cashback':
+        elif offer_type in ['cashback', 'reward_points']:
             data = {
                 "percentage": round(random.uniform(1, 10), 2),
                 "max_amount": random.randint(500, 10000),
                 "min_spend": random.randint(1000, 5000),
                 "categories": random.sample(["travel", "dining", "shopping", "groceries", "entertainment"], 
                                           k=random.randint(1, 3))
+            }
+        elif offer_type in ['interest_rate_discount', 'interest_rate_reduction']:
+            data = {
+                "discount_percentage": round(random.uniform(0.25, 2.0), 2),
+                "eligibility_criteria": "Minimum credit score of 750",
+                "tenure_months": random.choice([12, 24, 36, 48, 60])
+            }
+        elif offer_type in ['zero_processing_fee', 'processing_fee_waiver', 'fee_waiver']:
+            data = {
+                "waiver_amount": random.randint(1000, 10000),
+                "waiver_percentage": 100,
+                "min_loan_amount": random.randint(50000, 500000)
+            }
+        elif offer_type in ['instant_disbursal', 'quick_approval']:
+            data = {
+                "disbursal_time_hours": random.randint(1, 24),
+                "required_documents": ["ID Proof", "Address Proof"],
+                "eligibility": "Existing customers with good credit history"
             }
         else:
             # Generic data for other offer types
@@ -238,7 +287,7 @@ def generate_offers(conn, usernames: List[str], tenant_names: List[str], count: 
             }
         
         offers.append({
-            "tenant_name": random.choice(tenant_names),
+            "tenant_name": tenant_name,
             "created_by_username": random.choice(usernames),
             "offer_description": fake.sentence(),
             "offer_type": offer_type,
