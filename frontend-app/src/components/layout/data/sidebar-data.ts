@@ -2,15 +2,9 @@ import {
   IconBarrierBlock,
   IconBrowserCheck,
   IconBug,
-  IconChecklist,
   IconError404,
-  IconHelp,
-  IconLayoutDashboard,
   IconLock,
-  IconLockAccess,
-  IconMessages,
   IconNotification,
-  IconPackages,
   IconPalette,
   IconServerOff,
   IconSettings,
@@ -20,12 +14,10 @@ import {
   IconUsers,
   IconBuildingStore,
   IconTags,
-  IconPhone,
   IconDashboard,
   IconVolume,
 } from '@tabler/icons-react'
-import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
-import { ClerkLogo } from '@/assets/clerk-logo'
+import { Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -40,16 +32,6 @@ export const sidebarData: SidebarData = {
       logo: Command,
       plan: 'Offer Management',
     },
-    // {
-    //   name: 'Acme Inc',
-    //   logo: GalleryVerticalEnd,
-    //   plan: 'Enterprise',
-    // },
-    // {
-    //   name: 'Acme Corp.',
-    //   logo: AudioWaveform,
-    //   plan: 'Startup',
-    // },
   ],
   navGroups: [
     {
@@ -80,24 +62,6 @@ export const sidebarData: SidebarData = {
           url: '/users',
           icon: IconUsers,
         },
-        // {
-        //   title: 'Secured by Clerk',
-        //   icon: ClerkLogo,
-        //   items: [
-        //     {
-        //       title: 'Sign In',
-        //       url: '/clerk/sign-in',
-        //     },
-        //     {
-        //       title: 'Sign Up',
-        //       url: '/clerk/sign-up',
-        //     },
-        //     {
-        //       title: 'User Management',
-        //       url: '/clerk/user-management',
-        //     },
-        //   ],
-        // },
       ],
     },
     {
@@ -105,27 +69,15 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: 'Auth',
-          icon: IconLockAccess,
+          icon: IconLock,
           items: [
             {
               title: 'Sign In',
               url: '/sign-in',
             },
-            // {
-            //   title: 'Sign In (2 Col)',
-            //   url: '/sign-in-2',
-            // },
-            {
-              title: 'Sign Up',
-              url: '/sign-up',
-            },
             {
               title: 'Forgot Password',
               url: '/forgot-password',
-            },
-            {
-              title: 'OTP',
-              url: '/otp',
             },
           ],
         },
@@ -195,11 +147,6 @@ export const sidebarData: SidebarData = {
               icon: IconBrowserCheck,
             },
           ],
-        },
-        {
-          title: 'Help Center',
-          url: '/help-center',
-          icon: IconHelp,
         },
       ],
     },
