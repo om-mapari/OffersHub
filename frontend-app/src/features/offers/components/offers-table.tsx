@@ -30,14 +30,27 @@ import { useState } from 'react'
 import { Offer } from '../data/schema'
 import { useTenant } from '@/context/TenantContext'
 
+// Define permissions interface
+export interface OffersPermissions {
+  canApproveReject: boolean;
+  canSubmit: boolean;
+  canCreate: boolean;
+}
+
 interface OffersTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  permissions?: OffersPermissions
 }
 
 export function OffersTable<TData, TValue>({
   columns,
   data,
+  permissions = {
+    canApproveReject: false,
+    canSubmit: false,
+    canCreate: false
+  }
 }: OffersTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -89,6 +102,11 @@ export function OffersTable<TData, TValue>({
           <div className="text-sm text-muted-foreground">
             No offers exist for this tenant yet.
           </div>
+          {permissions.canCreate && (
+            <div className="mt-4">
+              <Button>Create New Offer</Button>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -100,9 +118,9 @@ export function OffersTable<TData, TValue>({
         <div>
           <Input
             placeholder='Filter offers...'
-            value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+            value={(table.getColumn('offer_description')?.getFilterValue() as string) ?? ''}
             onChange={(event) =>
-              table.getColumn('name')?.setFilterValue(event.target.value)
+              table.getColumn('offer_description')?.setFilterValue(event.target.value)
             }
             className='max-w-sm'
           />
@@ -118,9 +136,10 @@ export function OffersTable<TData, TValue>({
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="submitted">Submitted</SelectItem>
+              <SelectItem value="pending_review">Pending Review</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="retired">Retired</SelectItem>
             </SelectContent>
           </Select>
         </div>

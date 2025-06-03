@@ -15,7 +15,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: (redirectUrl?: string) => void;
   changePassword: (data: UserPasswordChange) => Promise<{ msg: string }>;
-  hasPermission: (role: UserRole, tenantId?: string) => boolean;
+  hasPermission: (role: UserRole, tenantName?: string) => boolean;
   isAuthenticated: boolean;
 }
 
@@ -54,15 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return storeChangePassword(data);
   };
 
-  const hasPermission = (role: UserRole, tenantId?: string) => {
+  const hasPermission = (role: UserRole, tenantName?: string) => {
     if (!user) return false;
 
     // Super admin has all permissions
     if (user.isSuperAdmin) return true;
 
-    // If tenantId is provided, check permissions for that tenant
-    if (tenantId) {
-      const group = user.groups?.find(g => g.tenantId === tenantId);
+    // If tenantName is provided, check permissions for that tenant
+    if (tenantName) {
+      const group = user.groups?.find(g => g.tenantId === tenantName);
       return !!group && group.roles.includes(role);
     }
 

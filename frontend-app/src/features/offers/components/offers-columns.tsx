@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { Check, Clock, X, MoreHorizontal } from 'lucide-react'
+import { Check, Clock, X, MoreHorizontal, FileText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Offer, OfferStatus } from '../data/schema'
 import { Button } from '@/components/ui/button'
@@ -9,9 +9,10 @@ import { useOffers } from '../context/offers-context'
 // Status badge variants
 const statusVariants: Record<OfferStatus, { variant: "default" | "outline" | "secondary" | "destructive" | "success"; icon: any }> = {
   draft: { variant: "secondary", icon: Clock },
-  submitted: { variant: "outline", icon: Clock },
+  pending_review: { variant: "outline", icon: Clock },
   approved: { variant: "success", icon: Check },
   rejected: { variant: "destructive", icon: X },
+  retired: { variant: "default", icon: FileText },
 }
 
 // Simple placeholder for row actions until we implement the full component
@@ -35,12 +36,20 @@ function OffersRowActions({ offer }: { offer: Offer }) {
 
 export const columns: ColumnDef<Offer>[] = [
   {
-    accessorKey: 'name',
-    header: 'Offer Name',
+    accessorKey: 'offer_description',
+    header: 'Description',
     cell: ({ row }) => (
       <div>
-        <div className="font-medium">{row.getValue('name')}</div>
+        <div className="font-medium">{row.getValue('offer_description')}</div>
+        <div className="text-sm text-muted-foreground">{row.original.offer_type}</div>
       </div>
+    ),
+  },
+  {
+    accessorKey: 'created_by_username',
+    header: 'Created By',
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue('created_by_username')}</div>
     ),
   },
   {
@@ -53,7 +62,7 @@ export const columns: ColumnDef<Offer>[] = [
       return (
         <Badge variant={variant as any} className="capitalize">
           <Icon className="mr-1 h-3 w-3" />
-          {status}
+          {status.replace('_', ' ')}
         </Badge>
       )
     },

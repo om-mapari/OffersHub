@@ -3,23 +3,24 @@ import { z } from 'zod'
 // Define the offer status type
 export const offerStatusSchema = z.enum([
   'draft',
-  'submitted',
+  'pending_review',
   'approved',
   'rejected',
+  'retired'
 ])
 
-// Define the offer schema
+// Define the offer schema based on actual API response
 export const offerSchema = z.object({
-  id: z.string(),
-  tenant_id: z.string(),
-  name: z.string(),
+  id: z.number(),
+  tenant_name: z.string(),
   status: offerStatusSchema,
-  created_by: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
-  approved_by: z.string().optional(),
-  approved_at: z.string().optional(),
   data: z.record(z.any()),
+  offer_description: z.string(),
+  offer_type: z.string(),
+  created_by_username: z.string(),
+  comments: z.string().nullable(),
 })
 
 // Define the offer list schema
