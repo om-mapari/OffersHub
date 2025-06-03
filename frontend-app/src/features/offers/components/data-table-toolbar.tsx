@@ -4,14 +4,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DataTableFacetedFilter } from './data-table-faceted-filter'
 import { DataTableViewOptions } from './data-table-view-options'
+import { DataTableExport } from './data-table-export'
 import { Check, Clock, X, FileText } from 'lucide-react'
+import { Offer } from '../data/schema'
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
+  data: Offer[]
 }
 
 export function DataTableToolbar<TData>({
   table,
+  data,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
 
@@ -68,7 +72,10 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      <div className="flex items-center space-x-2">
+        <DataTableExport table={table} data={data} />
+        <DataTableViewOptions table={table} />
+      </div>
     </div>
   )
 } 
