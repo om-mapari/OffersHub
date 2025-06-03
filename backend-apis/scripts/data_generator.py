@@ -68,7 +68,7 @@ DEFAULT_OFFER_TYPES = [
     'no_cost_emi', 'fee_waiver', 'partner_offer', 'milestone_offer'
 ]
 OFFER_STATUSES = ['draft', 'pending_review', 'approved', 'rejected', 'retired']
-CAMPAIGN_STATUSES = ['draft', 'active', 'paused', 'completed']
+CAMPAIGN_STATUSES = ['draft', 'approved', 'active', 'paused', 'completed']
 DELIVERY_STATUSES = ['pending', 'sent', 'declined', 'accepted']
 GENDERS = ['male', 'female', 'other']
 KYC_STATUSES = ['verified', 'pending', 'rejected']

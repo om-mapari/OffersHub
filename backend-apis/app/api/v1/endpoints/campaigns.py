@@ -54,4 +54,56 @@ def list_campaigns(
     campaigns = db.query(models.Campaign).filter(models.Campaign.tenant_name == tenant.name).offset(skip).limit(limit).all()
     return campaigns
 
-# Add other campaign endpoints (GET {id}, PUT {id}, DELETE {id}, /process-customers, /customers)
+@router.get("/{campaign_id}", response_model=schemas.Campaign, dependencies=[Depends(can_read_campaigns)])
+def get_campaign(
+    *,
+    db: Session = Depends(deps.get_db),
+    tenant: models.Tenant = Depends(deps.get_tenant_by_name),
+    campaign_id: int = Path(..., title="The ID of the campaign to get"),
+) -> typing.Any:
+    """
+    Get specific campaign by ID.
+    """
+    campaign = db.query(models.Campaign).filter(
+        models.Campaign.id == campaign_id,
+        models.Campaign.tenant_name == tenant.name
+    ).first()
+    
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+    
+    return campaign
+
+@router.patch("/{campaign_id}", response_model=schemas.Campaign, dependencies=[Depends(can_manage_campaigns)])
+def update_campaign(
+    *,
+    db: Session = Depends(deps.get_db),
+    tenant: models.Tenant = Depends(deps.get_tenant_by_name),
+    campaign_id: int = Path(..., title="The ID of the campaign to update"),
+    campaign_update: schemas.CampaignUpdate,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> typing.Any:
+    """
+    Update a campaign.
+    
+    Only include fields you want to update:
+    - name
+    - description
+    - start_date
+    - end_date
+    - selection_criteria
+    - status
+    """
+    campaign = db.query(models.Campaign).filter(
+        models.Campaign.id == campaign_id,
+        models.Campaign.tenant_name == tenant.name
+    ).first()
+    
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+    
+    # Update the campaign using the CRUD utility
+    updated_campaign = crud.campaign.update(db, db_obj=campaign, obj_in=campaign_update)
+    return updated_campaign
+
+# Add other campaign endpoints (DELETE {id}, /process-customers, /customers)
