@@ -1,6 +1,6 @@
 # This router will be mounted under /tenants/{tenant_name}/campaigns
 import typing
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Response
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -106,4 +106,29 @@ def update_campaign(
     updated_campaign = crud.campaign.update(db, db_obj=campaign, obj_in=campaign_update)
     return updated_campaign
 
-# Add other campaign endpoints (DELETE {id}, /process-customers, /customers)
+@router.delete("/{campaign_id}", dependencies=[Depends(can_manage_campaigns)])
+def delete_campaign(
+    *,
+    db: Session = Depends(deps.get_db),
+    tenant: models.Tenant = Depends(deps.get_tenant_by_name),
+    campaign_id: int = Path(..., title="The ID of the campaign to delete"),
+) -> typing.Any:
+    """
+    Delete a campaign.
+    """
+    campaign = db.query(models.Campaign).filter(
+        models.Campaign.id == campaign_id,
+        models.Campaign.tenant_name == tenant.name
+    ).first()
+    
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+    
+    # Delete the campaign
+    db.delete(campaign)
+    db.commit()
+    
+    # Return 204 No Content
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# Add other campaign endpoints (/process-customers, /customers)

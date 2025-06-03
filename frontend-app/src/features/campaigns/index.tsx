@@ -5,6 +5,8 @@ import { columns } from './components/campaigns-columns'
 import { useAuth } from '@/context/AuthContext'
 import { useTenant } from '@/context/TenantContext'
 import { CreateCampaignDialog } from './components/create-campaign-dialog'
+import { CampaignEditDialog } from './components/campaign-edit-dialog'
+import { CampaignsDialogs } from './components/campaigns-dialogs'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { Search } from '@/components/search'
@@ -15,7 +17,7 @@ import { Plus, Loader2, Filter } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 function CampaignsContent() {
-  const { campaigns, isLoading, setIsCreateDialogOpen } = useCampaigns()
+  const { campaigns, isLoading, setIsCreateDialogOpen, fetchCampaigns } = useCampaigns()
   const { hasPermission, user } = useAuth()
   const { currentTenant } = useTenant()
 
@@ -31,6 +33,25 @@ function CampaignsContent() {
       hasPermission('approver', currentTenant.name) || 
       hasPermission('read_only', currentTenant.name)
     ))
+
+  const canApprove = !!user?.isSuperAdmin || 
+    !!(currentTenant && hasPermission('approver', currentTenant.name))
+    
+  const canActivate = !!user?.isSuperAdmin || 
+    !!(currentTenant && (
+      hasPermission('admin', currentTenant.name) || 
+      hasPermission('create', currentTenant.name)
+    ))
+    
+  const canPause = canActivate
+  const canResume = canActivate
+  const canComplete = canActivate
+  
+  const canEdit = !!user?.isSuperAdmin || 
+    !!(currentTenant && hasPermission('create', currentTenant.name))
+    
+  const canDelete = !!user?.isSuperAdmin || 
+    !!(currentTenant && hasPermission('admin', currentTenant.name))
 
   const userRole = currentTenant ? 
     (user?.isSuperAdmin ? 'Super Admin' : 
@@ -96,6 +117,19 @@ function CampaignsContent() {
       </Main>
       
       <CreateCampaignDialog />
+      <CampaignEditDialog />
+      <CampaignsDialogs 
+        permissions={{
+          canApprove,
+          canActivate,
+          canPause,
+          canResume,
+          canComplete,
+          canDelete,
+          canEdit
+        }}
+        onActionComplete={fetchCampaigns}
+      />
     </>
   )
 }

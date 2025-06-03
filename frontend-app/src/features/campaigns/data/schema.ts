@@ -40,10 +40,22 @@ export const campaignCreateSchema = z.object({
   selection_criteria: selectionCriteriaSchema,
   start_date: z.string(),
   end_date: z.string(),
+  status: campaignStatusSchema.optional(),
+})
+
+// Define the campaign update schema
+export const campaignUpdateSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters").optional(),
+  description: z.string().optional(),
+  selection_criteria: selectionCriteriaSchema.optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  status: campaignStatusSchema.optional(),
 })
 
 // Types derived from schemas
 export type CampaignStatus = z.infer<typeof campaignStatusSchema>
 export type Campaign = z.infer<typeof campaignSchema>
 export type CampaignCreate = z.infer<typeof campaignCreateSchema>
+export type CampaignUpdate = z.infer<typeof campaignUpdateSchema>
 export type SelectionCriteria = z.infer<typeof selectionCriteriaSchema> 

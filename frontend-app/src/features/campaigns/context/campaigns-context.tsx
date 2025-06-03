@@ -14,6 +14,22 @@ interface CampaignsContextType {
   setSelectedCampaign: (campaign: Campaign | null) => void;
   isCreateDialogOpen: boolean;
   setIsCreateDialogOpen: (isOpen: boolean) => void;
+  isViewDialogOpen: boolean;
+  setIsViewDialogOpen: (isOpen: boolean) => void;
+  isEditDialogOpen: boolean;
+  setIsEditDialogOpen: (isOpen: boolean) => void;
+  isDeleteDialogOpen: boolean;
+  setIsDeleteDialogOpen: (isOpen: boolean) => void;
+  isApproveDialogOpen: boolean;
+  setIsApproveDialogOpen: (isOpen: boolean) => void;
+  isActivateDialogOpen: boolean;
+  setIsActivateDialogOpen: (isOpen: boolean) => void;
+  isPauseDialogOpen: boolean;
+  setIsPauseDialogOpen: (isOpen: boolean) => void;
+  isResumeDialogOpen: boolean;
+  setIsResumeDialogOpen: (isOpen: boolean) => void;
+  isCompleteDialogOpen: boolean;
+  setIsCompleteDialogOpen: (isOpen: boolean) => void;
 }
 
 const CampaignsContext = createContext<CampaignsContextType | undefined>(undefined);
@@ -24,6 +40,14 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState<boolean>(false);
+  const [isActivateDialogOpen, setIsActivateDialogOpen] = useState<boolean>(false);
+  const [isPauseDialogOpen, setIsPauseDialogOpen] = useState<boolean>(false);
+  const [isResumeDialogOpen, setIsResumeDialogOpen] = useState<boolean>(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState<boolean>(false);
   
   const { currentTenant } = useTenant();
 
@@ -90,6 +114,22 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
         setSelectedCampaign,
         isCreateDialogOpen,
         setIsCreateDialogOpen,
+        isViewDialogOpen,
+        setIsViewDialogOpen,
+        isEditDialogOpen,
+        setIsEditDialogOpen,
+        isDeleteDialogOpen,
+        setIsDeleteDialogOpen,
+        isApproveDialogOpen,
+        setIsApproveDialogOpen,
+        isActivateDialogOpen,
+        setIsActivateDialogOpen,
+        isPauseDialogOpen,
+        setIsPauseDialogOpen,
+        isResumeDialogOpen,
+        setIsResumeDialogOpen,
+        isCompleteDialogOpen,
+        setIsCompleteDialogOpen,
       }}
     >
       {children}

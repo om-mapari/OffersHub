@@ -7,43 +7,32 @@ import { useCampaigns } from '../context/campaigns-context'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { campaignCreateSchema, CampaignCreate } from '../data/schema'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { campaignUpdateSchema, CampaignUpdate, Campaign } from '../data/schema'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalendarIcon, Plus, Trash } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useTenant } from '@/context/TenantContext'
 import { campaignsApi } from '../api/campaigns-api'
-import { Offer } from '@/features/offers/data/schema'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
-export function CreateCampaignDialog() {
-  const { isCreateDialogOpen, setIsCreateDialogOpen, createCampaign } = useCampaigns()
+export function CampaignEditDialog() {
+  const { 
+    selectedCampaign, 
+    isEditDialogOpen, 
+    setIsEditDialogOpen, 
+    fetchCampaigns 
+  } = useCampaigns()
+  
   const { currentTenant } = useTenant()
   const { isAuthenticated } = useAuth()
-  const [offers, setOffers] = useState<Offer[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [selectionCriteria, setSelectionCriteria] = useState<{ key: string; value: string }[]>([
-    { key: 'selection_criteria', value: 'ai_generated' }
-  ])
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date())
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
-
-  const form = useForm<z.infer<typeof campaignCreateSchema>>({
-    resolver: zodResolver(campaignCreateSchema),
-    defaultValues: {
-      name: '',
-      offer_id: undefined,
-      description: '',
-      selection_criteria: { selection_criteria: 'ai_generated' },
-      start_date: formatDateToYYYYMMDD(new Date()),
-      end_date: formatDateToYYYYMMDD(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-    }
-  })
+  const [selectionCriteria, setSelectionCriteria] = useState<{ key: string; value: string }[]>([])
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
 
   // Helper function to format date to YYYY-MM-DD
   function formatDateToYYYYMMDD(date: Date): string {
@@ -53,31 +42,56 @@ export function CreateCampaignDialog() {
     return `${year}-${month}-${day}`;
   }
 
-  // Fetch offers for dropdown
-  useEffect(() => {
-    if (currentTenant && isCreateDialogOpen && isAuthenticated) {
-      setIsLoading(true)
-      campaignsApi.getOffers(currentTenant.name)
-        .then(data => {
-          // Filter only approved offers
-          const approvedOffers = data.filter((offer: any) => offer.status === 'approved')
-          setOffers(approvedOffers)
-          setIsLoading(false)
-        })
-        .catch(err => {
-          console.error('Error fetching offers:', err)
-          toast.error('Failed to fetch offers')
-          setIsLoading(false)
-        })
+  const form = useForm<z.infer<typeof campaignUpdateSchema>>({
+    resolver: zodResolver(campaignUpdateSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      selection_criteria: {},
+      start_date: '',
+      end_date: '',
     }
-  }, [currentTenant, isCreateDialogOpen, isAuthenticated])
+  })
+
+  // Initialize form when selected campaign changes
+  useEffect(() => {
+    if (selectedCampaign && isEditDialogOpen) {
+      const startDateObj = parseISO(selectedCampaign.start_date);
+      const endDateObj = parseISO(selectedCampaign.end_date);
+      
+      // Reset form with campaign data
+      form.reset({
+        name: selectedCampaign.name,
+        description: selectedCampaign.description || '',
+        start_date: formatDateToYYYYMMDD(startDateObj),
+        end_date: formatDateToYYYYMMDD(endDateObj),
+      })
+      
+      // Set dates for the date pickers
+      setStartDate(startDateObj)
+      setEndDate(endDateObj)
+      
+      // Convert selection criteria object to array format for UI
+      const criteriaArray = Object.entries(selectedCampaign.selection_criteria).map(
+        ([key, value]) => ({ key, value: String(value) })
+      )
+      
+      // Ensure at least one criterion exists
+      setSelectionCriteria(criteriaArray.length > 0 
+        ? criteriaArray 
+        : [{ key: 'selection_criteria', value: 'ai_generated' }]
+      )
+    }
+  }, [selectedCampaign, isEditDialogOpen, form])
 
   // Handle form submission
-  const onSubmit = async (data: z.infer<typeof campaignCreateSchema>) => {
-    if (!isAuthenticated) {
-      toast.error('You must be authenticated to create a campaign')
+  const onSubmit = async (data: z.infer<typeof campaignUpdateSchema>) => {
+    if (!isAuthenticated || !selectedCampaign || !currentTenant) {
+      toast.error('Authentication or campaign data error')
       return
     }
+    
+    setIsLoading(true)
     
     // Convert selection criteria array to object
     const criteriaObject = selectionCriteria.reduce((acc, { key, value }) => {
@@ -87,21 +101,21 @@ export function CreateCampaignDialog() {
       return acc
     }, {} as Record<string, string>)
 
-    const campaignData: CampaignCreate = {
+    const campaignData: CampaignUpdate = {
       ...data,
       selection_criteria: criteriaObject,
     }
 
     try {
-      await createCampaign(campaignData)
-      setIsCreateDialogOpen(false)
-      form.reset()
-      setStartDate(new Date())
-      setEndDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
-      setSelectionCriteria([{ key: 'selection_criteria', value: 'ai_generated' }])
+      await campaignsApi.updateCampaign(currentTenant.name, selectedCampaign.id, campaignData)
+      await fetchCampaigns()
+      setIsEditDialogOpen(false)
+      toast.success('Campaign updated successfully')
     } catch (error) {
-      console.error('Error creating campaign:', error)
-      toast.error('Failed to create campaign')
+      console.error('Error updating campaign:', error)
+      toast.error('Failed to update campaign')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -147,11 +161,15 @@ export function CreateCampaignDialog() {
     }
   }
 
+  if (!selectedCampaign) {
+    return null
+  }
+
   return (
-    <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create New Campaign</DialogTitle>
+          <DialogTitle>Edit Campaign</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
           <div className="grid grid-cols-1 gap-4">
@@ -174,34 +192,6 @@ export function CreateCampaignDialog() {
                 placeholder="Enter campaign description"
                 {...form.register('description')}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="offer_id">Select Offer</Label>
-              <Select
-                onValueChange={(value) => form.setValue('offer_id', parseInt(value))}
-                defaultValue={form.getValues('offer_id')?.toString()}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an offer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {isLoading ? (
-                    <SelectItem value="loading" disabled>Loading offers...</SelectItem>
-                  ) : offers.length > 0 ? (
-                    offers.map((offer: Offer) => (
-                      <SelectItem key={offer.id} value={offer.id.toString()}>
-                        {offer.offer_description} ({offer.offer_type})
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled>No approved offers available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.offer_id && (
-                <p className="text-sm text-red-500">{form.formState.errors.offer_id.message}</p>
-              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -230,7 +220,6 @@ export function CreateCampaignDialog() {
                       selected={startDate}
                       onSelect={handleStartDateSelect}
                       initialFocus
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -261,7 +250,7 @@ export function CreateCampaignDialog() {
                       selected={endDate}
                       onSelect={handleEndDateSelect}
                       initialFocus
-                      disabled={(date) => startDate ? date < startDate : date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      disabled={(date) => startDate ? date < startDate : false}
                     />
                   </PopoverContent>
                 </Popover>
@@ -302,7 +291,7 @@ export function CreateCampaignDialog() {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeCriterion(index)}
-                        disabled={index === 0}
+                        disabled={index === 0 && selectionCriteria.length === 1}
                         aria-label="Remove criterion"
                       >
                         <Trash className="h-4 w-4" />
@@ -318,11 +307,13 @@ export function CreateCampaignDialog() {
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => setIsCreateDialogOpen(false)}
+              onClick={() => setIsEditDialogOpen(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>Create Campaign</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Updating...' : 'Update Campaign'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
