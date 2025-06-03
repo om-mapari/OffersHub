@@ -1,12 +1,10 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
-// Define Tenant interface
+// Define Tenant interface based on API response
 export interface Tenant {
-  id: string;
   name: string;
-  description: string;
-  createdAt: string;
-  createdBy: string;
+  roles: string[];
 }
 
 interface TenantContextType {
@@ -14,49 +12,61 @@ interface TenantContextType {
   userTenants: Tenant[];
   setCurrentTenant: (tenant: Tenant) => void;
   setUserTenants: (tenants: Tenant[]) => void;
+  isLoading: boolean;
 }
-
-// Mock tenants for testing
-const MOCK_TENANTS: Tenant[] = [
-  {
-    id: "tenant-1",
-    name: "Credit Card",
-    description: "Credit Card Financial Products",
-    createdAt: "2023-01-01",
-    createdBy: "admin",
-  },
-  {
-    id: "tenant-2",
-    name: "Personal Loans",
-    description: "Personal Loan Financial Products",
-    createdAt: "2023-01-02",
-    createdBy: "admin",
-  },
-  {
-    id: "tenant-3",
-    name: "Mortgages",
-    description: "Mortgage Financial Products",
-    createdAt: "2023-01-03",
-    createdBy: "admin",
-  },
-];
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [userTenants, setUserTenants] = useState<Tenant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { token } = useAuth();
 
-  // Initialize with mock data for testing
+  // Fetch user tenants from API
   useEffect(() => {
-    // In a real app, this would come from an API call based on the logged-in user
-    setUserTenants(MOCK_TENANTS);
-    
-    // Optionally set a default current tenant
-    if (MOCK_TENANTS.length > 0) {
-      setCurrentTenant(MOCK_TENANTS[0]);
+    async function fetchUserTenants() {
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/users/me/tenants', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fetched tenant data:', data);
+          
+          // Transform API response to match our Tenant interface
+          const tenants: Tenant[] = data.map((item: any) => ({
+            name: item.tenant_name,
+            roles: item.roles || []
+          }));
+          
+          setUserTenants(tenants);
+          
+          // Set default tenant if available
+          if (tenants.length > 0 && !currentTenant) {
+            setCurrentTenant(tenants[0]);
+          }
+        } else {
+          console.error('Failed to fetch tenants:', await response.text());
+        }
+      } catch (error) {
+        console.error('Error fetching tenants:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, []);
+
+    fetchUserTenants();
+  }, [token]);
 
   return (
     <TenantContext.Provider
@@ -65,6 +75,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         userTenants,
         setCurrentTenant,
         setUserTenants,
+        isLoading
       }}
     >
       {children}

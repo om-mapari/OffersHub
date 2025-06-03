@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Building } from "lucide-react";
+import { Check, ChevronsUpDown, Building, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -18,9 +18,31 @@ import { useTenant, Tenant } from "@/context/TenantContext";
 
 export function TenantSelector() {
   const [open, setOpen] = useState(false);
-  const { currentTenant, userTenants, setCurrentTenant } = useTenant();
+  const { currentTenant, userTenants, setCurrentTenant, isLoading } = useTenant();
 
-  if (!userTenants.length) return null;
+  // If loading, show a loading indicator
+  if (isLoading) {
+    return (
+      <Button variant="outline" className="w-[240px] justify-between" disabled>
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading tenants...</span>
+        </div>
+      </Button>
+    );
+  }
+
+  // If no tenants available, show a message
+  if (!userTenants.length) {
+    return (
+      <Button variant="outline" className="w-[240px] justify-between" disabled>
+        <div className="flex items-center gap-2">
+          <Building className="h-4 w-4" />
+          <span>No tenants available</span>
+        </div>
+      </Button>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -45,7 +67,7 @@ export function TenantSelector() {
           <CommandGroup>
             {userTenants.map((tenant) => (
               <CommandItem
-                key={tenant.id}
+                key={tenant.name}
                 value={tenant.name}
                 onSelect={() => {
                   setCurrentTenant(tenant);
@@ -55,7 +77,7 @@ export function TenantSelector() {
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    currentTenant?.id === tenant.id ? "opacity-100" : "opacity-0"
+                    currentTenant?.name === tenant.name ? "opacity-100" : "opacity-0"
                   )}
                 />
                 {tenant.name}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,7 +14,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Offer } from "../data/schema";
+import offerTypesByTenant from "../data/offers_types_by_tenant.json";
 
 interface OfferFormProps {
   offer?: Offer;
@@ -24,10 +33,13 @@ interface OfferFormProps {
 
 // Basic form schema for common offer fields
 const offerFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
+  offer_description: z.string().min(2, {
+    message: "Description must be at least 2 characters.",
   }),
-  // We'll handle the dynamic JSONB data separately
+  offer_type: z.string().min(1, {
+    message: "Please select an offer type.",
+  }),
+  comments: z.string().optional(),
 });
 
 type FormData = z.infer<typeof offerFormSchema> & {
@@ -36,7 +48,16 @@ type FormData = z.infer<typeof offerFormSchema> & {
 
 export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   const { currentTenant } = useTenant();
-  const { user } = useAuth();
+  const { token } = useAuth();
+  
+  // State for tenant offer types
+  const [offerTypes, setOfferTypes] = useState<string[]>([]);
+  
+  // State for selected offer type
+  const [selectedOfferType, setSelectedOfferType] = useState<string>(offer?.offer_type || "");
+  
+  // State for default attributes of selected offer type
+  const [defaultAttributes, setDefaultAttributes] = useState<Record<string, any>>({});
   
   // State for dynamic JSON data
   const [jsonData, setJsonData] = useState<Record<string, any>>(
@@ -50,17 +71,77 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   const form = useForm<z.infer<typeof offerFormSchema>>({
     resolver: zodResolver(offerFormSchema),
     defaultValues: {
-      name: offer?.name || "",
+      offer_description: offer?.offer_description || "",
+      offer_type: offer?.offer_type || "",
+      comments: offer?.comments || "",
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof offerFormSchema>) => {
-    const formData: FormData = {
-      ...values,
-      data: jsonData,
-    };
+  // Load offer types based on the selected tenant
+  useEffect(() => {
+    if (!currentTenant) return;
     
-    onSubmit(formData);
+    const tenantName = currentTenant.name;
+    if (tenantName && offerTypesByTenant[tenantName as keyof typeof offerTypesByTenant]) {
+      const types = Object.keys(offerTypesByTenant[tenantName as keyof typeof offerTypesByTenant]);
+      setOfferTypes(types);
+      
+      // Reset offer type if the current one isn't valid for this tenant
+      if (selectedOfferType && !types.includes(selectedOfferType)) {
+        setSelectedOfferType("");
+        form.setValue("offer_type", "");
+      }
+    } else {
+      setOfferTypes([]);
+    }
+  }, [currentTenant]);
+
+  // Load default attributes when offer type changes
+  useEffect(() => {
+    if (!currentTenant || !selectedOfferType) {
+      setDefaultAttributes({});
+      return;
+    }
+    
+    const tenantName = currentTenant.name;
+    const tenantData = offerTypesByTenant[tenantName as keyof typeof offerTypesByTenant];
+    
+    if (tenantData && tenantData[selectedOfferType as keyof typeof tenantData]) {
+      const typeAttributes = tenantData[selectedOfferType as keyof typeof tenantData];
+      setDefaultAttributes(typeAttributes as Record<string, any>);
+      
+      // Initialize jsonData with default attribute keys if creating a new offer
+      if (!offer) {
+        // Create a template with empty values based on the attribute types
+        const template: Record<string, any> = {};
+        Object.entries(typeAttributes as Record<string, any>).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            template[key] = [];
+          } else if (typeof value === 'number') {
+            template[key] = 0;
+          } else if (typeof value === 'boolean') {
+            template[key] = false;
+          } else {
+            template[key] = "";
+          }
+        });
+        setJsonData(template);
+      }
+    } else {
+      setDefaultAttributes({});
+    }
+  }, [selectedOfferType, currentTenant]);
+
+  const handleOfferTypeChange = (value: string) => {
+    setSelectedOfferType(value);
+    form.setValue("offer_type", value);
+  };
+
+  const handleAttributeChange = (key: string, value: any) => {
+    setJsonData(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const addKeyValuePair = () => {
@@ -83,17 +164,80 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
     });
   };
 
+  const handleSubmit = (values: z.infer<typeof offerFormSchema>) => {
+    const formData: FormData = {
+      ...values,
+      data: jsonData,
+    };
+    
+    onSubmit(formData);
+  };
+
   if (!currentTenant) {
     return <div>Please select a tenant to create or edit an offer.</div>;
   }
 
+  // Render input field based on attribute type
+  const renderAttributeInput = (key: string, value: any) => {
+    // Determine the input type based on the attribute value type in the template
+    const templateValue = defaultAttributes[key];
+    const currentValue = jsonData[key];
+
+    if (Array.isArray(templateValue)) {
+      // For array values, use a comma-separated input
+      return (
+        <Input
+          value={Array.isArray(currentValue) ? currentValue.join(", ") : ""}
+          onChange={(e) => {
+            const values = e.target.value.split(",").map(v => v.trim());
+            handleAttributeChange(key, values);
+          }}
+          placeholder={`e.g., ${Array.isArray(templateValue) ? templateValue.join(", ") : ""}`}
+        />
+      );
+    } else if (typeof templateValue === 'number') {
+      return (
+        <Input
+          type="number"
+          value={currentValue || ""}
+          onChange={(e) => handleAttributeChange(key, parseFloat(e.target.value) || 0)}
+          placeholder={`e.g., ${templateValue}`}
+        />
+      );
+    } else if (typeof templateValue === 'boolean') {
+      return (
+        <Select
+          value={currentValue ? "true" : "false"}
+          onValueChange={(v) => handleAttributeChange(key, v === "true")}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select value" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="true">True</SelectItem>
+            <SelectItem value="false">False</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    } else {
+      // Default to string input
+      return (
+        <Input
+          value={currentValue || ""}
+          onChange={(e) => handleAttributeChange(key, e.target.value)}
+          placeholder={`e.g., ${templateValue}`}
+        />
+      );
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="text-xl font-bold tracking-tight">
           {offer ? "Edit Offer" : "Create New Offer"}
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {offer
             ? `Update offer details for ${currentTenant.name}`
             : `Create a new offer for ${currentTenant.name}`}
@@ -101,87 +245,188 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          {/* Offer Type Selection */}
           <FormField
             control={form.control}
-            name="name"
+            name="offer_type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Offer Name</FormLabel>
+                <FormLabel>Offer Type</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    handleOfferTypeChange(value);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an offer type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {offerTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type.replace(/_/g, ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Offer Description */}
+          <FormField
+            control={form.control}
+            name="offer_description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Offer Description</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter offer name" {...field} />
+                  <Textarea 
+                    placeholder="Enter a description for this offer" 
+                    className="resize-none h-20" 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* JSON Data Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Offer Details</h3>
-            <p className="text-sm text-muted-foreground">
-              Add tenant-specific attributes for this offer.
-            </p>
+          {/* Comments (Optional) */}
+          <FormField
+            control={form.control}
+            name="comments"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Comments (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Add any additional comments" 
+                    className="resize-none h-20" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            {/* Display existing JSON data */}
-            {Object.entries(jsonData).length > 0 ? (
-              <div className="rounded-md border p-4 space-y-2">
-                {Object.entries(jsonData).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">{key}:</span>{" "}
-                      <span>{String(value)}</span>
+          {/* Dynamic Attributes Section */}
+          {selectedOfferType && (
+            <div className="space-y-3 border p-3 rounded-md">
+              <div>
+                <h3 className="text-md font-medium">Offer Attributes</h3>
+                <p className="text-xs text-muted-foreground">
+                  Configure the attributes for this {selectedOfferType.replace(/_/g, ' ')} offer.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {Object.keys(defaultAttributes).map((key) => (
+                  <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                    <div className="text-sm font-medium capitalize col-span-1">
+                      {key.replace(/_/g, ' ')}:
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeKeyValuePair(key)}
-                    >
-                      Remove
-                    </Button>
+                    <div className="col-span-2">
+                      {renderAttributeInput(key, jsonData[key])}
+                    </div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Custom Attributes Section */}
+          <div className="space-y-3 border p-3 rounded-md">
+            <div>
+              <h3 className="text-md font-medium">Custom Attributes</h3>
+              <p className="text-xs text-muted-foreground">
+                Add custom attributes specific to this offer.
+              </p>
+            </div>
+
+            {/* Display custom attributes */}
+            {Object.entries(jsonData)
+              .filter(([key]) => !defaultAttributes[key]) // Only show custom attributes
+              .length > 0 ? (
+              <div className="border rounded-md p-2 mb-3 bg-gray-50 dark:bg-gray-900">
+                <div className="space-y-2">
+                  {Object.entries(jsonData)
+                    .filter(([key]) => !defaultAttributes[key]) // Only show custom attributes
+                    .map(([key, value], index, array) => (
+                      <div 
+                        key={key} 
+                        className={`flex items-center justify-between ${index < array.length - 1 ? 'border-b pb-2 mb-2' : ''}`}
+                      >
+                        <div className="truncate mr-2 max-w-[70%]">
+                          <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{" "}
+                          <span className="text-sm">{Array.isArray(value) ? value.join(", ") : String(value)}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeKeyValuePair(key)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              </div>
             ) : (
-              <div className="text-sm text-muted-foreground italic">
-                No attributes added yet.
+              <div className="text-xs text-muted-foreground italic mb-3">
+                No custom attributes added yet.
               </div>
             )}
 
-            {/* Add new key-value pair */}
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <FormLabel>Attribute Name</FormLabel>
-                <Input
-                  value={newKey}
-                  onChange={(e) => setNewKey(e.target.value)}
-                  placeholder="e.g., interest_rate"
-                />
+            {/* Add new key-value pair - Add a separator line for visual distinction */}
+            <div className="border-t pt-3">
+              <p className="text-xs font-medium mb-2">Add New Attribute</p>
+              <div className="grid grid-cols-7 gap-2 items-end">
+                <div className="col-span-3">
+                  <FormLabel className="text-xs">Attribute Name</FormLabel>
+                  <Input
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value)}
+                    placeholder="e.g., campaign_code"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="col-span-3">
+                  <FormLabel className="text-xs">Value</FormLabel>
+                  <Input
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                    placeholder="e.g., SUMMER2023"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="col-span-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addKeyValuePair}
+                    className="h-8 w-full"
+                    size="sm"
+                    disabled={!newKey.trim()}
+                  >
+                    Add
+                  </Button>
+                </div>
               </div>
-              <div className="flex-1">
-                <FormLabel>Value</FormLabel>
-                <Input
-                  value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
-                  placeholder="e.g., 5.99"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addKeyValuePair}
-                className="mb-0.5"
-              >
-                Add
-              </Button>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={!selectedOfferType}>
               {offer ? "Update Offer" : "Create Offer"}
             </Button>
           </div>

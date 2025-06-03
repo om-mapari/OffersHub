@@ -16,6 +16,8 @@ interface OffersContextType {
   setIsApproveDialogOpen: (open: boolean) => void
   isRejectDialogOpen: boolean
   setIsRejectDialogOpen: (open: boolean) => void
+  isRetireDialogOpen: boolean
+  setIsRetireDialogOpen: (open: boolean) => void
 }
 
 const OffersContext = createContext<OffersContextType | undefined>(undefined)
@@ -40,6 +42,7 @@ export default function OffersProvider({ children }: OffersProviderProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
+  const [isRetireDialogOpen, setIsRetireDialogOpen] = useState(false)
   
   // Selected offer
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
@@ -61,6 +64,8 @@ export default function OffersProvider({ children }: OffersProviderProps) {
         setIsApproveDialogOpen,
         isRejectDialogOpen,
         setIsRejectDialogOpen,
+        isRetireDialogOpen,
+        setIsRetireDialogOpen,
       }}
     >
       {children}
