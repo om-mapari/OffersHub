@@ -1,0 +1,74 @@
+import { Cross2Icon } from '@radix-ui/react-icons'
+import { Table } from '@tanstack/react-table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { DataTableFacetedFilter } from './data-table-faceted-filter'
+import { DataTableViewOptions } from './data-table-view-options'
+import { Check, Clock, X, FileText } from 'lucide-react'
+
+interface DataTableToolbarProps<TData> {
+  table: Table<TData>
+}
+
+export function DataTableToolbar<TData>({
+  table,
+}: DataTableToolbarProps<TData>) {
+  const isFiltered = table.getState().columnFilters.length > 0
+
+  return (
+    <div className='flex items-center justify-between'>
+      <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
+        <Input
+          placeholder='Filter offers...'
+          value={
+            (table.getColumn('offer_description')?.getFilterValue() as string) ?? ''
+          }
+          onChange={(event) =>
+            table.getColumn('offer_description')?.setFilterValue(event.target.value)
+          }
+          className='h-8 w-[150px] lg:w-[250px]'
+        />
+        <div className='flex gap-x-2'>
+          {table.getColumn('status') && (
+            <DataTableFacetedFilter
+              column={table.getColumn('status')}
+              title='Status'
+              options={[
+                { label: 'Draft', value: 'draft', icon: Clock },
+                { label: 'Pending Review', value: 'pending_review', icon: Clock },
+                { label: 'Approved', value: 'approved', icon: Check },
+                { label: 'Rejected', value: 'rejected', icon: X },
+                { label: 'Retired', value: 'retired', icon: FileText },
+              ]}
+            />
+          )}
+          {table.getColumn('offer_type') && (
+            <DataTableFacetedFilter
+              column={table.getColumn('offer_type')}
+              title='Type'
+              options={[
+                { label: 'Bundle Offer', value: 'bundle_offer' },
+                { label: 'Premium Discount', value: 'premium_discount' },
+                { label: 'Processing Fee Waiver', value: 'processing_fee_waiver' },
+                { label: 'Interest Rate Reduction', value: 'interest_rate_reduction' },
+                { label: 'Quick Approval', value: 'quick_approval' },
+                { label: 'Home Insurance Bundle', value: 'home_insurance_bundle' },
+              ]}
+            />
+          )}
+        </div>
+        {isFiltered && (
+          <Button
+            variant='ghost'
+            onClick={() => table.resetColumnFilters()}
+            className='h-8 px-2 lg:px-3'
+          >
+            Reset
+            <Cross2Icon className='ml-2 h-4 w-4' />
+          </Button>
+        )}
+      </div>
+      <DataTableViewOptions table={table} />
+    </div>
+  )
+} 

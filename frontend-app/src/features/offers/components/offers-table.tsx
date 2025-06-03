@@ -1,13 +1,18 @@
+import { useState } from 'react'
 import {
   ColumnDef,
+  ColumnFiltersState,
+  RowData,
+  SortingState,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -26,15 +31,23 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
 import { Offer } from '../data/schema'
 import { useTenant } from '@/context/TenantContext'
+import { DataTablePagination } from './data-table-pagination'
+import { DataTableToolbar } from './data-table-toolbar'
 
 // Define permissions interface
 export interface OffersPermissions {
   canApproveReject: boolean;
   canSubmit: boolean;
   canCreate: boolean;
+}
+
+declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    className: string
+  }
 }
 
 interface OffersTableProps<TData, TValue> {
@@ -52,34 +65,33 @@ export function OffersTable<TData, TValue>({
     canCreate: false
   }
 }: OffersTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [rowSelection, setRowSelection] = useState({})
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [sorting, setSorting] = useState<SortingState>([])
   const { currentTenant } = useTenant()
 
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
+      columnVisibility,
+      rowSelection,
       columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   })
-
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value)
-    if (value === 'all') {
-      table.getColumn('status')?.setFilterValue(undefined)
-    } else {
-      table.getColumn('status')?.setFilterValue(value)
-    }
-  }
 
   if (!currentTenant) {
     return (
@@ -114,45 +126,19 @@ export function OffersTable<TData, TValue>({
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center gap-4'>
-        <div>
-          <Input
-            placeholder='Filter offers...'
-            value={(table.getColumn('offer_description')?.getFilterValue() as string) ?? ''}
-            onChange={(event) =>
-              table.getColumn('offer_description')?.setFilterValue(event.target.value)
-            }
-            className='max-w-sm'
-          />
-        </div>
-        <div>
-          <Select 
-            value={statusFilter} 
-            onValueChange={handleStatusFilterChange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="pending_review">Pending Review</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="retired">Retired</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
+      <DataTableToolbar table={table} />
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className='group/row'>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={header.column.columnDef.meta?.className ?? ''}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -171,9 +157,13 @@ export function OffersTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  className='group/row'
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className={cell.column.columnDef.meta?.className ?? ''}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -195,36 +185,7 @@ export function OffersTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-
-      <div className='flex items-center justify-end space-x-2 py-4'>
-        <div className='flex-1 text-sm text-muted-foreground'>
-          Showing{' '}
-          <span className='font-medium'>
-            {table.getFilteredRowModel().rows.length}
-          </span>{' '}
-          of{' '}
-          <span className='font-medium'>{data.length}</span>{' '}
-          offer(s)
-        </div>
-        <div className='space-x-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <DataTablePagination table={table} />
     </div>
   )
 } 
