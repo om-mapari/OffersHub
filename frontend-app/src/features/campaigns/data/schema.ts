@@ -5,7 +5,8 @@ export const campaignStatusSchema = z.enum([
   'draft',
   'active',
   'paused',
-  'completed'
+  'completed',
+  'approved',
 ])
 
 // Define the selection criteria schema

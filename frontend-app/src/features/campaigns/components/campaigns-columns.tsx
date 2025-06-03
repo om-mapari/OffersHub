@@ -14,6 +14,7 @@ const statusVariants: Record<CampaignStatus, { variant: "default" | "outline" | 
   active: { variant: "success", icon: Check },
   paused: { variant: "outline", icon: Pause },
   completed: { variant: "default", icon: FileText },
+  approved: { variant: "success", icon: Check },
 }
 
 export const columns: ColumnDef<Campaign>[] = [
