@@ -1,10 +1,12 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { Check, Clock, X, MoreHorizontal, FileText } from 'lucide-react'
+import { Check, Clock, X, FileText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Offer, OfferStatus } from '../data/schema'
+import { OffersRowActions } from './offers-row-actions'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { useOffers } from '../context/offers-context'
+import { ArrowUpDown } from 'lucide-react'
 
 // Status badge variants
 const statusVariants: Record<OfferStatus, { variant: "default" | "outline" | "secondary" | "destructive" | "success"; icon: any }> = {
@@ -15,29 +17,44 @@ const statusVariants: Record<OfferStatus, { variant: "default" | "outline" | "se
   retired: { variant: "default", icon: FileText },
 }
 
-// Simple placeholder for row actions until we implement the full component
-function OffersRowActions({ offer }: { offer: Offer }) {
-  const { setSelectedOffer, setIsViewDialogOpen } = useOffers()
-  
-  return (
-    <Button 
-      variant="ghost" 
-      className="h-8 w-8 p-0"
-      onClick={() => {
-        setSelectedOffer(offer)
-        setIsViewDialogOpen(true)
-      }}
-    >
-      <span className="sr-only">Open menu</span>
-      <MoreHorizontal className="h-4 w-4" />
-    </Button>
-  )
-}
-
 export const columns: ColumnDef<Offer>[] = [
   {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
     accessorKey: 'offer_description',
-    header: 'Description',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Description
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => (
       <div>
         <div className="font-medium">{row.getValue('offer_description')}</div>
@@ -46,15 +63,43 @@ export const columns: ColumnDef<Offer>[] = [
     ),
   },
   {
+    accessorKey: 'offer_type',
+    header: 'Type',
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
     accessorKey: 'created_by_username',
-    header: 'Created By',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Created By
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => (
       <div className="font-medium">{row.getValue('created_by_username')}</div>
     ),
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => {
       const status = row.getValue('status') as OfferStatus
       const { variant, icon: Icon } = statusVariants[status]
@@ -66,23 +111,53 @@ export const columns: ColumnDef<Offer>[] = [
         </Badge>
       )
     },
+    enableSorting: true,
+    enableHiding: true,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id))
+    },
   },
   {
     accessorKey: 'created_at',
-    header: 'Created At',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Created At
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => {
       return format(new Date(row.getValue('created_at')), 'MMM d, yyyy')
     },
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     accessorKey: 'updated_at',
-    header: 'Updated At',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Updated At
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
     cell: ({ row }) => {
       return format(new Date(row.getValue('updated_at')), 'MMM d, yyyy')
     },
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     id: 'actions',
     cell: ({ row }) => <OffersRowActions offer={row.original} />,
+    enableHiding: false,
   },
 ] 
