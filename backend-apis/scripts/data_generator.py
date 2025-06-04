@@ -31,7 +31,7 @@ DB_PARAMS = {
     "dbname": "offer_management",
     "user": "postgres",
     "password": "postgres",
-    "host": "localhost",
+    "host": "135.13.8.201",
     "port": "5432"
 }
 
@@ -96,19 +96,45 @@ def connect_to_db():
 def generate_users(conn, count: int = 10) -> List[str]:
     """Generate random users"""
     users = []
-    # Example usage
-   
-    # Create one super admin
-    super_admin = {
-        "username": "coderom",
-        "password_hash": pwd_context.hash("coderom"),
-        "full_name": "System Administrator",
-        "is_super_admin": True
-    }
-    users.append(super_admin)
     
-    # Create regular users
-    for _ in range(count - 1):
+    # Create specified users with designated roles
+    specific_users = [
+        {
+            "username": "mohan",
+            "password_hash": pwd_context.hash("mohan"),
+            "full_name": "System Administrator",
+            "is_super_admin": True
+        },
+        {
+            "username": "himashu",
+            "password_hash": pwd_context.hash("himashu"),
+            "full_name": "System Administrator",
+            "is_super_admin": True
+        },
+        {
+            "username": "coderom1",
+            "password_hash": pwd_context.hash("coderom1"),
+            "full_name": "Om Mapari",
+            "is_super_admin": True
+        },
+        {
+            "username": "ankita",
+            "password_hash": pwd_context.hash("ankita"),
+            "full_name": "Ankita D",
+            "is_super_admin": True
+        },
+        {
+            "username": "coderom",
+            "password_hash": pwd_context.hash("coderom"),
+            "full_name": "System Administrator",
+            "is_super_admin": True
+        }
+    ]
+    
+    users.extend(specific_users)
+    
+    # Create additional regular users if needed
+    for _ in range(max(0, count - len(specific_users))):
         username = fake.user_name()
         users.append({
             "username": username,
@@ -192,20 +218,35 @@ def generate_user_tenant_roles(conn, usernames: List[str], tenant_names: List[st
     """Generate random user tenant roles"""
     user_tenant_roles = []
     
-    # Ensure each user has at least one role
-    for username in usernames:
-        tenant_name = random.choice(tenant_names)
-        role = random.choice(USER_ROLES)
-        user_tenant_roles.append({
-            "username": username,
-            "tenant_name": tenant_name,
-            "role": role
-        })
+    # Define role assignments for specific users
+    specific_role_assignments = {
+        "mohan": "approver",
+        "himashu": "admin",
+        "coderom1": "create",
+        "ankita": "read_only",
+        "coderom": "admin"  # Default admin role for the original super admin
+    }
     
-    # Add more random roles up to count
-    for _ in range(count - len(usernames)):
+    # Assign specified roles to specific users for all tenant types
+    for username, role in specific_role_assignments.items():
+        if username in usernames:  # Make sure user exists
+            for tenant_name in tenant_names:
+                user_tenant_roles.append({
+                    "username": username,
+                    "tenant_name": tenant_name,
+                    "role": role
+                })
+    
+    # Add more random roles for other users up to count
+    remaining_count = max(0, count - len(user_tenant_roles))
+    other_usernames = [u for u in usernames if u not in specific_role_assignments]
+    
+    for _ in range(remaining_count):
+        if not other_usernames:  # Skip if no other users
+            break
+            
         user_tenant_roles.append({
-            "username": random.choice(usernames),
+            "username": random.choice(other_usernames),
             "tenant_name": random.choice(tenant_names),
             "role": random.choice(USER_ROLES)
         })
