@@ -12,6 +12,7 @@ import { Main } from '@/components/layout/main'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { ProfileDropdown } from '@/components/profile-dropdown'
+import { NotificationButton } from '@/components/notification-button'
 import { Button } from '@/components/ui/button'
 import { Plus, Loader2, Filter } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -66,6 +67,7 @@ function CampaignsContent() {
         <Search />
         <div className='ml-auto flex items-center space-x-4'>
           <ThemeSwitch />
+          <NotificationButton />
           <ProfileDropdown />
         </div>
       </Header>

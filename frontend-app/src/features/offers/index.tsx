@@ -3,6 +3,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { NotificationButton } from '@/components/notification-button'
 import { columns } from './components/offers-columns'
 import { OffersDialogs } from './components/offers-dialogs'
 import { OffersPrimaryButtons } from './components/offers-primary-buttons'
@@ -13,6 +14,7 @@ import { useTenant } from '@/context/TenantContext'
 import { useAuth } from '@/context/AuthContext'
 import { useEffect, useState, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
+import ChatBot from '../ai-chat'
 
 // Define permissions for different offer operations
 const PERMISSIONS = {
@@ -149,6 +151,7 @@ export default function Offers() {
         <Search />
         <div className='ml-auto flex items-center space-x-4'>
           <ThemeSwitch />
+          <NotificationButton />
           <ProfileDropdown />
         </div>
       </Header>
@@ -213,6 +216,7 @@ export default function Offers() {
         }}
         onActionComplete={fetchOffers}
       />
+      <ChatBot />
     </OffersProvider>
   )
 } 

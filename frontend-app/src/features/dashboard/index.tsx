@@ -13,6 +13,7 @@ import { TopNav } from '@/components/layout/top-nav'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { NotificationButton } from '@/components/notification-button'
 import { Overview } from './components/overview'
 import { RecentSales } from './components/recent-sales'
 import { useTenant } from '@/context/TenantContext'
@@ -30,6 +31,7 @@ export default function Dashboard() {
         <div className='ml-auto flex items-center space-x-4'>
           <Search />
           <ThemeSwitch />
+          <NotificationButton />
           <ProfileDropdown />
         </div>
       </Header>
