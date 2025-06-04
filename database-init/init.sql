@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     created_by_username TEXT REFERENCES users(username),
-    status TEXT CHECK (status IN ('draft', 'active', 'paused', 'completed')) DEFAULT 'draft',
+    status TEXT CHECK (status IN ('draft', 'approved', 'active', 'paused', 'completed')) DEFAULT 'draft',
     created_at TIMESTAMP DEFAULT NOW()
 );
 
