@@ -57,12 +57,12 @@ async def get_campaign_customers(db: Session = Depends(get_db)):
         query = text(""" 
             SELECT 
                 cc.campaign_id,
-                c.campaign_name,
+                c.name,
                 COUNT(*) FILTER (WHERE cc.delivery_status = 'sent') AS total_sent,
                 COUNT(*) FILTER (WHERE cc.delivery_status = 'accepted') AS total_accepted
             FROM campaign_customers cc
-            JOIN campaigns c ON cc.campaign_id = c.campaign_id WHERE c.status = 'active'
-            GROUP BY cc.campaign_id, c.campaign_name
+            JOIN campaigns c ON cc.campaign_id = c.id WHERE c.status = 'active'
+            GROUP BY cc.campaign_id, c.name
             ORDER BY cc.campaign_id
         """)
 

@@ -31,7 +31,7 @@ DB_PARAMS = {
     "dbname": "offer_management",
     "user": "postgres",
     "password": "postgres",
-    "host": "135.13.8.201",
+    "host": "20.41.249.65",
     "port": "5432"
 }
 
