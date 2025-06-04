@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useEffect, useState, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
 import ChatBot from '../ai-chat'
+import { buildUserApiUrl, buildTenantApiUrl } from "@/config/api";
 
 // Define permissions for different offer operations
 const PERMISSIONS = {
@@ -48,7 +49,7 @@ export default function Offers() {
     if (!currentTenant || !token) return;
     
     // Get user roles for the current tenant
-    fetch('http://localhost:8000/api/v1/users/me/tenants', {
+    fetch(buildUserApiUrl('/me/tenants'), {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -78,7 +79,7 @@ export default function Offers() {
     
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/?skip=0&limit=100`, 
+        buildTenantApiUrl(currentTenant.name, '/offers/?skip=0&limit=100'), 
         {
           headers: {
             'Authorization': `Bearer ${token}`

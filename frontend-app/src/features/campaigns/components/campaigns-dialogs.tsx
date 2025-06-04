@@ -17,6 +17,7 @@ import { CampaignStatus } from '../data/schema'
 import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import { Offer } from '@/features/offers/data/schema'
+import { buildTenantApiUrl } from "@/config/api"
 
 // Define permissions interface
 export interface CampaignsDialogPermissions {
@@ -91,12 +92,12 @@ export function CampaignsDialogs({
   
   // Fetch offer details when a campaign is selected for viewing
   useEffect(() => {
-    if (isViewDialogOpen && selectedCampaign && currentTenant && token) {
+    if (selectedCampaign && selectedCampaign.offer_id && currentTenant) {
       setIsLoadingOffer(true)
       setOfferError(null)
       
       fetch(
-        `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedCampaign.offer_id}`,
+        buildTenantApiUrl(currentTenant.name, `/offers/${selectedCampaign.offer_id}`),
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -132,7 +133,7 @@ export function CampaignsDialogs({
       // Clear offer details when dialog is closed
       setOfferDetails(null)
     }
-  }, [isViewDialogOpen, selectedCampaign, currentTenant, token])
+  }, [selectedCampaign, currentTenant, token, isViewDialogOpen])
   
   // Check if user can perform specific actions on the current campaign
   const canApproveCampaign = () => {
@@ -230,27 +231,27 @@ export function CampaignsDialogs({
       let method = 'POST';
       
       if (isApproveDialogOpen && selectedCampaign) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/campaigns/${selectedCampaign.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/campaigns/${selectedCampaign.id}`);
         method = 'PATCH';
         payload = { status: 'approved' };
       } else if (isActivateDialogOpen && selectedCampaign) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/campaigns/${selectedCampaign.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/campaigns/${selectedCampaign.id}`);
         method = 'PATCH';
         payload = { status: 'active' };
       } else if (isPauseDialogOpen && selectedCampaign) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/campaigns/${selectedCampaign.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/campaigns/${selectedCampaign.id}`);
         method = 'PATCH';
         payload = { status: 'paused' };
       } else if (isResumeDialogOpen && selectedCampaign) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/campaigns/${selectedCampaign.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/campaigns/${selectedCampaign.id}`);
         method = 'PATCH';
         payload = { status: 'active' }; // Resume is same as activate
       } else if (isCompleteDialogOpen && selectedCampaign) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/campaigns/${selectedCampaign.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/campaigns/${selectedCampaign.id}`);
         method = 'PATCH';
         payload = { status: 'completed' };
       } else if (isDeleteDialogOpen && selectedCampaign) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/campaigns/${selectedCampaign.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/campaigns/${selectedCampaign.id}`);
         method = 'DELETE';
       }
       

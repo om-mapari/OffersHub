@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { Campaign, CampaignCreate, CampaignUpdate, campaignListSchema, campaignSchema } from '../data/schema';
 import { useAuthStore } from '@/stores/authStore';
-
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+import { API_BASE_URL } from '@/config/api';
 
 // Helper to get the current auth token
 const getAuthToken = (): string | null => {
