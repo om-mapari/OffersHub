@@ -16,7 +16,7 @@ export default function SignIn() {
         <CardHeader>
           <CardTitle className='text-lg tracking-tight'>Login</CardTitle>
           <CardDescription>
-            Enter your email and password below to <br />
+            Enter your email and Intranet ID below to <br />
             log into your account
           </CardDescription>
         </CardHeader>
@@ -37,7 +37,7 @@ export default function SignIn() {
               href='/privacy'
               className='hover:text-primary underline underline-offset-4'
             >
-              Privacy Policy
+              Privacy Policy Of Barclays
             </a>
             .
           </p>

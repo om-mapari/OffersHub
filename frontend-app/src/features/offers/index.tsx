@@ -3,6 +3,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { NotificationButton } from '@/components/notification-button'
 import { columns } from './components/offers-columns'
 import { OffersDialogs } from './components/offers-dialogs'
 import { OffersPrimaryButtons } from './components/offers-primary-buttons'
@@ -13,6 +14,8 @@ import { useTenant } from '@/context/TenantContext'
 import { useAuth } from '@/context/AuthContext'
 import { useEffect, useState, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
+import ChatBot from '../ai-chat'
+import { buildUserApiUrl, buildTenantApiUrl } from "@/config/api";
 
 // Define permissions for different offer operations
 const PERMISSIONS = {
@@ -46,7 +49,7 @@ export default function Offers() {
     if (!currentTenant || !token) return;
     
     // Get user roles for the current tenant
-    fetch('http://localhost:8000/api/v1/users/me/tenants', {
+    fetch(buildUserApiUrl('/me/tenants'), {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -76,7 +79,7 @@ export default function Offers() {
     
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/?skip=0&limit=100`, 
+        buildTenantApiUrl(currentTenant.name, '/offers/?skip=0&limit=100'), 
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -127,12 +130,29 @@ export default function Offers() {
   // Check if user can submit offers
   const canSubmit = hasActionPermission('SUBMIT');
 
+  // Get the highest priority role for display
+  const getPrimaryUserRole = () => {
+    if (!currentTenant) return 'None';
+    if (user?.isSuperAdmin) return 'Super Admin';
+    
+    // Priority order: Admin > Create > Approver > Read Only
+    if (userRoles.includes('admin')) return 'Admin';
+    if (userRoles.includes('create')) return 'Create';
+    if (userRoles.includes('approver')) return 'Approver';
+    if (userRoles.includes('read_only')) return 'Read Only';
+    
+    return 'None';
+  };
+  
+  const primaryRole = getPrimaryUserRole();
+
   return (
     <OffersProvider>
       <Header fixed>
         <Search />
         <div className='ml-auto flex items-center space-x-4'>
           <ThemeSwitch />
+          <NotificationButton />
           <ProfileDropdown />
         </div>
       </Header>
@@ -146,11 +166,18 @@ export default function Offers() {
                 ? `Manage offers for ${currentTenant.name}`
                 : "Select a tenant to manage offers"}
             </p>
-            {userRoles.length > 0 && (
-              <p className='text-xs text-muted-foreground'>
-                Your roles: {userRoles.join(', ')}
-              </p>
-            )}
+            <div className="mt-2 flex items-center">
+              <span className="text-sm font-medium mr-2">Your role:</span>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                primaryRole === 'Super Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
+                primaryRole === 'Admin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                primaryRole === 'Create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                primaryRole === 'Approver' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' :
+                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+              }`}>
+                {primaryRole}
+              </span>
+            </div>
           </div>
           {canCreate && <OffersPrimaryButtons />}
         </div>
@@ -190,6 +217,7 @@ export default function Offers() {
         }}
         onActionComplete={fetchOffers}
       />
+      <ChatBot />
     </OffersProvider>
   )
 } 

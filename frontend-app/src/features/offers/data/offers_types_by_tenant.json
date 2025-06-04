@@ -11,7 +11,6 @@
         "ICICI",
         "SBI"
       ],
-      "offer_description": "Transfer your outstanding credit card balance and enjoy a lower interest rate.",
       "validity_days": 30
     },
     "pricing": {
@@ -20,7 +19,6 @@
       "renewal_fee": 500,
       "interest_free_period_days": 50,
       "foreign_currency_markup": "3.5%",
-      "offer_description": "Competitive pricing and fee structure for your credit card.",
       "card_variant": "Platinum"
     },
     "cashback": {
@@ -32,7 +30,6 @@
         "fuel",
         "online shopping"
       ],
-      "offer_description": "Earn cashback on your everyday spends.",
       "crediting_timeline_days": 7
     },
     "reward_points": {
@@ -44,7 +41,6 @@
       ],
       "bonus_on_signup": 1000,
       "points_expiry_months": 24,
-      "offer_description": "Collect reward points on all your transactions and redeem them for exciting rewards.",
       "min_points_for_redemption": 500
     },
     "no_cost_emi": {
@@ -61,7 +57,6 @@
       ],
       "processing_fee": "0%",
       "min_purchase_amount": 3000,
-      "offer_description": "Convert your big purchases into easy No Cost EMIs.",
       "max_purchase_amount": 150000
     },
     "fee_waiver": {
@@ -73,7 +68,6 @@
         "joining_fee",
         "late_payment_fee"
       ],
-      "offer_description": "Get a waiver on your card fees by meeting specific criteria.",
       "notification_method": "SMS"
     },
     "partner_offer": {
@@ -81,7 +75,6 @@
       "discount_percent": 15,
       "max_discount": 200,
       "coupon_code": "ZOMCC15",
-      "offer_description": "Enjoy exclusive discounts with our partner brands.",
       "validity_period": "monthly",
       "min_order_value": 500
     },
@@ -89,7 +82,6 @@
       "milestone_spend": 100000,
       "milestone_reward": "5000 reward points",
       "evaluation_period": "yearly",
-      "offer_description": "Achieve spending milestones and unlock exciting rewards.",
       "reward_type": [
         "points",
         "voucher",
@@ -107,7 +99,6 @@
         "personal_loan",
         "home_loan"
       ],
-      "offer_description": "Get a special discount on your loan interest rate.",
       "max_loan_amount_for_offer": 5000000
     },
     "zero_processing_fee": {
@@ -115,7 +106,6 @@
       "discounted_fee": "0%",
       "valid_till": "2025-12-31",
       "min_loan_amount": 100000,
-      "offer_description": "Avail a loan with zero processing charges.",
       "applicable_loan_products": [
         "personal_loan",
         "car_loan"
@@ -126,7 +116,6 @@
       "min_tenure_before_prepayment_months": 6,
       "max_prepayment_amount_percent_of_outstanding": "50%",
       "number_of_prepayments_allowed_per_year": 2,
-      "offer_description": "Prepay your loan without any additional charges.",
       "notice_period_days_for_prepayment": 15
     },
     "instant_disbursal": {
@@ -141,7 +130,6 @@
         "IMPS"
       ],
       "max_disbursal_amount": 500000,
-      "offer_description": "Get your loan amount disbursed instantly upon approval.",
       "documentation_required": "minimal"
     },
     "flexible_tenure": {
@@ -149,7 +137,6 @@
       "max_tenure_months": 60,
       "tenure_step_months": 6,
       "interest_rate_variation_with_tenure": true,
-      "offer_description": "Choose a loan tenure that suits your repayment capacity.",
       "option_to_change_tenure_mid_term": false
     },
     "top_up_offer": {
@@ -157,7 +144,6 @@
       "top_up_amount_limit_percent_of_original": "30%",
       "new_interest_rate_basis": "current_rate_plus_spread",
       "min_repayment_history_months": 12,
-      "offer_description": "Get an additional loan on your existing loan with attractive terms.",
       "processing_fee_for_top_up": "0.5%"
     }
   },
@@ -167,14 +153,12 @@
       "offer_interest_rate": 6,
       "min_balance_for_offer_rate": 50000,
       "offer_duration_months": 12,
-      "offer_description": "Earn a higher interest rate on your savings account balance.",
       "interest_calculation_frequency": "quarterly"
     },
     "zero_balance_offer": {
       "non_maintenance_charges_waived": true,
       "min_initial_deposit": 1000,
       "account_type": "digital_savings",
-      "offer_description": "Open a savings account with no minimum balance requirement.",
       "debit_card_issuance_fee": 0
     },
     "reward_points": {
@@ -188,7 +172,6 @@
         "vouchers",
         "merchandise"
       ],
-      "offer_description": "Earn reward points on your debit card spends and account activities.",
       "min_points_for_redemption": 250
     },
     "referral_bonus": {
@@ -196,7 +179,6 @@
       "referee_bonus_amount": 100,
       "min_referee_account_funding": 5000,
       "max_referrals_per_month": 5,
-      "offer_description": "Refer your friends to open a savings account and earn bonuses.",
       "bonus_credit_timeline_days": 15
     },
     "bill_pay_cashback": {
@@ -208,7 +190,6 @@
         "mobile_recharge"
       ],
       "min_bill_amount_for_cashback": 200,
-      "offer_description": "Get cashback on paying your utility bills through our platform.",
       "monthly_cashback_limit": 200
     },
     "auto_sweep_feature": {
@@ -216,7 +197,6 @@
       "sweep_out_threshold_amount": 100000,
       "linked_fixed_deposit_rate": 6.5,
       "min_sweep_amount": 10000,
-      "offer_description": "Automatically transfer excess funds to a fixed deposit to earn higher interest.",
       "reverse_sweep_on_low_balance": true
     }
   },
@@ -226,7 +206,6 @@
       "offered_rate_reduction_percent": 0.25,
       "min_loan_to_value_ratio": "70%",
       "lock_in_period_months": 24,
-      "offer_description": "Avail a reduction in your mortgage interest rate.",
       "applicable_for_new_loans_only": true
     },
     "processing_fee_waiver": {
@@ -234,7 +213,6 @@
       "waiver_percent": 100,
       "min_loan_amount_for_waiver": 2500000,
       "offer_validity_days": 60,
-      "offer_description": "Get a full or partial waiver on your mortgage processing fee.",
       "festive_offer": false
     },
     "home_insurance_bundle": {
@@ -242,7 +220,6 @@
       "premium_discount_on_bundle_percent": 10,
       "insurance_coverage_amount": "loan_amount",
       "insurance_provider": "ABC Insurance Ltd.",
-      "offer_description": "Get a bundled home insurance offer at a discounted premium with your mortgage.",
       "opt_out_available": true
     },
     "quick_approval": {
@@ -254,7 +231,6 @@
       ],
       "online_application_tracking": true,
       "dedicated_relationship_manager": true,
-      "offer_description": "Experience a faster mortgage approval process.",
       "pre_approved_offer_for_existing_customers": true
     },
     "loan_to_value_boost": {
@@ -262,7 +238,6 @@
       "boosted_ltv_percent": 80,
       "max_boost_amount": 500000,
       "eligibility_criteria": "good_credit_score_and_income",
-      "offer_description": "Get a higher loan amount with our increased Loan-to-Value ratio offer.",
       "applicable_property_types": [
         "residential_ready_to_move"
       ]
@@ -272,7 +247,6 @@
       "applicable_after_months_of_disbursement": 12,
       "interest_accrual_during_holiday": true,
       "impact_on_loan_tenure": "extension",
-      "offer_description": "Avail an EMI holiday (moratorium) for a specified period.",
       "number_of_times_allowed_during_tenure": 1
     }
   },
@@ -285,7 +259,6 @@
       ],
       "min_premium_amount_for_discount": 5000,
       "online_purchase_only": true,
-      "offer_description": "Get a discount on your insurance premium.",
       "coupon_code": "INSURE15"
     },
     "bundle_offer": {
@@ -293,7 +266,6 @@
       "bundled_policy_type": "critical_illness_cover",
       "discount_on_bundle_percent": 10,
       "combined_premium_amount": 12000,
-      "offer_description": "Save more by bundling multiple insurance policies.",
       "renewal_benefits_on_bundle": true
     },
     "no_claim_bonus_boost": {
@@ -301,7 +273,6 @@
       "boosted_ncb_percent_increase": 10,
       "max_ncb_achievable_percent": 50,
       "applicable_to": "car_insurance",
-      "offer_description": "Accelerate your No Claim Bonus (NCB) accumulation.",
       "ncb_protection_addon_available": true
     },
     "free_addon_cover": {
@@ -309,7 +280,6 @@
       "free_addon_name": "hospital_cash_benefit",
       "addon_sum_insured": 100000,
       "conditions_for_addon": "policy_sum_insured_above_500000",
-      "offer_description": "Get a complimentary add-on cover with your primary policy.",
       "addon_duration_years": 1
     },
     "wellness_rewards": {
@@ -320,7 +290,6 @@
       "activity_to_track": "daily_steps_count",
       "reward_points_for_activity": "1_point_per_1000_steps",
       "redemption_platform": "mobile_app",
-      "offer_description": "Earn rewards for maintaining a healthy lifestyle.",
       "partner_wellness_brands": [
         "Fitbit",
         "Cult.fit"
@@ -331,7 +300,6 @@
       "discount_for_2_years_percent": 5,
       "discount_for_3_years_percent": 7.5,
       "upfront_payment_required": true,
-      "offer_description": "Get discounts for opting for a multi-year insurance policy.",
       "cancellation_clause_for_multi_year": "pro_rata_refund"
     }
   },
@@ -348,7 +316,6 @@
         "gst",
         "dp_charges"
       ],
-      "offer_description": "Enjoy zero brokerage on your trades for a limited period.",
       "max_turnover_limit_for_offer": 1000000
     },
     "welcome_bonus": {
@@ -356,7 +323,6 @@
       "bonus_amount_or_value": 500,
       "min_first_deposit_amount": 1000,
       "lock_in_period_for_bonus_months": 6,
-      "offer_description": "Get a welcome bonus when you open an investment account.",
       "conditions_for_withdrawal": "complete_5_trades"
     },
     "portfolio_review_offer": {
@@ -367,7 +333,6 @@
         "online_meeting",
         "report"
       ],
-      "offer_description": "Get a complimentary portfolio review from experts.",
       "actionable_insights_provided": true
     },
     "tax_saver_plan": {
@@ -375,7 +340,6 @@
       "tax_benefit_under_section": "80C",
       "lock_in_period_years": 3,
       "min_investment_amount": 500,
-      "offer_description": "Invest in tax-saving plans and reduce your tax liability.",
       "sip_option_available": true
     },
     "sip_boost_offer": {
@@ -383,7 +347,6 @@
       "boost_percentage_or_units": "1%_extra_units",
       "min_sip_amount": 2000,
       "applicable_for_new_sips_only": true,
-      "offer_description": "Boost your SIP investments with additional benefits.",
       "max_boost_cap_per_sip_installment": 100
     },
     "goal_based_advisory": {
@@ -395,7 +358,6 @@
         "wealth_creation"
       ],
       "customized_portfolio_creation": true,
-      "offer_description": "Get personalized investment advisory based on your financial goals.",
       "periodic_goal_tracking": true
     }
   }

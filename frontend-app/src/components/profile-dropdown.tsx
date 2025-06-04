@@ -58,12 +58,6 @@ export function ProfileDropdown() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to='/settings/billing'>
-              Billing
-              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <Link to='/settings'>
               Settings
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>

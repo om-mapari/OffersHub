@@ -55,7 +55,7 @@ export function ForgotPasswordForm({ className, ...props }: ForgotFormProps) {
             <FormItem className='space-y-1'>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder='name@example.com' {...field} />
+                <Input placeholder='name@barclays.com' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

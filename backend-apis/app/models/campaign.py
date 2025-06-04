@@ -7,6 +7,7 @@ from app.db.session import Base
 
 class CampaignStatus(str, enum.Enum):
     draft = "draft"
+    approved = "approved"
     active = "active"
     paused = "paused"
     completed = "completed"

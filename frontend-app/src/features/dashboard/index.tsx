@@ -13,6 +13,7 @@ import { TopNav } from '@/components/layout/top-nav'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { NotificationButton } from '@/components/notification-button'
 import { Overview } from './components/overview'
 import { RecentSales } from './components/recent-sales'
 import { useTenant } from '@/context/TenantContext'
@@ -30,6 +31,7 @@ export default function Dashboard() {
         <div className='ml-auto flex items-center space-x-4'>
           <Search />
           <ThemeSwitch />
+          <NotificationButton />
           <ProfileDropdown />
         </div>
       </Header>
@@ -39,7 +41,7 @@ export default function Dashboard() {
         <div className='mb-2 flex items-center justify-between space-y-2'>
           <h1 className='text-2xl font-bold tracking-tight'>
             {currentTenant 
-              ? `${currentTenant.name} Dashboard` 
+              ? `${currentTenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ')} Dashboard` 
               : user?.isSuperAdmin 
                 ? "Admin Dashboard" 
                 : "Dashboard"}
