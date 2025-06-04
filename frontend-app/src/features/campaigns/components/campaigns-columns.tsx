@@ -65,6 +65,10 @@ export const columns: ColumnDef<Campaign>[] = [
     cell: ({ row }) => (
       <div>{row.getValue('offer_id')}</div>
     ),
+    filterFn: (row, id, value) => {
+      const offerId = row.getValue(id) as number;
+      return value.includes(offerId.toString())
+    },
   },
   {
     accessorKey: 'start_date',

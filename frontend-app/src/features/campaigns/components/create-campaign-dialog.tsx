@@ -66,7 +66,7 @@ export function CreateCampaignDialog() {
         })
         .catch(err => {
           console.error('Error fetching offers:', err)
-          toast.error('Failed to fetch offers')
+          toast.error('Failed to fetch offers', { duration: 10000 })
           setIsLoading(false)
         })
     }
@@ -75,7 +75,7 @@ export function CreateCampaignDialog() {
   // Handle form submission
   const onSubmit = async (data: z.infer<typeof campaignCreateSchema>) => {
     if (!isAuthenticated) {
-      toast.error('You must be authenticated to create a campaign')
+      toast.error('You must be authenticated to create a campaign', { duration: 10000 })
       return
     }
     
@@ -101,7 +101,7 @@ export function CreateCampaignDialog() {
       setSelectionCriteria([{ key: 'selection_criteria', value: 'ai_generated' }])
     } catch (error) {
       console.error('Error creating campaign:', error)
-      toast.error('Failed to create campaign')
+      toast.error('Failed to create campaign', { duration: 10000 })
     }
   }
 

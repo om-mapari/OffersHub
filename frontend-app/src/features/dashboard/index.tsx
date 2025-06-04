@@ -41,7 +41,7 @@ export default function Dashboard() {
         <div className='mb-2 flex items-center justify-between space-y-2'>
           <h1 className='text-2xl font-bold tracking-tight'>
             {currentTenant 
-              ? `${currentTenant.name} Dashboard` 
+              ? `${currentTenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ')} Dashboard` 
               : user?.isSuperAdmin 
                 ? "Admin Dashboard" 
                 : "Dashboard"}

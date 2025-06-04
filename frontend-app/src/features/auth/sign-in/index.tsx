@@ -37,7 +37,7 @@ export default function SignIn() {
               href='/privacy'
               className='hover:text-primary underline underline-offset-4'
             >
-              Privacy Policy
+              Privacy Policy Of Barclays
             </a>
             .
           </p>

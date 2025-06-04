@@ -45,11 +45,6 @@ export const sidebarData: SidebarData = {
           icon: IconDashboard,
         },
         {
-          title: 'Tenants',
-          url: '/tenants',
-          icon: IconBuildingStore,
-        },
-        {
           title: 'Offers',
           url: '/offers',
           icon: IconTags,
@@ -58,6 +53,16 @@ export const sidebarData: SidebarData = {
           title: 'Campaigns',
           url: '/campaigns',
           icon: IconVolume,
+        },
+      ],
+    },
+    {
+      title: 'Manage Tenants',
+      items: [
+        {
+          title: 'Tenants',
+          url: '/tenants',
+          icon: IconBuildingStore,
         },
         {
           title: 'Users',

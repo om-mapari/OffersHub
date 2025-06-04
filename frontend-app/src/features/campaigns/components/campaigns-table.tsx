@@ -27,6 +27,7 @@ import { Campaign } from '../data/schema'
 import { useTenant } from '@/context/TenantContext'
 import { useCampaigns } from '../context/campaigns-context'
 import { Plus } from 'lucide-react'
+import { DataTableToolbar } from './data-table-toolbar'
 
 // Define permissions interface
 export interface CampaignsPermissions {
@@ -120,6 +121,7 @@ export function CampaignsTable<TData, TValue>({
 
   return (
     <div className='space-y-4'>
+      <DataTableToolbar table={table} data={data as Campaign[]} />
       <div className='rounded-md border'>
         <Table>
           <TableHeader>

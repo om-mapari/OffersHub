@@ -14,8 +14,7 @@ import { ThemeSwitch } from '@/components/theme-switch'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { NotificationButton } from '@/components/notification-button'
 import { Button } from '@/components/ui/button'
-import { Plus, Loader2, Filter } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { Plus, Loader2 } from 'lucide-react'
 
 function CampaignsContent() {
   const { campaigns, isLoading, setIsCreateDialogOpen, fetchCampaigns } = useCampaigns()
@@ -77,10 +76,21 @@ function CampaignsContent() {
           <div>
             <h2 className='text-2xl font-bold tracking-tight'>Campaigns</h2>
             <p className='text-muted-foreground'>
-              {currentTenant 
-                ? `Manage campaigns for ${currentTenant.name}`
-                : "Select a tenant to manage campaigns"}
-            </p>
+  {currentTenant ? (
+    <>
+      Manage campaigns for{' '}
+      <strong className="font-bold">
+        {currentTenant.name
+          .split('_')
+          .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+          .join(' ')}
+      </strong>
+    </>
+  ) : (
+    "Select a tenant to manage campaigns"
+  )}
+</p>
+
             <div className="mt-2 flex items-center">
               <span className="text-sm font-medium mr-2">Your role:</span>
               <span className={`text-xs px-2 py-1 rounded-full ${
@@ -99,13 +109,6 @@ function CampaignsContent() {
               <Plus className="mr-2 h-4 w-4" /> New Campaign
             </Button>
           )}
-        </div>
-
-        <div className="mb-4">
-          <Input 
-            placeholder="Filter campaigns..." 
-            className="max-w-sm"
-          />
         </div>
 
         <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>
