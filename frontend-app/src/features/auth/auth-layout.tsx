@@ -4,24 +4,20 @@ interface Props {
 
 export default function AuthLayout({ children }: Props) {
   return (
-    <div className='bg-primary-foreground container grid h-svh max-w-none items-center justify-center'>
-      <div className='mx-auto flex w-full flex-col justify-center space-y-2 py-8 sm:w-[480px] sm:p-8'>
-        <div className='mb-4 flex items-center justify-center'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='mr-2 h-6 w-6'
-          >
-            <path d='M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3' />
-          </svg>
-          <h1 className='text-xl font-medium'>OffersHub</h1>
+    <div className='bg-background min-h-svh flex items-center justify-center'>
+      <div className='mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[480px] p-8 rounded-lg bg-card'>
+        <div className='flex flex-col items-center justify-center'>
+          <img 
+            src="/images/barclays-wordmark.svg" 
+            alt="Barclays" 
+            className="h-8 mb-2" 
+          />
+          <h1 className='text-[#00aeef] text-xl font-bold mt-2'>Offers Hub</h1>
         </div>
         {children}
+        <div className="text-center text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} OffersHub. All rights reserved.</p>
+        </div>
       </div>
     </div>
   )

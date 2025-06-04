@@ -209,14 +209,7 @@ export function OffersDialogs({
     <>
       {/* Create Offer Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Offer</DialogTitle>
-            <DialogDescription>
-              Create a new offer for {currentTenant?.name || 'your tenant'}.
-            </DialogDescription>
-          </DialogHeader>
-          
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">         
           <div className="mt-4 pr-4">
             <OfferForm
               onSubmit={handleFormSubmit}

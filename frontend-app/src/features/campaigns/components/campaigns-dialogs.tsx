@@ -12,9 +12,11 @@ import { useTenant } from '@/context/TenantContext'
 import { useAuth } from '@/context/AuthContext'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
-import { Check, Clock, X, FileText, Pause, Play } from 'lucide-react'
+import { Check, Clock, X, FileText, Pause, Play, ExternalLink, Loader2 } from 'lucide-react'
 import { CampaignStatus } from '../data/schema'
 import { toast } from 'sonner'
+import { useState, useEffect } from 'react'
+import { Offer } from '@/features/offers/data/schema'
 
 // Define permissions interface
 export interface CampaignsDialogPermissions {
@@ -78,6 +80,59 @@ export function CampaignsDialogs({
   
   const { currentTenant } = useTenant()
   const { token, user } = useAuth()
+  
+  // State for offer details
+  const [offerDetails, setOfferDetails] = useState<Offer | null>(null)
+  const [isLoadingOffer, setIsLoadingOffer] = useState<boolean>(false)
+  const [offerError, setOfferError] = useState<string | null>(null)
+  
+  // State for offer details dialog
+  const [isOfferDetailsDialogOpen, setIsOfferDetailsDialogOpen] = useState<boolean>(false)
+  
+  // Fetch offer details when a campaign is selected for viewing
+  useEffect(() => {
+    if (isViewDialogOpen && selectedCampaign && currentTenant && token) {
+      setIsLoadingOffer(true)
+      setOfferError(null)
+      
+      fetch(
+        `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedCampaign.offer_id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      )
+      .then(response => {
+        if (response.ok) {
+          return response.json()
+        } else {
+          if (response.status === 404) {
+            throw new Error(`Offer not found. It may have been deleted or moved.`)
+          } else {
+            throw new Error(`Failed to fetch offer details: ${response.statusText}`)
+          }
+        }
+      })
+      .then(data => {
+        setOfferDetails(data)
+      })
+      .catch(error => {
+        console.error('Error fetching offer details:', error)
+        setOfferError(error.message || 'Failed to load offer details')
+        // Only show toast for unexpected errors, not for "not found" which is handled in the UI
+        if (!error.message.includes('not found')) {
+          toast.error('Failed to load offer details')
+        }
+      })
+      .finally(() => {
+        setIsLoadingOffer(false)
+      })
+    } else if (!isViewDialogOpen) {
+      // Clear offer details when dialog is closed
+      setOfferDetails(null)
+    }
+  }, [isViewDialogOpen, selectedCampaign, currentTenant, token])
   
   // Check if user can perform specific actions on the current campaign
   const canApproveCampaign = () => {
@@ -311,6 +366,83 @@ export function CampaignsDialogs({
                     ))}
                   </div>
                 </div>
+                
+                {/* Offer Details Section */}
+                <div>
+                  <h3 className="text-sm font-medium mb-2 flex items-center justify-between">
+                    <span className="flex items-center">
+                      Linked Offer Details
+                      <ExternalLink className="ml-2 h-4 w-4 text-muted-foreground" />
+                    </span>
+                    {offerDetails && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setIsOfferDetailsDialogOpen(true)}
+                        className="text-xs"
+                      >
+                        View Full Details
+                      </Button>
+                    )}
+                  </h3>
+                  <div className="rounded-md border p-4">
+                    {isLoadingOffer ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        <span>Loading offer details...</span>
+                      </div>
+                    ) : offerError ? (
+                      <div className="text-red-500">{offerError}</div>
+                    ) : offerDetails ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground">Description</h4>
+                            <p className="text-sm">{offerDetails.offer_description}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground">Type</h4>
+                            <p className="text-sm">{offerDetails.offer_type}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground">Status</h4>
+                            <p className="text-sm capitalize">{offerDetails.status.replace('_', ' ')}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground">Created By</h4>
+                            <p className="text-sm">{offerDetails.created_by_username}</p>
+                          </div>
+                        </div>
+                        
+                        {offerDetails.comments && (
+                          <div>
+                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Comments</h4>
+                            <p className="text-sm">{offerDetails.comments}</p>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <h4 className="text-xs font-medium text-muted-foreground mb-1">Offer Attributes</h4>
+                          <div className="rounded-md bg-muted/50 p-2 space-y-1">
+                            {Object.entries(offerDetails.data).slice(0, 3).map(([key, value]) => (
+                              <div key={key} className="flex justify-between text-xs">
+                                <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
+                                <span>{String(value)}</span>
+                              </div>
+                            ))}
+                            {Object.keys(offerDetails.data).length > 3 && (
+                              <div className="text-xs text-center text-muted-foreground">
+                                + {Object.keys(offerDetails.data).length - 3} more attributes
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No offer details available</p>
+                    )}
+                  </div>
+                </div>
               </div>
             
               <DialogFooter className="mt-6">
@@ -415,6 +547,83 @@ export function CampaignsDialogs({
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Offer Details Dialog */}
+      <Dialog open={isOfferDetailsDialogOpen} onOpenChange={setIsOfferDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Offer Details</DialogTitle>
+            <DialogDescription>
+              Complete information about the linked offer
+            </DialogDescription>
+          </DialogHeader>
+          
+          {offerDetails ? (
+            <div className="space-y-4 pr-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium">Description</h3>
+                  <p>{offerDetails.offer_description}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Type</h3>
+                  <p>{offerDetails.offer_type}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Status</h3>
+                  <p className="capitalize">{offerDetails.status.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Created By</h3>
+                  <p>{offerDetails.created_by_username}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Created At</h3>
+                  <p>{format(new Date(offerDetails.created_at), 'PPP')}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Updated At</h3>
+                  <p>{format(new Date(offerDetails.updated_at), 'PPP')}</p>
+                </div>
+              </div>
+              
+              {offerDetails.comments && (
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Comments</h3>
+                  <div className="rounded-md border p-4">
+                    <p>{offerDetails.comments}</p>
+                  </div>
+                </div>
+              )}
+              
+              <div>
+                <h3 className="text-sm font-medium mb-2">Offer Attributes</h3>
+                <div className="rounded-md border p-4 space-y-2">
+                  {Object.entries(offerDetails.data).map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
+                      <span>{String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-4 text-center text-muted-foreground">
+              No offer details available
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsOfferDetailsDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       

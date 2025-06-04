@@ -6,6 +6,8 @@ import {
   IconLock,
   IconNotification,
   IconPalette,
+  IconLogin,
+  IconKey,
   IconServerOff,
   IconSettings,
   IconTool,
@@ -30,7 +32,7 @@ export const sidebarData: SidebarData = {
     {
       name: 'Barclays',
       logo: Command,
-      plan: 'Offer Management',
+      plan: 'OffersHub',
     },
   ],
   navGroups: [
@@ -65,55 +67,70 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      title: 'Pages',
+      title: 'Auth',
       items: [
         {
-          title: 'Auth',
-          icon: IconLock,
-          items: [
-            {
-              title: 'Sign In',
-              url: '/sign-in',
-            },
-            {
-              title: 'Forgot Password',
-              url: '/forgot-password',
-            },
-          ],
+          title: 'Sign In',
+          url: '/sign-in',
+          icon: IconLogin,
         },
         {
-          title: 'Errors',
-          icon: IconBug,
-          items: [
-            {
-              title: 'Unauthorized',
-              url: '/401',
-              icon: IconLock,
-            },
-            {
-              title: 'Forbidden',
-              url: '/403',
-              icon: IconUserOff,
-            },
-            {
-              title: 'Not Found',
-              url: '/404',
-              icon: IconError404,
-            },
-            {
-              title: 'Internal Server Error',
-              url: '/500',
-              icon: IconServerOff,
-            },
-            {
-              title: 'Maintenance Error',
-              url: '/503',
-              icon: IconBarrierBlock,
-            },
-          ],
+          title: 'Forgot Password',
+          url: '/forgot-password',
+          icon: IconKey,
         },
       ],
     },
+    // {
+      // title: 'Pages',
+      // items: [
+      //   {
+      //     title: 'Auth',
+      //     icon: IconLock,
+      //     items: [
+      //       {
+      //         title: 'Sign In',
+      //         url: '/sign-in',
+      //       },
+      //       {
+      //         title: 'Forgot Password',
+      //         url: '/forgot-password',
+      //       },
+      //     ],
+      //   },
+      //   // {
+      //   //   title: 'Errors',
+      //   //   icon: IconBug,
+      //   //   items: [
+      //   //     {
+      //   //       title: 'Unauthorized',
+      //   //       url: '/401',
+      //   //       icon: IconLock,
+      //   //     },
+      //   //     {
+      //   //       title: 'Forbidden',
+      //   //       url: '/403',
+      //   //       icon: IconUserOff,
+      //   //     },
+      //   //     {
+      //   //       title: 'Not Found',
+      //   //       url: '/404',
+      //   //       icon: IconError404,
+      //   //     },
+      //   //     {
+      //   //       title: 'Internal Server Error',
+      //   //       url: '/500',
+      //   //       icon: IconServerOff,
+      //   //     },
+      //   //     {
+      //   //       title: 'Maintenance Error',
+      //   //       url: '/503',
+      //   //       icon: IconBarrierBlock,
+      //   //     },
+      //   //   ],
+      //   // },
+      // ],
+    // },
     {
       title: 'Other',
       items: [
