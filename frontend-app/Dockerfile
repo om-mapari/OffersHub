@@ -1,25 +1,21 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
+# Set working directory
 WORKDIR /app
 
+# Install pnpm
 RUN npm install -g pnpm
 
+# Copy only package.json & lock for install
 COPY package.json pnpm-lock.yaml ./
+
+# Install deps
 RUN pnpm install
 
-COPY . .
+# Don't copy project files here — volumes will mount them
 
-# Ignore build failure and continue
-RUN pnpm run build || echo "⚠️ Bypassed TypeScript errors during build"
-
-FROM node:20-alpine AS production
-
-WORKDIR /app
-
-RUN npm install -g pnpm
-
-COPY --from=builder /app /app
-
+# Expose Vite dev port
 EXPOSE 3000
 
-CMD ["pnpm", "run", "preview", "--", "--port", "3000", "--host"]
+# Start the dev server
+CMD ["pnpm", "run", "dev"]
