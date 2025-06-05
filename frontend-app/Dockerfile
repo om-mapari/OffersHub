@@ -13,7 +13,7 @@ RUN pnpm install
 COPY . .
 
 # Optional: Type-check only to catch TS errors early
-RUN pnpm run typecheck   # if you have "typecheck" script for `tsc --noEmit`
+# RUN pnpm run typecheck   # if you have "typecheck" script for `tsc --noEmit`
 
 # 👇 Build fails here if there are TS errors
 RUN pnpm run build
