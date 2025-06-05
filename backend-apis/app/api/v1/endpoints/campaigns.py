@@ -7,6 +7,8 @@ from app import crud, models, schemas
 from app.models.campaign import CampaignStatus
 from app.api.v1 import deps
 
+from app import email_sender
+
 router = APIRouter()
 
 # Define required roles (similar to offers.py)
@@ -104,6 +106,18 @@ def update_campaign(
     
     # Update the campaign using the CRUD utility
     updated_campaign = crud.campaign.update(db, db_obj=campaign, obj_in=campaign_update)
+    print(f"Updated campaign: {updated_campaign.id}, Status: {updated_campaign.status}")
+    if updated_campaign.status == CampaignStatus.active:
+        # sent email to all customers
+        try:
+            email_sender.send_email(
+                recipient_email="vishalgupta1504@gmail.com",
+                campaign_name=updated_campaign.name
+            )
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")
+            # Handle the exception as needed, e.g., log it or raise a custom error
+        pass
     return updated_campaign
 
 @router.delete("/{campaign_id}", dependencies=[Depends(can_manage_campaigns)])
