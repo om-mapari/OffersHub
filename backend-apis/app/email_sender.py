@@ -34,19 +34,18 @@ def send_email(recipient_email, campaign_name):
     email = "offershubbarclays@gmail.com"
     password = "pany jzht ucrv lfwv" 
     subject = "Campaign Selection Notification"
-    markdown_body = f"""
-    # Congratulations!
+    markdown_body = f"""# Congratulations!
 
-    We are excited to inform you that you have been selected for the following campaign:
+We are excited to inform you that you have been selected for the following campaign:
 
-    ### **Campaign Name**
-    *{campaign_name}*
+### **Campaign Name**
+*{campaign_name}*
 
-    We look forward to your participation!
-    Thank you for being a valued member of our community.
+We look forward to your participation!  
+Thank you for being a valued member of our community.
 
-    ### **Best Regards,**
-    ### **Offers Hub Team**
-    """
+### **Best Regards,**  
+### **Offers Hub Team**
+"""
 
     send_email_using_gmail(email, password, recipient_email, subject, markdown_body)
