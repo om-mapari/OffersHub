@@ -119,10 +119,10 @@ def update_campaign(
             # Handle the exception as needed, e.g., log it or raise a custom error
         pass
 
-    if update_campaign.status == "approved":
+    if updated_campaign.status == "approved":
         concatenated_list = []
         campaignCustomer = []
-        for key, value in update_campaign.selection_criteria.items():
+        for key, value in updated_campaign.selection_criteria.items():
             if value.startswith('='):
                 value_substringed_left = value[:1]
                 value_substringed_right = value[1:]
