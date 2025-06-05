@@ -21,15 +21,72 @@ import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
+// Define the selection criteria options from selection-criterion.md
+const SELECTION_CRITERIA = [
+  {
+    name: 'credit_score',
+    operators: ['>', '<', '='],
+    valueType: 'number',
+    values: [] // For number inputs, values are determined by user input
+  },
+  {
+    name: 'gender',
+    operators: ['=', '!'],
+    valueType: 'select',
+    values: ['male', 'female', 'other']
+  },
+  {
+    name: 'is_active',
+    operators: ['='],
+    valueType: 'boolean',
+    values: ['true', 'false']
+  },
+  {
+    name: 'occupation',
+    operators: ['='],
+    valueType: 'select',
+    values: ['salaried', 'self-employed', 'student', 'retired']
+  },
+  {
+    name: 'marital_status',
+    operators: ['='],
+    valueType: 'select',
+    values: ['single', 'married', 'divorced', 'widowed']
+  },
+  {
+    name: 'segment',
+    operators: ['=', '!'],
+    valueType: 'select',
+    values: ['premium', 'regular', 'corporate']
+  },
+  {
+    name: 'deliquency',
+    operators: ['='],
+    valueType: 'boolean',
+    values: ['true', 'false']
+  },
+  {
+    name: 'kyc_status',
+    operators: ['='],
+    valueType: 'select',
+    values: ['verified', 'pending', 'rejected']
+  }
+]
+
+// Type for structured selection criteria
+interface StructuredCriterion {
+  criterion: string;
+  operator: string;
+  value: string;
+}
+
 export function CreateCampaignDialog() {
   const { isCreateDialogOpen, setIsCreateDialogOpen, createCampaign } = useCampaigns()
   const { currentTenant } = useTenant()
   const { isAuthenticated } = useAuth()
   const [offers, setOffers] = useState<Offer[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [selectionCriteria, setSelectionCriteria] = useState<{ key: string; value: string }[]>([
-    { key: 'selection_criteria', value: 'ai_generated' }
-  ])
+  const [selectionCriteria, setSelectionCriteria] = useState<StructuredCriterion[]>([])
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [endDate, setEndDate] = useState<Date | undefined>(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
 
@@ -39,7 +96,7 @@ export function CreateCampaignDialog() {
       name: '',
       offer_id: undefined,
       description: '',
-      selection_criteria: { selection_criteria: 'ai_generated' },
+      selection_criteria: {},
       start_date: formatDateToYYYYMMDD(new Date()),
       end_date: formatDateToYYYYMMDD(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
     }
@@ -79,13 +136,14 @@ export function CreateCampaignDialog() {
       return
     }
     
-    // Convert selection criteria array to object
-    const criteriaObject = selectionCriteria.reduce((acc, { key, value }) => {
-      if (key && value) {
-        acc[key] = value
+    // Format criteria for API
+    const criteriaObject: Record<string, string> = {};
+    
+    selectionCriteria.forEach(({ criterion, operator, value }) => {
+      if (criterion && operator && value) {
+        criteriaObject[criterion] = `${operator}${value}`;
       }
-      return acc
-    }, {} as Record<string, string>)
+    });
 
     const campaignData: CampaignCreate = {
       ...data,
@@ -98,7 +156,7 @@ export function CreateCampaignDialog() {
       form.reset()
       setStartDate(new Date())
       setEndDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
-      setSelectionCriteria([{ key: 'selection_criteria', value: 'ai_generated' }])
+      setSelectionCriteria([])
     } catch (error) {
       console.error('Error creating campaign:', error)
       toast.error('Failed to create campaign', { duration: 10000 })
@@ -107,7 +165,14 @@ export function CreateCampaignDialog() {
 
   // Handle selection criteria
   const addCriterion = () => {
-    setSelectionCriteria([...selectionCriteria, { key: '', value: '' }])
+    setSelectionCriteria([
+      ...selectionCriteria, 
+      { 
+        criterion: '', 
+        operator: '', 
+        value: '' 
+      }
+    ]);
   }
 
   const removeCriterion = (index: number) => {
@@ -116,34 +181,66 @@ export function CreateCampaignDialog() {
     setSelectionCriteria(newCriteria)
   }
 
-  const updateCriterion = (index: number, field: 'key' | 'value', value: string) => {
-    const newCriteria = [...selectionCriteria]
-    newCriteria[index][field] = value
+  const updateCriterion = (index: number, field: keyof StructuredCriterion, value: string) => {
+    const newCriteria = [...selectionCriteria];
+    
+    // Update the specific field
+    newCriteria[index] = {
+      ...newCriteria[index],
+      [field]: value
+    }
+    
+    // If criterion type changed, reset operator and value
+    if (field === 'criterion') {
+      const criterionDef = SELECTION_CRITERIA.find(c => c.name === value)
+      if (criterionDef) {
+        newCriteria[index].operator = '';
+        newCriteria[index].value = '';
+      }
+    }
+    
     setSelectionCriteria(newCriteria)
+  }
+
+  // Get available criteria options excluding already selected ones
+  const getAvailableCriteria = (currentIndex: number): typeof SELECTION_CRITERIA => {
+    const usedCriteria = selectionCriteria
+      .filter((_, i) => i !== currentIndex)
+      .map(c => c.criterion);
+    
+    return SELECTION_CRITERIA.filter(c => !usedCriteria.includes(c.name));
+  }
+
+  // Get available operators for a criterion
+  const getOperatorsForCriterion = (criterionName: string): string[] => {
+    const criterionDef = SELECTION_CRITERIA.find(c => c.name === criterionName)
+    return criterionDef?.operators || []
+  }
+
+  // Get available values for a criterion
+  const getValuesForCriterion = (criterionName: string): string[] => {
+    const criterionDef = SELECTION_CRITERIA.find(c => c.name === criterionName)
+    return criterionDef?.values || []
+  }
+
+  // Get value type for a criterion
+  const getValueTypeForCriterion = (criterionName: string): string => {
+    const criterionDef = SELECTION_CRITERIA.find(c => c.name === criterionName)
+    return criterionDef?.valueType || 'text'
   }
 
   // Fix for date selection
   const handleStartDateSelect = (date: Date | undefined) => {
     setStartDate(date)
     if (date) {
-      // Use a method that preserves the exact date without timezone adjustments
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      form.setValue('start_date', formattedDate);
+      form.setValue('start_date', formatDateToYYYYMMDD(date));
     }
   }
 
   const handleEndDateSelect = (date: Date | undefined) => {
     setEndDate(date)
     if (date) {
-      // Use a method that preserves the exact date without timezone adjustments
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      form.setValue('end_date', formattedDate);
+      form.setValue('end_date', formatDateToYYYYMMDD(date));
     }
   }
 
@@ -276,40 +373,122 @@ export function CreateCampaignDialog() {
                   variant="outline" 
                   size="sm" 
                   onClick={addCriterion}
+                  disabled={selectionCriteria.length >= SELECTION_CRITERIA.length}
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Criterion
                 </Button>
               </div>
               
               <ScrollArea className="h-[200px] rounded-md border p-4">
-                <div className="space-y-3">
-                  {selectionCriteria.map((criterion, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <Input
-                        placeholder="Key"
-                        value={criterion.key}
-                        onChange={(e) => updateCriterion(index, 'key', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        placeholder="Value"
-                        value={criterion.value}
-                        onChange={(e) => updateCriterion(index, 'value', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeCriterion(index)}
-                        disabled={index === 0}
-                        aria-label="Remove criterion"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                {selectionCriteria.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-8">
+                    <p>No selection criteria added yet</p>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={addCriterion}
+                      className="mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Your First Criterion
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectionCriteria.map((criterion, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        {/* Criterion Type Selection */}
+                        <Select
+                          value={criterion.criterion}
+                          onValueChange={(value) => updateCriterion(index, 'criterion', value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableCriteria(index).map((criterionOption) => (
+                              <SelectItem key={criterionOption.name} value={criterionOption.name}>
+                                {criterionOption.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Operator Selection */}
+                        <Select
+                          value={criterion.operator}
+                          onValueChange={(value) => updateCriterion(index, 'operator', value)}
+                          disabled={!criterion.criterion}
+                        >
+                          <SelectTrigger className="w-[80px]">
+                            <SelectValue placeholder="Op" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getOperatorsForCriterion(criterion.criterion).map((op) => (
+                              <SelectItem key={op} value={op}>
+                                {op}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Value Selection or Input based on type */}
+                        {criterion.criterion && getValueTypeForCriterion(criterion.criterion) === 'select' ? (
+                          <Select
+                            value={criterion.value}
+                            onValueChange={(value) => updateCriterion(index, 'value', value)}
+                            disabled={!criterion.operator}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Value" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getValuesForCriterion(criterion.criterion).map((val) => (
+                                <SelectItem key={val} value={val}>
+                                  {val}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : criterion.criterion && getValueTypeForCriterion(criterion.criterion) === 'boolean' ? (
+                          <Select
+                            value={criterion.value}
+                            onValueChange={(value) => updateCriterion(index, 'value', value)}
+                            disabled={!criterion.operator}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Value" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="true">true</SelectItem>
+                              <SelectItem value="false">false</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            type="text"
+                            placeholder="Value"
+                            value={criterion.value}
+                            onChange={(e) => updateCriterion(index, 'value', e.target.value)}
+                            className="flex-1"
+                            disabled={!criterion.operator}
+                          />
+                        )}
+
+                        {/* Remove button */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCriterion(index)}
+                          aria-label="Remove criterion"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </ScrollArea>
             </div>
           </div>
