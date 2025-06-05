@@ -44,6 +44,36 @@ interface CampaignsDialogsProps {
   onActionComplete?: () => void;
 }
 
+// Helper function to format selection criteria for display
+const formatSelectionCriteria = (criteria: Record<string, any>): { displayKey: string; displayValue: string }[] => {
+  const formattedCriteria: { displayKey: string; displayValue: string }[] = [];
+
+  Object.entries(criteria).forEach(([key, value]) => {
+    let displayValue = String(value);
+    const criterion = key;
+    
+    // Extract operator from the value string
+    if (typeof value === 'string') {
+      if (value.startsWith('=')) {
+        displayValue = `= ${value.substring(1)}`;
+      } else if (value.startsWith('>')) {
+        displayValue = `> ${value.substring(1)}`;
+      } else if (value.startsWith('<')) {
+        displayValue = `< ${value.substring(1)}`;
+      } else if (value.startsWith('!')) {
+        displayValue = `! ${value.substring(1)}`;
+      }
+    }
+    
+    formattedCriteria.push({
+      displayKey: criterion,
+      displayValue
+    });
+  });
+  
+  return formattedCriteria;
+};
+
 export function CampaignsDialogs({ 
   permissions = {
     canApprove: false,
@@ -359,12 +389,16 @@ export function CampaignsDialogs({
                 <div>
                   <h3 className="text-sm font-medium mb-2">Selection Criteria</h3>
                   <div className="rounded-md border p-4 space-y-2">
-                    {Object.entries(selectedCampaign.selection_criteria).map(([key, value]) => (
-                      <div key={key} className="flex justify-between">
-                        <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
-                        <span>{String(value)}</span>
-                      </div>
-                    ))}
+                    {Object.keys(selectedCampaign.selection_criteria).length === 0 ? (
+                      <p className="text-muted-foreground text-center">No selection criteria defined</p>
+                    ) : (
+                      formatSelectionCriteria(selectedCampaign.selection_criteria).map(({ displayKey, displayValue }) => (
+                        <div key={displayKey} className="flex justify-between">
+                          <span className="font-medium capitalize">{displayKey.replace(/_/g, ' ')}:</span>
+                          <span>{displayValue}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
                 
@@ -377,7 +411,7 @@ export function CampaignsDialogs({
                     </span>
                     {offerDetails && (
                       <Button 
-                        variant="ghost" 
+                        variant="outline"
                         size="sm" 
                         onClick={() => setIsOfferDetailsDialogOpen(true)}
                         className="text-xs"
@@ -386,63 +420,7 @@ export function CampaignsDialogs({
                       </Button>
                     )}
                   </h3>
-                  <div className="rounded-md border p-4">
-                    {isLoadingOffer ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                        <span>Loading offer details...</span>
-                      </div>
-                    ) : offerError ? (
-                      <div className="text-red-500">{offerError}</div>
-                    ) : offerDetails ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="text-xs font-medium text-muted-foreground">Description</h4>
-                            <p className="text-sm">{offerDetails.offer_description}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-medium text-muted-foreground">Type</h4>
-                            <p className="text-sm">{offerDetails.offer_type}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-medium text-muted-foreground">Status</h4>
-                            <p className="text-sm capitalize">{offerDetails.status.replace('_', ' ')}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-medium text-muted-foreground">Created By</h4>
-                            <p className="text-sm">{offerDetails.created_by_username}</p>
-                          </div>
-                        </div>
-                        
-                        {offerDetails.comments && (
-                          <div>
-                            <h4 className="text-xs font-medium text-muted-foreground mb-1">Comments</h4>
-                            <p className="text-sm">{offerDetails.comments}</p>
-                          </div>
-                        )}
-                        
-                        <div>
-                          <h4 className="text-xs font-medium text-muted-foreground mb-1">Offer Attributes</h4>
-                          <div className="rounded-md bg-muted/50 p-2 space-y-1">
-                            {Object.entries(offerDetails.data).slice(0, 3).map(([key, value]) => (
-                              <div key={key} className="flex justify-between text-xs">
-                                <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
-                                <span>{String(value)}</span>
-                              </div>
-                            ))}
-                            {Object.keys(offerDetails.data).length > 3 && (
-                              <div className="text-xs text-center text-muted-foreground">
-                                + {Object.keys(offerDetails.data).length - 3} more attributes
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">No offer details available</p>
-                    )}
-                  </div>
+                
                 </div>
               </div>
             
