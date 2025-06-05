@@ -121,7 +121,6 @@ def update_campaign(
 
     if updated_campaign.status == "approved":
         concatenated_list = []
-        campaignCustomer = []
         for key, value in updated_campaign.selection_criteria.items():
             if value.startswith('='):
                 value_substringed_left = value[:1]
@@ -133,20 +132,23 @@ def update_campaign(
                 concatenated_list.append(f"{key}={formatted_value}")
             else:
                 concatenated_list.append(f"{key}={value}")
-        print(concatenated_list)
+        # print(concatenated_list)
         query = generate_select_query_for_table(where_criteria=concatenated_list)
         print(query)
         execution_output = execute_sql_query(query)
-        print("\nExecution Output:")
-        print(execution_output)
+        # print("\nExecution Output:")
+        # print(execution_output)
         for s in execution_output:
             campaignCustomerObj = {}
             campaignCustomerObj['customer_id'] = s
             campaignCustomerObj['campaign_id'] = updated_campaign.id
             campaignCustomerObj['offer_id'] = updated_campaign.offer_id
             campaignCustomerObj['delivery_status'] = "pending"
-            campaignCustomer.append(campaignCustomerObj)
-        print(campaignCustomerObj)
+            print(campaignCustomerObj)
+            campaign_customer = models.CampaignCustomer(**campaignCustomerObj)
+            db.add(campaign_customer)
+            db.commit()
+            db.refresh(campaign_customer)
 
     return updated_campaign
 
