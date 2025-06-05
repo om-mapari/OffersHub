@@ -1,21 +1,31 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy only package.json & lock for install
+# Copy and install dependencies
 COPY package.json pnpm-lock.yaml ./
-
-# Install deps
 RUN pnpm install
 
-# Don't copy project files here — volumes will mount them
+# Copy rest of the app and build
+COPY . .
+RUN pnpm run build
 
-# Expose Vite dev port
+# Production image
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install pnpm (needed to run preview)
+RUN npm install -g pnpm
+
+# Copy only what is needed to run preview
+COPY --from=builder /app /app
+
+# Expose Vite preview port
 EXPOSE 3000
 
-# Start the dev server
-CMD ["pnpm", "run", "dev"]
+# Run Vite's production server
+CMD ["pnpm", "run", "preview", "--", "--port", "3000", "--host"]

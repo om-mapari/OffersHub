@@ -61,8 +61,6 @@ services:
     environment:
       - VITE_API_BASE_URL=http://20.41.249.65:8000/api/v1
     restart: unless-stopped 
-    depends_on:
-      - backend-apis
 
   # Service to clean up the database (run with --profile cleanup)
   db-cleanup:
