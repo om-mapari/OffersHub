@@ -118,6 +118,36 @@ def update_campaign(
             print(f"Failed to send email: {str(e)}")
             # Handle the exception as needed, e.g., log it or raise a custom error
         pass
+    
+    if update_campaign.status == "approved":
+        concatenated_list = []
+        campaignCustomer = []
+        for key, value in update_campaign.selection_criteria.items():
+            if value.startswith('='):
+                value_substringed_left = value[:1]
+                value_substringed_right = value[1:]
+                value_substringed_right_split = value_substringed_right.split(",")
+                value_substringed_right_quoted = [f"'{s}'" for s in value_substringed_right_split]
+                value_substringed_right_rejoined = ','.join(value_substringed_right_quoted)
+                formatted_value = f"IN({value_substringed_right_rejoined})"
+                concatenated_list.append(f"{key}={formatted_value}")
+            else:
+                concatenated_list.append(f"{key}={value}")
+        print(concatenated_list)
+        query = generate_select_query_for_table(where_criteria=concatenated_list)
+        print(query)
+        execution_output = execute_sql_query(query)
+        print("\nExecution Output:")
+        print(execution_output)
+        for s in execution_output:
+            campaignCustomerObj = {}
+            campaignCustomerObj.customer_id = s
+            campaignCustomerObj.campaign_id = updated_campaign.id
+            campaignCustomerObj.offer_id = updated_campaign.offer_id
+            campaignCustomerObj.delivery_status = "pending"
+            campaignCustomer.append(campaignCustomerObj)
+        print(campaignCustomerObj)
+
     return updated_campaign
 
 @router.delete("/{campaign_id}", dependencies=[Depends(can_manage_campaigns)])
