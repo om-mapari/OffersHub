@@ -141,10 +141,10 @@ def update_campaign(
         print(execution_output)
         for s in execution_output:
             campaignCustomerObj = {}
-            campaignCustomerObj.customer_id = s
-            campaignCustomerObj.campaign_id = updated_campaign.id
-            campaignCustomerObj.offer_id = updated_campaign.offer_id
-            campaignCustomerObj.delivery_status = "pending"
+            campaignCustomerObj['customer_id'] = s
+            campaignCustomerObj['campaign_id'] = updated_campaign.id
+            campaignCustomerObj['offer_id'] = updated_campaign.offer_id
+            campaignCustomerObj['delivery_status'] = "pending"
             campaignCustomer.append(campaignCustomerObj)
         print(campaignCustomerObj)
 
