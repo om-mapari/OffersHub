@@ -2,6 +2,10 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import markdown
+import sys
+
+#handle null values in the script if null then put "" in the place of null value
+recipient_email, campaign_name, offer_details = sys.argv[1:4] if len(sys.argv) > 3 else ("vishalgupta1504@gmail.com", "Campaign Name", "Offer Details")
 
 def send_email_using_gmail(email, password, recipient_email, subject, markdown_body):
     html_body = markdown.markdown(markdown_body)
@@ -28,17 +32,23 @@ def send_email_using_gmail(email, password, recipient_email, subject, markdown_b
 
 email = "offershubbarclays@gmail.com"
 password = "pany jzht ucrv lfwv" 
-recipient_email = "vishalgupta1504@gmail.com"
-subject = "Test Email with Markdown"
-markdown_body = """
-# Hello, This is a test email
-This is a sample **markdown** email.
+subject = "Campaign Selection Notification"
+markdown_body = f"""
+# Congratulations!
 
-- Item 1
-- Item 2
-- Item 3
+We are excited to inform you that you have been selected for the following campaign:
 
-[Click here](https://example.com) to visit a website.
+### **Campaign Name**
+*{campaign_name}*
+
+### **Offer Details**
+*{offer_details}*
+
+We look forward to your participation!
+Thank you for being a valued member of our community.
+
+### **Best Regards,**
+### **Offers Hub Team**
 """
 
 send_email_using_gmail(email, password, recipient_email, subject, markdown_body)
