@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.models.campaign import CampaignStatus
 from app.api.v1 import deps
-
+import psycopg2
 from app import email_sender
 
 router = APIRouter()
