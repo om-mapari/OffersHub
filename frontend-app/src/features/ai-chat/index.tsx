@@ -6,10 +6,10 @@ import { BsChatDots } from 'react-icons/bs';
 import { FaLightbulb } from 'react-icons/fa';
 
 // Azure OpenAI client configuration
-const AZURE_ENDPOINT = "https://bh-in-openai-synapsesynergy.openai.azure.com/";
-const AZURE_API_KEY = "ff1cd87da4ba4304986e9bf652498906";
-const AZURE_API_VERSION = "2024-12-01-preview";
-const AZURE_DEPLOYMENT = "gpt-4o-3";
+const AZURE_ENDPOINT = "";
+const AZURE_API_KEY = "";
+const AZURE_API_VERSION = "";
+const AZURE_DEPLOYMENT = "";
 
 interface Message {
   type: 'user' | 'bot';
