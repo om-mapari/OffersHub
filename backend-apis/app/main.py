@@ -13,24 +13,41 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Set all CORS enabled origins
-if settings.BACKEND_CORS_ORIGINS: # Assuming this setting exists in config if needed
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else: # Allow all for development if not specified
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Define allowed origins explicitly
+allowed_origins = [
+    "http://offermanagerapp.southindia.cloudapp.azure.com:3000",
+    "http://localhost:3000",  # For local development
+    "http://127.0.0.1:3000",  # Alternative localhost
+    "https://offermanagerapp.southindia.cloudapp.azure.com",  # HTTPS version if needed
+]
 
+# Add any additional origins from settings if they exist
+if hasattr(settings, 'BACKEND_CORS_ORIGINS') and settings.BACKEND_CORS_ORIGINS:
+    # Extend the list with origins from settings
+    for origin in settings.BACKEND_CORS_ORIGINS:
+        if str(origin) not in allowed_origins:
+            allowed_origins.append(str(origin))
+
+# Configure CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "X-Csrftoken",
+        "Cache-Control",
+        "Pragma",
+    ],
+    expose_headers=["*"],
+)
 
 @app.on_event("startup")
 def on_startup():
