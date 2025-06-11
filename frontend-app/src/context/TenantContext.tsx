@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { buildUserApiUrl } from "@/config/api";
 
 // Define Tenant interface based on API response
 export interface Tenant {
@@ -33,7 +34,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:8000/api/v1/users/me/tenants', {
+        const response = await fetch(buildUserApiUrl('/me/tenants'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }

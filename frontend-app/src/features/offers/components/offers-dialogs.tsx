@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import { Check, Clock, X, FileText } from 'lucide-react'
 import { OfferStatus } from '../data/schema'
+import { buildTenantApiUrl } from "@/config/api";
 
 // Define permissions interface
 export interface OffersDialogPermissions {
@@ -131,37 +132,37 @@ export function OffersDialogs({
       let method = 'POST';
       
       if (isCreateDialogOpen) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, '/offers/');
         method = 'POST';
       } else if (isEditDialogOpen && selectedOffer) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedOffer.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${selectedOffer.id}`);
         method = 'PATCH';
       } else if (isApproveDialogOpen && selectedOffer) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedOffer.id}/approve`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${selectedOffer.id}/approve`);
         method = 'POST';
         payload = {}; // Empty payload for approve endpoint
       } else if (isRejectDialogOpen && selectedOffer) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedOffer.id}/reject`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${selectedOffer.id}/reject`);
         method = 'POST';
         payload = {}; // Empty payload for reject endpoint
       } else if (isRetireDialogOpen && selectedOffer) {
         // Use PATCH to update status to retired
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedOffer.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${selectedOffer.id}`);
         method = 'PATCH';
         payload = {
           status: 'retired'
         };
       } else if (isDeleteDialogOpen && selectedOffer) {
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${selectedOffer.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${selectedOffer.id}`);
         method = 'DELETE';
       } else if (data.action === 'submit' && data.id) {
         // Handle Submit for Review action
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${data.id}/submit`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${data.id}/submit`);
         method = 'POST';
         payload = {}; // Empty payload for submit endpoint
       } else if (data.action === 'revise' && data.id) {
         // Use PATCH to update status back to draft for revision
-        apiUrl = `http://localhost:8000/api/v1/tenants/${currentTenant.name}/offers/${data.id}`;
+        apiUrl = buildTenantApiUrl(currentTenant.name, `/offers/${data.id}`);
         method = 'PATCH';
         payload = {
           status: 'draft'
@@ -209,14 +210,7 @@ export function OffersDialogs({
     <>
       {/* Create Offer Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Offer</DialogTitle>
-            <DialogDescription>
-              Create a new offer for {currentTenant?.name || 'your tenant'}.
-            </DialogDescription>
-          </DialogHeader>
-          
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">         
           <div className="mt-4 pr-4">
             <OfferForm
               onSubmit={handleFormSubmit}
