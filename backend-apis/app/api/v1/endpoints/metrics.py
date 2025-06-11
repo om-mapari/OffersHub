@@ -1,7 +1,8 @@
 from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func, case, distinct
+from sqlalchemy import func, case, distinct, text
+from sqlalchemy.sql import text as sql_text
 
 from app import models, schemas
 from app.api.v1 import deps
@@ -105,35 +106,47 @@ async def get_campaigns_metrics(
 @router.get("/campaign-customers", response_model=schemas.CampaignCustomersResponse, dependencies=[Depends(can_view_metrics)])
 async def get_campaign_customers(
     db: Session = Depends(deps.get_db),
-    tenant: models.Tenant = Depends(deps.get_tenant_by_name),  # Injected by path param {tenant_name}
+    tenant: models.Tenant = Depends(deps.get_tenant_by_name),
     current_user: models.User = Depends(deps.get_current_active_user)
 ) -> schemas.CampaignCustomersResponse:
     """
     Get metrics about campaign customers for a specific tenant: sent, accepted, and percentage of accepted campaigns
     """
     try:
-        # Query to get campaign metrics for active campaigns for the specific tenant
-        results = db.query(
-            models.CampaignCustomer.campaign_id,
-            models.Campaign.name.label('campaign_name'),
-            func.count().filter(models.CampaignCustomer.delivery_status == models.DeliveryStatus.sent).label('sent'),
-            func.count().filter(models.CampaignCustomer.delivery_status == models.DeliveryStatus.accepted).label('accepted')
-        ).join(
-            models.Campaign, models.CampaignCustomer.campaign_id == models.Campaign.id
-        ).filter(
-            models.Campaign.status == models.CampaignStatus.active,
-            models.CampaignCustomer.tenant_name == tenant.name
-        ).group_by(
-            models.CampaignCustomer.campaign_id, models.Campaign.name
-        ).order_by(
-            models.CampaignCustomer.campaign_id
-        ).all()
+        # Simplified implementation with raw SQL to bypass the ORM's use of enums
+        query = sql_text("""
+            SELECT 
+                cc.campaign_id, 
+                c.name as campaign_name,
+                COUNT(CASE WHEN cc.delivery_status = 'sent' THEN 1 ELSE NULL END) as sent,
+                COUNT(CASE WHEN cc.delivery_status = 'accepted' THEN 1 ELSE NULL END) as accepted
+            FROM 
+                campaign_customers cc
+            JOIN 
+                campaigns c ON cc.campaign_id = c.id
+            WHERE 
+                c.status = 'active' AND
+                cc.tenant_name = :tenant_name
+            GROUP BY 
+                cc.campaign_id, c.name
+            ORDER BY 
+                cc.campaign_id
+        """)
+        
+        # Execute the raw query
+        results = db.execute(query, {"tenant_name": tenant.name}).fetchall()
         
         if not results:
             return schemas.CampaignCustomersResponse(campaigns=[])
         
+        # Process the results
         campaigns_summary = []
-        for campaign_id, campaign_name, sent, accepted in results:
+        for row in results:
+            campaign_id = row[0]
+            campaign_name = row[1]
+            sent = row[2]
+            accepted = row[3]
+            
             total_customers = sent + accepted
             
             percentage_accepted = 0.0
@@ -150,6 +163,7 @@ async def get_campaign_customers(
             
         return schemas.CampaignCustomersResponse(campaigns=campaigns_summary)
     except Exception as e:
+        print(f"Error in campaign-customers endpoint: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
 

@@ -8,8 +8,8 @@ from .user_tenant_role import UserTenantRole
 from .offer import Offer, OfferStatus
 from .offer_audit_log import OfferAuditLog
 from .customer import Customer
-from .campaign import Campaign
-from .campaign_customer import CampaignCustomer
+from .campaign import Campaign, CampaignStatus
+from .campaign_customer import CampaignCustomer, DeliveryStatus
 
 # You can also define __all__ if you want to control what 'from .models import *' imports
 # __all__ = ["User", "Tenant", "UserTenantRole", "Offer", "OfferAuditLog", "Customer", "Campaign", "CampaignCustomer"]
