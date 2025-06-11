@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS campaign_customers (
     campaign_id INT REFERENCES campaigns(id) ON DELETE CASCADE,
     customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
     offer_id INT REFERENCES offers(id) ON DELETE CASCADE NOT NULL,
+    tenant_name TEXT REFERENCES tenants(name) ON DELETE CASCADE NOT NULL,
     delivery_status TEXT CHECK (delivery_status IN ('pending', 'sent', 'declined', 'accepted')) DEFAULT 'pending',
     sent_at TIMESTAMP,
     PRIMARY KEY (campaign_id, customer_id)
@@ -152,3 +153,4 @@ CREATE INDEX idx_campaigns_created_by_username ON campaigns (created_by_username
 CREATE INDEX idx_campaign_customers_campaign_id ON campaign_customers (campaign_id);
 CREATE INDEX idx_campaign_customers_customer_id ON campaign_customers (customer_id);
 CREATE INDEX idx_campaign_customers_offer_id ON campaign_customers (offer_id);
+CREATE INDEX idx_campaign_customers_tenant_name ON campaign_customers (tenant_name);

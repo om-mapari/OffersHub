@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # Use SQLite for testing, otherwise use the provided DATABASE_URL
-    DATABASE_URL: str = "sqlite:///./test.db" if os.environ.get("TESTING") == "true" else os.environ.get("DATABASE_URL", "postgresql://admin:secret@127.0.0.1:5432/myappdb")
-
+    DATABASE_URL: str = "postgresql://admin:secret@127.0.0.1:5432/myappdb" if os.environ.get("TESTING") == "true" else os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5432/offer_management")
+    print(f"DATABASE_URL: {DATABASE_URL.split('@')[1]}")
     # Default roles for tenants
     DEFAULT_TENANT_ROLES: list = ["admin", "read_only", "create", "approver"]
     

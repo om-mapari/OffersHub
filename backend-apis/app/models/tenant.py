@@ -14,6 +14,7 @@ class Tenant(Base):
     creator = relationship("User", back_populates="tenants_created")
     offers = relationship("Offer", back_populates="tenant", cascade="all, delete-orphan")
     campaigns = relationship("Campaign", back_populates="tenant", cascade="all, delete-orphan")
+    campaign_customers = relationship("CampaignCustomer", back_populates="tenant", cascade="all, delete-orphan")
     
     # Relationship to UserTenantRole for users and their roles in this tenant
     user_roles = relationship("UserTenantRole", back_populates="tenant")
