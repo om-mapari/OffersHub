@@ -17,3 +17,8 @@ pytest
 pytest-asyncio
 httpx
 pytest-cov
+
+# data genration 
+faker
+argparse
+hashlib
