@@ -21,4 +21,3 @@ pytest-cov
 # data genration 
 faker
 argparse
-hashlib
