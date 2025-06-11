@@ -59,20 +59,10 @@ services:
       - ./frontend-app:/app
       - /app/node_modules
     environment:
-      - VITE_API_BASE_URL=http://135.13.8.201:8000/api/v1
-    restart: unless-stopped 
+      - VITE_API_URL=http://localhost:8000
+    restart: unless-stopped
     depends_on:
       - backend-apis
-
-  # Service to clean up the database (run with --profile cleanup)
-  db-cleanup:
-    image: alpine:latest
-    container_name: db-cleanup
-    command: sh -c "echo 'Removing database volume' && rm -rf /data/* && echo 'Database volume cleaned'"
-    volumes:
-      - postgres-data:/data
-    profiles:
-      - cleanup
 
 volumes:
   postgres-data:
