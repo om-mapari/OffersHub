@@ -37,13 +37,13 @@ export function TeamSwitcher({
               size='lg'
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
             >
-              <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
+              <div className='text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
               <img
                   src="/images/barclays2.png"
                   alt={activeTeam.name}
-                  className='size-6 object-contain'
+                  className='size-8 object-contain'
                 />              </div>
-              <div className='grid flex-1 text-left text-sm leading-tight'>
+              <div className='grid flex-1 text-left text-lg leading-tight'>
                 <span className='truncate font-semibold'>
                   {activeTeam.name}
                 </span>

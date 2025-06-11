@@ -53,9 +53,9 @@ export function TenantSelector() {
           aria-expanded={open}
           className="w-[240px] justify-between"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-primary">
             <Building className="h-4 w-4" />
-            {currentTenant ? currentTenant.name : "Select tenant..."}
+            {currentTenant ? currentTenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ') : "Select tenant..."}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -68,7 +68,7 @@ export function TenantSelector() {
             {userTenants.map((tenant) => (
               <CommandItem
                 key={tenant.name}
-                value={tenant.name}
+                value={tenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ')}
                 onSelect={() => {
                   setCurrentTenant(tenant);
                   setOpen(false);
@@ -80,7 +80,7 @@ export function TenantSelector() {
                     currentTenant?.name === tenant.name ? "opacity-100" : "opacity-0"
                   )}
                 />
-                {tenant.name}
+                {tenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ')}
               </CommandItem>
             ))}
           </CommandGroup>

@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { IconBrandFacebook, IconBrandGithub } from '@tabler/icons-react'
+import { IconBrandWindows } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,7 @@ type UserAuthFormProps = HTMLAttributes<HTMLFormElement>
 const formSchema = z.object({
   username: z // Changed from email to username as per OAuth2 standard for 'password' grant
     .string()
-    .min(1, { message: 'Please enter your username or email' }),
+    .min(1, { message: 'Please enter your username or intranet id' }),
   password: z
     .string()
     .min(1, {
@@ -55,7 +55,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       // For 'password' grant type, typically username is used.
       // If your API expects email, ensure 'username' field in form corresponds to that.
       await auth.login({ username: data.username, password: data.password, grant_type: 'password' })
-      toast.success('Login successful!')
+      toast.success('Login successful!', { duration: 10000 })
       
       // Get the redirect path from the URL query parameters or default to '/'
       const searchParams = new URLSearchParams(window.location.search)
@@ -69,7 +69,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       navigate({ to: redirectPath, replace: true })
     } catch (error: any) {
       const errorMsg = error?.detail?.[0]?.msg || error?.detail || 'Login failed. Please check your credentials.'
-      toast.error(errorMsg)
+      toast.error(errorMsg, { duration: 10000 })
     } finally {
       setIsLoading(false)
     }
@@ -90,9 +90,9 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           name='username'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username or Email</FormLabel>
+              <FormLabel>Username Or Intranet ID</FormLabel>
               <FormControl>
-                <Input placeholder='name@example.com' {...field} />
+                <Input placeholder='name@barclays.com' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -111,7 +111,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             </FormItem>
           )}
         />
-        <Button type='submit' className='w-full' disabled={isLoading}>
+        <Button type='submit' className='w-full bg-primary text-white hover:bg-primary/90' disabled={isLoading}>
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
         <div className='relative'>
@@ -124,16 +124,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             </span>
           </div>
         </div>
-        <div className='grid grid-cols-2 gap-4'>
-          <Button variant='outline' type='button'>
-            <IconBrandGithub className='mr-2 size-4' />
-            Github
-          </Button>
-          <Button variant='outline' type='button'>
-            <IconBrandFacebook className='mr-2 size-4' />
-            Facebook
-          </Button>
-        </div>
+        <Button 
+          variant='outline' 
+          type='button' 
+          className='w-full border-primary text-primary hover:bg-primary/10'
+        >
+          <IconBrandWindows className='mr-2 size-5' />
+          Sign in with Microsoft
+        </Button>
       </form>
     </Form>
   )
