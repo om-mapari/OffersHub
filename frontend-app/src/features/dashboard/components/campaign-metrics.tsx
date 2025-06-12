@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react'
-import { fetchCampaignsMetrics, CampaignsMetrics } from '../api/metrics'
+import { CampaignsMetrics } from '../api/metrics'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
-import { useTenant } from '@/context/TenantContext'
-import { useAuth } from '@/context/AuthContext'
+import { useDashboardData } from '../context/DashboardContext'
 
 // Custom Tooltip Component
 function CustomTooltip({ active, payload }: any) {
@@ -27,34 +25,7 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 export function CampaignMetrics() {
-  const { currentTenant } = useTenant()
-  const { token } = useAuth()
-  const [campaignsMetrics, setCampaignsMetrics] = useState<CampaignsMetrics | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!currentTenant || !token) {
-        setLoading(false)
-        return
-      }
-      
-      try {
-        setLoading(true)
-        const data = await fetchCampaignsMetrics(currentTenant.name, token)
-        setCampaignsMetrics(data)
-        setError(null)
-      } catch (err) {
-        setError('Failed to fetch campaign metrics')
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [currentTenant, token])
+  const { campaignsMetrics, loading, error } = useDashboardData();
 
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading campaign data...</div>

@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react'
 import { 
-  fetchCampaignCustomers,
   CampaignCustomersResponse,
   CampaignCustomer
 } from '../api/metrics'
 import { Progress } from '@/components/ui/progress'
-import { useTenant } from '@/context/TenantContext'
-import { useAuth } from '@/context/AuthContext'
+import { useDashboardData } from '../context/DashboardContext'
 
 // Mock data to use when API fails
 const mockCampaigns = {
@@ -43,50 +40,24 @@ const mockCampaigns = {
 };
 
 export function CampaignPerformance() {
-  const { currentTenant } = useTenant()
-  const { token } = useAuth()
-  const [campaignCustomers, setCampaignCustomers] = useState<CampaignCustomersResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [useDemo, setUseDemo] = useState(false)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!currentTenant || !token) {
-        setLoading(false)
-        return
-      }
-      
-      try {
-        setLoading(true)
-        const data = await fetchCampaignCustomers(currentTenant.name, token)
-        setCampaignCustomers(data)
-        setError(null)
-        setUseDemo(false)
-      } catch (err) {
-        console.error(err)
-        // Use demo data instead of showing error
-        setCampaignCustomers(mockCampaigns as CampaignCustomersResponse)
-        setError("Using demo data (API endpoint under maintenance)")
-        setUseDemo(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [currentTenant, token])
+  const { campaignCustomers, loading, error } = useDashboardData()
+  
+  // Determine if we need to show mock data
+  const useDemo = !campaignCustomers?.campaigns || campaignCustomers.campaigns.length === 0
 
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading campaign data...</div>
   }
 
-  if (!campaignCustomers?.campaigns || campaignCustomers.campaigns.length === 0) {
+  // If no real data and no explicit error, use mock data with a notification
+  const displayData = useDemo ? mockCampaigns : campaignCustomers
+
+  if (!displayData?.campaigns || displayData.campaigns.length === 0) {
     return <div className="flex items-center justify-center h-64">No campaign data available</div>
   }
 
   // Sort campaigns by acceptance rate
-  const sortedCampaigns = [...campaignCustomers.campaigns]
+  const sortedCampaigns = [...displayData.campaigns]
     .sort((a, b) => b.percentage_accepted - a.percentage_accepted)
     .slice(0, 5)
 
@@ -94,7 +65,7 @@ export function CampaignPerformance() {
     <div className="space-y-8">
       {useDemo && (
         <div className="text-amber-500 text-xs mb-2">
-          {error}
+          Using demo data (no active campaigns or API unavailable)
         </div>
       )}
       {sortedCampaigns.map((campaign) => (

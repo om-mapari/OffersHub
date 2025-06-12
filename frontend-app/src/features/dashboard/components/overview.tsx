@@ -1,8 +1,5 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Cell } from 'recharts'
-import { useEffect, useState } from 'react'
-import { fetchOffersMetrics, OffersMetrics } from '../api/metrics'
-import { useTenant } from '@/context/TenantContext'
-import { useAuth } from '@/context/AuthContext'
+import { useDashboardData } from '../context/DashboardContext'
 
 // 🧩 Custom Tooltip Component
 function CustomTooltip({ active, payload, label }: any) {
@@ -27,34 +24,7 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function Overview() {
-  const { currentTenant } = useTenant()
-  const { token } = useAuth()
-  const [offersMetrics, setOffersMetrics] = useState<OffersMetrics | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!currentTenant || !token) {
-        setLoading(false)
-        return
-      }
-      
-      try {
-        setLoading(true)
-        const data = await fetchOffersMetrics(currentTenant.name, token)
-        setOffersMetrics(data)
-        setError(null)
-      } catch (err) {
-        setError('Failed to fetch offers metrics')
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [currentTenant, token])
+  const { offersMetrics, loading, error } = useDashboardData();
 
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading offers data...</div>

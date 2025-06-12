@@ -1,11 +1,8 @@
-import { useEffect, useState } from 'react'
 import { 
-  fetchDeliveryStatus,
   DeliveryStatusResponse 
 } from '../api/metrics'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, Cell } from 'recharts'
-import { useTenant } from '@/context/TenantContext'
-import { useAuth } from '@/context/AuthContext'
+import { useDashboardData } from '../context/DashboardContext'
 
 // Custom Tooltip Component
 function CustomTooltip({ active, payload }: any) {
@@ -30,34 +27,7 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 export function DeliveryStatus() {
-  const { currentTenant } = useTenant()
-  const { token } = useAuth()
-  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatusResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!currentTenant || !token) {
-        setLoading(false)
-        return
-      }
-      
-      try {
-        setLoading(true)
-        const data = await fetchDeliveryStatus(currentTenant.name, token)
-        setDeliveryStatus(data)
-        setError(null)
-      } catch (err) {
-        setError('Failed to fetch delivery status')
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [currentTenant, token])
+  const { deliveryStatus, loading, error } = useDashboardData();
 
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading delivery status data...</div>

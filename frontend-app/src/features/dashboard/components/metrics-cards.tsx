@@ -9,8 +9,12 @@ import {
 } from '../api/metrics'
 import { useTenant } from '@/context/TenantContext'
 import { useAuth } from '@/context/AuthContext'
+import { useDashboardData } from '../context/DashboardContext'
 
-export function useMetricsData() {
+// Re-export the hook for backward compatibility if needed
+export const useMetricsData = useDashboardData;
+
+export function useMetricsDataOld() {
   const { currentTenant } = useTenant()
   const { token } = useAuth()
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatusResponse | null>(null)
