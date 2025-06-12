@@ -11,7 +11,16 @@ import { useEffect } from 'react'
 import { Switch } from '@/components/ui/switch'
 
 export function EditUserDialog() {
-  const { isEditDialogOpen, setIsEditDialogOpen, selectedUser, updateUser, isLoading } = useUsersContext()
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("EditUserDialog: UsersContext not available");
+    return null;
+  }
+  
+  const { isEditDialogOpen, setIsEditDialogOpen, selectedUser, updateUser, isLoading } = contextValue;
 
   const form = useForm<z.infer<typeof updateUserSchema>>({
     resolver: zodResolver(updateUserSchema),

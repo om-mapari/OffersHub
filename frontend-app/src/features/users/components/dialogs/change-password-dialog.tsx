@@ -14,7 +14,16 @@ const passwordChangeSchema = z.object({
 })
 
 export function ChangePasswordDialog() {
-  const { isChangePasswordDialogOpen, setIsChangePasswordDialogOpen, selectedUser, changeUserPassword, isLoading } = useUsersContext()
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("ChangePasswordDialog: UsersContext not available");
+    return null;
+  }
+  
+  const { isChangePasswordDialogOpen, setIsChangePasswordDialogOpen, selectedUser, changeUserPassword, isLoading } = contextValue;
   const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<z.infer<typeof passwordChangeSchema>>({

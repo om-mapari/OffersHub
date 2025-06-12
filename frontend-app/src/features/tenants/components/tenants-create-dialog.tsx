@@ -25,7 +25,16 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TenantsCreateDialog() {
-  const { isCreateDialogOpen, setIsCreateDialogOpen, createTenant, isLoading, error } = useTenantsContext();
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useTenantsContext();
+  } catch (error) {
+    console.warn("TenantsCreateDialog: TenantsContext not available");
+    return null;
+  }
+  
+  const { isCreateDialogOpen, setIsCreateDialogOpen, createTenant, isLoading, error } = contextValue;
 
   const form = useForm<CreateTenantInput>({
     resolver: zodResolver(createTenantSchema),

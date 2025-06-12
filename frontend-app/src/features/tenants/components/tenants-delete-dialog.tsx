@@ -12,6 +12,15 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TenantsDeleteDialog() {
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useTenantsContext();
+  } catch (error) {
+    console.warn("TenantsDeleteDialog: TenantsContext not available");
+    return null;
+  }
+  
   const { 
     isDeleteDialogOpen, 
     setIsDeleteDialogOpen, 
@@ -19,7 +28,7 @@ export function TenantsDeleteDialog() {
     deleteTenant,
     isLoading,
     error
-  } = useTenantsContext();
+  } = contextValue;
 
   function handleDelete() {
     if (!selectedTenant) return;

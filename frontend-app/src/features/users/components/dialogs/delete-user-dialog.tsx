@@ -4,7 +4,16 @@ import { useUsersContext } from '../../context/users-context'
 import { AlertTriangle } from 'lucide-react'
 
 export function DeleteUserDialog() {
-  const { isDeleteDialogOpen, setIsDeleteDialogOpen, selectedUser, deleteUser, isLoading } = useUsersContext()
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("DeleteUserDialog: UsersContext not available");
+    return null;
+  }
+  
+  const { isDeleteDialogOpen, setIsDeleteDialogOpen, selectedUser, deleteUser, isLoading } = contextValue;
 
   const handleDelete = async () => {
     if (selectedUser) {

@@ -21,7 +21,16 @@ const AVAILABLE_ROLES = [
 ]
 
 export function AssignRoleDialog() {
-  const { isAssignRoleDialogOpen, setIsAssignRoleDialogOpen, selectedUser, assignRoleToUser, isLoading } = useUsersContext()
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("AssignRoleDialog: UsersContext not available");
+    return null;
+  }
+  
+  const { isAssignRoleDialogOpen, setIsAssignRoleDialogOpen, selectedUser, assignRoleToUser, isLoading } = contextValue;
   const { token } = useAuth()
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [isLoadingTenants, setIsLoadingTenants] = useState(false)

@@ -1,11 +1,21 @@
 import { Button } from '@/components/ui/button'
 import { Plus, RefreshCw } from 'lucide-react'
 import { useUsersContext } from '../context/users-context'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 
 export function UsersPrimaryButtons() {
-  const { setIsCreateDialogOpen, refreshUsers } = useUsersContext()
   const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("UsersPrimaryButtons: UsersContext not available");
+    return null;
+  }
+  
+  const { setIsCreateDialogOpen, refreshUsers } = contextValue;
 
   const handleRefresh = async () => {
     setIsRefreshing(true)

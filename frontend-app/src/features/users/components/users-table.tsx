@@ -40,7 +40,15 @@ export function UsersTable<TData, TValue>({
   columns,
   data,
 }: UsersTableProps<TData, TValue>) {
-  const { isLoading } = useUsersContext()
+  // Try to use the context, but don't throw if it's not available
+  let isLoading = false;
+  try {
+    const context = useUsersContext();
+    isLoading = context.isLoading;
+  } catch (error) {
+    console.warn("UsersTable: UsersContext not available");
+  }
+  
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})

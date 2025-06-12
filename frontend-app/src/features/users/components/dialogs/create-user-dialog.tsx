@@ -10,7 +10,16 @@ import { z } from 'zod'
 import { createUserSchema } from '../../data/schema'
 
 export function CreateUserDialog() {
-  const { isCreateDialogOpen, setIsCreateDialogOpen, createUser, isLoading } = useUsersContext()
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("CreateUserDialog: UsersContext not available");
+    return null;
+  }
+  
+  const { isCreateDialogOpen, setIsCreateDialogOpen, createUser, isLoading } = contextValue;
   const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<z.infer<typeof createUserSchema>>({

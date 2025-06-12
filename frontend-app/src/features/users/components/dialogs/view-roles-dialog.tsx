@@ -8,6 +8,15 @@ import { useState } from 'react'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
 export function ViewRolesDialog() {
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("ViewRolesDialog: UsersContext not available");
+    return null;
+  }
+  
   const { 
     isViewRolesDialogOpen, 
     setIsViewRolesDialogOpen, 
@@ -15,7 +24,7 @@ export function ViewRolesDialog() {
     userTenantRoles, 
     removeRoleFromUser,
     isLoading 
-  } = useUsersContext()
+  } = contextValue;
   
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [roleToDelete, setRoleToDelete] = useState<{ username: string, tenant_name: string, role: string } | null>(null)

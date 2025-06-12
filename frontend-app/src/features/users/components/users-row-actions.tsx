@@ -16,6 +16,15 @@ interface UsersRowActionsProps {
 }
 
 export function UsersRowActions({ user }: UsersRowActionsProps) {
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useUsersContext();
+  } catch (error) {
+    console.warn("UsersRowActions: UsersContext not available");
+    return null;
+  }
+  
   const { 
     setSelectedUser, 
     setIsEditDialogOpen, 
@@ -24,7 +33,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
     setIsAssignRoleDialogOpen,
     setIsViewRolesDialogOpen,
     fetchUserTenantRoles
-  } = useUsersContext()
+  } = contextValue;
 
   return (
     <DropdownMenu>

@@ -16,7 +16,17 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const tenant = row.original;
-  const { setSelectedTenant, setIsDeleteDialogOpen } = useTenantsContext();
+  
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useTenantsContext();
+  } catch (error) {
+    console.warn("DataTableRowActions: TenantsContext not available");
+    return null;
+  }
+  
+  const { setSelectedTenant, setIsDeleteDialogOpen } = contextValue;
 
   const handleDelete = () => {
     setSelectedTenant(tenant);
