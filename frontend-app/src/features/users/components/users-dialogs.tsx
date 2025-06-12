@@ -1,51 +1,20 @@
-import { useUsers } from '../context/users-context'
-import { UsersActionDialog } from './users-action-dialog'
-import { UsersDeleteDialog } from './users-delete-dialog'
-import { UsersInviteDialog } from './users-invite-dialog'
+// Import all dialog components
+import { CreateUserDialog } from "@/features/users/components/dialogs/create-user-dialog";
+import { DeleteUserDialog } from "@/features/users/components/dialogs/delete-user-dialog";
+import { EditUserDialog } from "@/features/users/components/dialogs/edit-user-dialog";
+import { ChangePasswordDialog } from "@/features/users/components/dialogs/change-password-dialog";
+import { AssignRoleDialog } from "@/features/users/components/dialogs/assign-role-dialog";
+import { ViewRolesDialog } from "@/features/users/components/dialogs/view-roles-dialog";
 
 export function UsersDialogs() {
-  const { open, setOpen, currentRow, setCurrentRow } = useUsers()
   return (
     <>
-      <UsersActionDialog
-        key='user-add'
-        open={open === 'add'}
-        onOpenChange={() => setOpen('add')}
-      />
-
-      <UsersInviteDialog
-        key='user-invite'
-        open={open === 'invite'}
-        onOpenChange={() => setOpen('invite')}
-      />
-
-      {currentRow && (
-        <>
-          <UsersActionDialog
-            key={`user-edit-${currentRow.id}`}
-            open={open === 'edit'}
-            onOpenChange={() => {
-              setOpen('edit')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-            }}
-            currentRow={currentRow}
-          />
-
-          <UsersDeleteDialog
-            key={`user-delete-${currentRow.id}`}
-            open={open === 'delete'}
-            onOpenChange={() => {
-              setOpen('delete')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-            }}
-            currentRow={currentRow}
-          />
-        </>
-      )}
+      <CreateUserDialog />
+      <DeleteUserDialog />
+      <EditUserDialog />
+      <ChangePasswordDialog />
+      <AssignRoleDialog />
+      <ViewRolesDialog />
     </>
-  )
-}
+  );
+} 

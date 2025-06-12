@@ -1,20 +1,31 @@
-import { IconMailPlus, IconUserPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { useUsers } from '../context/users-context'
+import { Plus, RefreshCw } from 'lucide-react'
+import { useUsersContext } from '../context/users-context'
+import { useState } from 'react'
 
 export function UsersPrimaryButtons() {
-  const { setOpen } = useUsers()
+  const { setIsCreateDialogOpen, refreshUsers } = useUsersContext()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await refreshUsers()
+    setIsRefreshing(false)
+  }
+
   return (
-    <div className='flex gap-2'>
+    <div className="flex space-x-2">
       <Button
-        variant='outline'
-        className='space-x-1'
-        onClick={() => setOpen('invite')}
+        variant="outline"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={isRefreshing}
       >
-        <span>Invite User</span> <IconMailPlus size={18} />
+        <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+        {isRefreshing ? 'Refreshing...' : 'Refresh'}
       </Button>
-      <Button className='space-x-1' onClick={() => setOpen('add')}>
-        <span>Add User</span> <IconUserPlus size={18} />
+      <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" /> Create User
       </Button>
     </div>
   )

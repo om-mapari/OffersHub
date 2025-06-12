@@ -118,7 +118,7 @@ export function CampaignEditDialog() {
     const result: StructuredCriterion[] = [];
     
     Object.entries(criteria).forEach(([key, value]) => {
-      let criterion = key;
+      const criterion = key;
       let operator = '=';
       let criterionValue = String(value);
       
