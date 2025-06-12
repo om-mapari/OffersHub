@@ -103,25 +103,25 @@ def generate_users(conn, count: int = 10) -> List[str]:
             "username": "mohan",
             "password_hash": pwd_context.hash("mohan"),
             "full_name": "System Administrator",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "himashu",
             "password_hash": pwd_context.hash("himashu"),
             "full_name": "System Administrator",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "coderom1",
             "password_hash": pwd_context.hash("coderom1"),
             "full_name": "Om Mapari",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "ankita",
             "password_hash": pwd_context.hash("ankita"),
             "full_name": "Ankita D",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "coderom",
