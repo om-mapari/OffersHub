@@ -18,21 +18,21 @@ import ChatBot from '../ai-chat'
 function OffersContent() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
-  const { 
-    offers, 
-    isLoading, 
-    error, 
-    primaryRole, 
+  const {
+    offers,
+    isLoading,
+    error,
+    primaryRole,
     hasActionPermission,
     refreshOffers
   } = useOffers();
-  
+
   // Check if user can create offers
   const canCreate = hasActionPermission('CREATE');
-  
+
   // Check if user can approve/reject offers
   const canApproveReject = hasActionPermission('APPROVE_REJECT');
-  
+
   // Check if user can submit offers
   const canSubmit = hasActionPermission('SUBMIT');
 
@@ -52,19 +52,28 @@ function OffersContent() {
           <div>
             <h2 className='text-2xl font-bold tracking-tight'>Offers</h2>
             <p className='text-muted-foreground'>
-              {currentTenant 
-                ? `Manage offers for ${currentTenant.name}`
-                : "Select a tenant to manage offers"}
+              {currentTenant ? (
+                <>
+                  Manage offers for{' '}
+                  <strong className="font-bold text-primary">
+                    {currentTenant.name
+                      .split('_')
+                      .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                      .join(' ')}
+                  </strong>
+                </>
+              ) : (
+                "Select a tenant to manage offers"
+              )}
             </p>
             <div className="mt-2 flex items-center">
               <span className="text-sm font-medium mr-2">Your role:</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                primaryRole === 'Super Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
+              <span className={`text-xs px-2 py-1 rounded-full ${primaryRole === 'Super Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
                 primaryRole === 'Admin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                primaryRole === 'Create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                primaryRole === 'Approver' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' :
-                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-              }`}>
+                  primaryRole === 'Create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                    primaryRole === 'Approver' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                }`}>
                 {primaryRole}
               </span>
             </div>
@@ -82,9 +91,9 @@ function OffersContent() {
               <p className="text-red-500">{error}</p>
             </div>
           ) : (
-            <OffersTable 
-              data={offers} 
-              columns={columns} 
+            <OffersTable
+              data={offers}
+              columns={columns}
               permissions={{
                 canApproveReject,
                 canSubmit,
@@ -95,7 +104,7 @@ function OffersContent() {
         </div>
       </Main>
 
-      <OffersDialogs 
+      <OffersDialogs
         permissions={{
           canApproveReject,
           canSubmit,
