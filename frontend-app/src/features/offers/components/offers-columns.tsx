@@ -82,7 +82,7 @@ export const columns: ColumnDef<Offer>[] = [
       )
     },
     cell: ({ row }) => (
-      <div className="font-medium">{row.getValue('created_by_username')}</div>
+      <div className="font-medium">{row.getValue('created_by_username') || 'System'}</div>
     ),
     enableSorting: true,
     enableHiding: true,

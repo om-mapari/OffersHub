@@ -15,7 +15,7 @@ const prepareOffersForExport = (offers: Offer[]) => {
       Description: offer.offer_description,
       Type: offer.offer_type,
       Status: offer.status,
-      'Created By': offer.created_by_username,
+      'Created By': offer.created_by_username || 'System',
       'Created At': new Date(offer.created_at).toLocaleDateString(),
       'Updated At': new Date(offer.updated_at).toLocaleDateString(),
       Tenant: offer.tenant_name,

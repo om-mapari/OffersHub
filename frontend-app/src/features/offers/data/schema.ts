@@ -19,7 +19,7 @@ export const offerSchema = z.object({
   data: z.record(z.any()),
   offer_description: z.string(),
   offer_type: z.string(),
-  created_by_username: z.string(),
+  created_by_username: z.string().nullable(),
   comments: z.string().nullable(),
 })
 
