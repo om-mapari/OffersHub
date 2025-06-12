@@ -61,6 +61,9 @@ docker-compose down
 docker-compose logs -f
 ```
 
+### Convert the file to Unix-style line endings:
+dos2unix ./database-init/00-init-db.sh
+
 ## 🔧 Setup (Local Development)
 
 1. Create a Python virtual environment:

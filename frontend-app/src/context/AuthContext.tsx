@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser as StoreUser, UserPasswordChange, LoginCredentials, UserRole as StoreUserRole } from '@/stores/authStore';
 
 // Define user roles
@@ -21,6 +21,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Global flag to track auth initialization across all instances
+// Using module-level variable ensures singleton initialization
+let authInitialized = false;
+// Promise to track ongoing initialization
+let authInitPromise: Promise<void> | null = null;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const {
     user,
@@ -32,9 +38,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth,
   } = useAuthStore(state => state.auth);
 
-  // Initialize with mock data for testing
+  // Local ref to track if this instance initiated auth
+  const didInitRef = useRef(false);
+
+  // Initialize auth only once across all provider instances
   useEffect(() => {
-    initializeAuth();
+    const initAuth = async () => {
+      if (authInitialized) {
+        console.log('Auth already initialized globally, skipping');
+        return;
+      }
+      
+      if (authInitPromise) {
+        console.log('Auth initialization already in progress, waiting...');
+        return authInitPromise;
+      }
+      
+      console.log('Starting global auth initialization');
+      authInitialized = true;
+      didInitRef.current = true;
+      
+      // Create a promise for the initialization so other instances can wait for it
+      authInitPromise = initializeAuth().finally(() => {
+        authInitPromise = null;
+      });
+      
+      return authInitPromise;
+    };
+    
+    initAuth();
+    
+    // Cleanup function
+    return () => {
+      // Only reset the global flag if this instance was the one that initialized
+      if (didInitRef.current) {
+        console.log('Auth provider that initialized is unmounting');
+      }
+    };
   }, [initializeAuth]);
 
   const login = async (credentials: LoginCredentials) => {
@@ -44,6 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = (redirectUrl?: string) => {
     storeLogout();
+    // Reset initialization flag to ensure re-initialization on next login
+    authInitialized = false;
+    authInitPromise = null;
+    didInitRef.current = false;
     // Let the component handle navigation after logout
     if (redirectUrl) {
       window.location.href = redirectUrl;

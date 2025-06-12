@@ -122,7 +122,11 @@ export const useAuthStore = create<AppState>()((set, get) => ({
       }
     },
     initializeAuth: async () => {
-      if (get().auth.isInitialized) return;
+      if (get().auth.isInitialized) {
+        console.log('Auth store already initialized, skipping');
+        return;
+      }
+      console.log('Initializing auth store');
       set(state => ({ auth: { ...state.auth, isLoading: true } }));
       const token = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
       console.log('Initializing auth, token exists:', !!token);
@@ -140,6 +144,7 @@ export const useAuthStore = create<AppState>()((set, get) => ({
     logout: () => {
       // Optionally: Call a backend /logout endpoint
       // await authApi.logoutUser(get().auth.accessToken);
+      authApi.clearAuthCache(); // Clear API cache on logout
       get().auth.reset();
     },
     changePassword: async (data: UserPasswordChange) => {
@@ -157,20 +162,22 @@ export const useAuthStore = create<AppState>()((set, get) => ({
         set(state => ({ auth: { ...state.auth, isLoading: false } }));
       }
     },
-    reset: () =>
+    reset: () => {
+      authApi.clearAuthCache(); // Clear API cache on reset
       set(state => {
         Cookies.remove(ACCESS_TOKEN_COOKIE_KEY);
-  return {
-    auth: {
+        return {
+          auth: {
             ...state.auth,
-      user: null,
+            user: null,
             accessToken: null,
             isLoading: false,
             error: null,
           },
         };
-        }),
+      });
     },
+  },
 }))
 
 // export const useAuth = () => useAuthStore((state) => state.auth)

@@ -1,6 +1,84 @@
 // Using VITE_API_BASE_URL from .env or defaulting to localhost:8000
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
+// Simple cache implementation for API responses
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+interface ApiCache {
+  [key: string]: CacheEntry<any>;
+}
+
+// Cache expiration time in milliseconds (5 minutes)
+const CACHE_EXPIRATION = 5 * 60 * 1000;
+
+// In-memory cache for API responses
+const apiCache: ApiCache = {};
+
+// Track ongoing fetch requests to prevent duplicate calls
+const ongoingFetches: Record<string, Promise<any>> = {};
+
+// Helper function to get or set cached data
+async function getOrFetchData<T>(
+  cacheKey: string,
+  fetchFn: () => Promise<T>
+): Promise<T> {
+  const now = Date.now();
+  const cachedData = apiCache[cacheKey];
+  
+  // Return cached data if it exists and hasn't expired
+  if (cachedData && now - cachedData.timestamp < CACHE_EXPIRATION) {
+    console.log(`Using cached data for ${cacheKey}`);
+    return cachedData.data;
+  }
+  
+  // If there's already an ongoing fetch for this key, return that promise
+  // This prevents duplicate requests if multiple components call the same API
+  // at the same time before the first one resolves
+  if (ongoingFetches[cacheKey] !== undefined) {
+    console.log(`Reusing in-progress fetch for ${cacheKey}`);
+    return ongoingFetches[cacheKey];
+  }
+  
+  // Fetch fresh data
+  console.log(`Fetching fresh data for ${cacheKey}`);
+  
+  // Create a promise and store it to prevent duplicate requests
+  const fetchPromise = fetchFn().then(data => {
+    // Cache the successful result
+    apiCache[cacheKey] = {
+      data,
+      timestamp: now
+    };
+    // Remove from ongoing fetches
+    delete ongoingFetches[cacheKey];
+    return data;
+  }).catch(error => {
+    // Remove from ongoing fetches on error
+    delete ongoingFetches[cacheKey];
+    throw error;
+  });
+  
+  // Store the promise
+  ongoingFetches[cacheKey] = fetchPromise;
+  
+  return fetchPromise;
+}
+
+// Helper function to clear cache
+export function clearAuthCache(): void {
+  Object.keys(apiCache).forEach(key => {
+    delete apiCache[key];
+  });
+  // Also clear ongoing fetches
+  Object.keys(ongoingFetches).forEach(key => {
+    delete ongoingFetches[key];
+  });
+  console.log('Auth API cache cleared');
+}
+
 export interface LoginError {
   detail?: string | { msg: string }[];
 }
@@ -68,6 +146,9 @@ export async function loginForAccessToken(credentials: LoginCredentials): Promis
 
   console.log('Sending login request to:', `${API_BASE_URL}/auth/token`);
   
+  // Clear cache on login to ensure fresh data
+  clearAuthCache();
+  
   const response = await fetch(`${API_BASE_URL}/auth/token`, {
     method: 'POST',
     headers: {
@@ -79,21 +160,25 @@ export async function loginForAccessToken(credentials: LoginCredentials): Promis
 }
 
 export async function getCurrentUser(token: string): Promise<User> {
-  console.log('Fetching current user from:', `${API_BASE_URL}/auth/me`);
-  
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+  return getOrFetchData<User>(`current-user-${token.substring(0, 10)}`, async () => {
+    console.log('Fetching current user from:', `${API_BASE_URL}/auth/me`);
+    
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return handleResponse<User>(response);
   });
-  return handleResponse<User>(response);
 }
 
 export async function getUserTenants(token: string): Promise<UserTenantInfo[]> {
-  console.log('Fetching user tenants from:', `${API_BASE_URL}/users/me/tenants`);
-  
-  const response = await fetch(`${API_BASE_URL}/users/me/tenants`, {
-    headers: { Authorization: `Bearer ${token}` },
+  return getOrFetchData<UserTenantInfo[]>(`user-tenants-${token.substring(0, 10)}`, async () => {
+    console.log('Fetching user tenants from:', `${API_BASE_URL}/users/me/tenants`);
+    
+    const response = await fetch(`${API_BASE_URL}/users/me/tenants`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return handleResponse<UserTenantInfo[]>(response);
   });
-  return handleResponse<UserTenantInfo[]>(response);
 }
 
 export async function changeUserPassword(data: UserPasswordChange, token: string): Promise<Msg> {

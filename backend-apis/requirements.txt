@@ -10,9 +10,14 @@ python-dotenv
 alembic
 greenlet # Required by SQLAlchemy for async ORM features, good to have if future plans involve asyncpg
 python-multipart # Required for form data handling
+markdown
 
 # Testing dependencies
 pytest
 pytest-asyncio
 httpx
 pytest-cov
+
+# data genration 
+faker
+argparse

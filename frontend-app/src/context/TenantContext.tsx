@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { buildUserApiUrl } from "@/config/api";
+import { getUserTenants } from "@/features/auth/api";
 
 // Define Tenant interface based on API response
 export interface Tenant {
@@ -22,9 +23,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [userTenants, setUserTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
-  // Fetch user tenants from API
+  // Fetch user tenants from API using cached auth API
   useEffect(() => {
     async function fetchUserTenants() {
       if (!token) {
@@ -34,30 +35,21 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(true);
       try {
-        const response = await fetch(buildUserApiUrl('/me/tenants'), {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Fetched tenant data:', data);
-          
-          // Transform API response to match our Tenant interface
-          const tenants: Tenant[] = data.map((item: any) => ({
-            name: item.tenant_name,
-            roles: item.roles || []
-          }));
-          
-          setUserTenants(tenants);
-          
-          // Set default tenant if available
-          if (tenants.length > 0 && !currentTenant) {
-            setCurrentTenant(tenants[0]);
-          }
-        } else {
-          console.error('Failed to fetch tenants:', await response.text());
+        // This will use the cached data if available (implemented in api.ts)
+        const data = await getUserTenants(token);
+        console.log('Fetched tenant data:', data);
+        
+        // Transform API response to match our Tenant interface
+        const tenants: Tenant[] = data.map((item: any) => ({
+          name: item.tenant_name,
+          roles: item.roles || []
+        }));
+        
+        setUserTenants(tenants);
+        
+        // Set default tenant if available
+        if (tenants.length > 0 && !currentTenant) {
+          setCurrentTenant(tenants[0]);
         }
       } catch (error) {
         console.error('Error fetching tenants:', error);
@@ -67,7 +59,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
 
     fetchUserTenants();
-  }, [token]);
+  }, [token, user]);
 
   return (
     <TenantContext.Provider

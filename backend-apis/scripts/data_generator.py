@@ -31,7 +31,7 @@ DB_PARAMS = {
     "dbname": "offer_management",
     "user": "postgres",
     "password": "postgres",
-    "host": "135.13.8.201",
+    "host": "127.0.0.1",
     "port": "5432"
 }
 
@@ -103,25 +103,25 @@ def generate_users(conn, count: int = 10) -> List[str]:
             "username": "mohan",
             "password_hash": pwd_context.hash("mohan"),
             "full_name": "System Administrator",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "himashu",
             "password_hash": pwd_context.hash("himashu"),
             "full_name": "System Administrator",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "coderom1",
             "password_hash": pwd_context.hash("coderom1"),
             "full_name": "Om Mapari",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "ankita",
             "password_hash": pwd_context.hash("ankita"),
             "full_name": "Ankita D",
-            "is_super_admin": True
+            "is_super_admin": False
         },
         {
             "username": "coderom",
@@ -660,15 +660,24 @@ def generate_campaign_customers(conn, campaign_ids: List[int], customer_ids: Lis
         
         unique_pairs.add(pair)
         
-        # Get a valid offer ID for the campaign
+        # Get a valid offer ID and tenant_name for the campaign
         cursor = conn.cursor()
         try:
-            cursor.execute("SELECT offer_id FROM campaigns WHERE id = %s", (campaign_id,))
+            cursor.execute("SELECT offer_id, tenant_name FROM campaigns WHERE id = %s", (campaign_id,))
             result = cursor.fetchone()
-            offer_id = result[0] if result else random.choice(offer_ids)
+            if result:
+                offer_id = result[0]
+                tenant_name = result[1]
+            else:
+                offer_id = random.choice(offer_ids)
+                # Get a random tenant name from the database
+                cursor.execute("SELECT name FROM tenants LIMIT 1")
+                tenant_result = cursor.fetchone()
+                tenant_name = tenant_result[0] if tenant_result else "credit_card"  # Default fallback
         except Exception as e:
-            print(f"Error getting offer_id for campaign {campaign_id}: {e}")
+            print(f"Error getting offer_id and tenant_name for campaign {campaign_id}: {e}")
             offer_id = random.choice(offer_ids)
+            tenant_name = "credit_card"  # Default fallback
         
         delivery_status = random.choice(DELIVERY_STATUSES)
         sent_at = fake.date_time_between(start_date="-30d", end_date="now") if delivery_status != 'pending' else None
@@ -677,6 +686,7 @@ def generate_campaign_customers(conn, campaign_ids: List[int], customer_ids: Lis
             "campaign_id": campaign_id,
             "customer_id": customer_id,
             "offer_id": offer_id,
+            "tenant_name": tenant_name,
             "delivery_status": delivery_status,
             "sent_at": sent_at
         })
@@ -693,7 +703,7 @@ def generate_campaign_customers(conn, campaign_ids: List[int], customer_ids: Lis
     
     insert_query = """
         INSERT INTO campaign_customers (
-            campaign_id, customer_id, offer_id, delivery_status, sent_at
+            campaign_id, customer_id, offer_id, tenant_name, delivery_status, sent_at
         )
         VALUES %s
         ON CONFLICT (campaign_id, customer_id) DO NOTHING
@@ -701,7 +711,7 @@ def generate_campaign_customers(conn, campaign_ids: List[int], customer_ids: Lis
     cc_data = [
         (
             cc["campaign_id"], cc["customer_id"], cc["offer_id"],
-            cc["delivery_status"], cc["sent_at"]
+            cc["tenant_name"], cc["delivery_status"], cc["sent_at"]
         )
         for cc in campaign_customers
     ]

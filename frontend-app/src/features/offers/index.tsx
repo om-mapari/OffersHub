@@ -8,119 +8,25 @@ import { columns } from './components/offers-columns'
 import { OffersDialogs } from './components/offers-dialogs'
 import { OffersPrimaryButtons } from './components/offers-primary-buttons'
 import { OffersTable } from './components/offers-table'
-import OffersProvider from './context/offers-context'
-import { offerListSchema, Offer } from './data/schema'
+import OffersProvider, { useOffers } from './context/offers-context'
 import { useTenant } from '@/context/TenantContext'
 import { useAuth } from '@/context/AuthContext'
-import { useEffect, useState, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
 import ChatBot from '../ai-chat'
-import { buildUserApiUrl, buildTenantApiUrl } from "@/config/api";
 
-// Define permissions for different offer operations
-const PERMISSIONS = {
-  CREATE: ["admin", "create"],
-  READ: ["admin", "create", "approver", "read_only"],
-  UPDATE_DRAFT: ["admin", "create"],
-  UPDATE_ADMIN: ["admin"],
-  DELETE: ["admin"],
-  SUBMIT: ["admin", "create"],
-  APPROVE_REJECT: ["admin", "approver"],
-  COMMENT: ["admin", "create", "approver"]
-};
-
-export default function Offers() {
+// Component for the content to avoid provider/consumer in same component
+function OffersContent() {
   const { currentTenant } = useTenant();
-  const { user, hasPermission, token } = useAuth();
-  const [offers, setOffers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [parsedOffers, setParsedOffers] = useState<Offer[]>([]);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const { user } = useAuth();
+  const { 
+    offers, 
+    isLoading, 
+    error, 
+    primaryRole, 
+    hasActionPermission,
+    refreshOffers
+  } = useOffers();
   
-  // Check if user has permission for a specific action
-  const hasActionPermission = (action: keyof typeof PERMISSIONS) => {
-    if (!currentTenant) return false;
-    return PERMISSIONS[action].some(role => userRoles.includes(role));
-  };
-  
-  // Fetch user roles for the current tenant
-  useEffect(() => {
-    if (!currentTenant || !token) return;
-    
-    // Get user roles for the current tenant
-    fetch(buildUserApiUrl('/me/tenants'), {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Find the current tenant's roles
-      const tenantInfo = data.find((t: any) => t.tenant_name === currentTenant.name);
-      if (tenantInfo) {
-        setUserRoles(tenantInfo.roles || []);
-      } else {
-        setUserRoles([]);
-      }
-    })
-    .catch(err => {
-      console.error('Error fetching user roles:', err);
-      setUserRoles([]);
-    });
-  }, [currentTenant, token]);
-  
-  // Function to fetch offers data
-  const fetchOffers = useCallback(async () => {
-    if (!currentTenant || !token) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(
-        buildTenantApiUrl(currentTenant.name, '/offers/?skip=0&limit=100'), 
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched offers:', data);
-        setOffers(data);
-        
-        // Parse offer list
-        try {
-          if (data.length > 0) {
-            const parsed = offerListSchema.parse(data);
-            setParsedOffers(parsed);
-          } else {
-            setParsedOffers([]);
-          }
-        } catch (parseError) {
-          console.error('Error parsing offers:', parseError);
-          setError('Error processing offer data.');
-        }
-      } else {
-        console.error('Failed to fetch offers:', await response.text());
-        setError('Failed to fetch offers. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error fetching offers:', error);
-      setError('An error occurred while fetching offers.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentTenant, token]);
-  
-  // Fetch offers when tenant changes
-  useEffect(() => {
-    fetchOffers();
-  }, [fetchOffers]);
-
   // Check if user can create offers
   const canCreate = hasActionPermission('CREATE');
   
@@ -130,24 +36,8 @@ export default function Offers() {
   // Check if user can submit offers
   const canSubmit = hasActionPermission('SUBMIT');
 
-  // Get the highest priority role for display
-  const getPrimaryUserRole = () => {
-    if (!currentTenant) return 'None';
-    if (user?.isSuperAdmin) return 'Super Admin';
-    
-    // Priority order: Admin > Create > Approver > Read Only
-    if (userRoles.includes('admin')) return 'Admin';
-    if (userRoles.includes('create')) return 'Create';
-    if (userRoles.includes('approver')) return 'Approver';
-    if (userRoles.includes('read_only')) return 'Read Only';
-    
-    return 'None';
-  };
-  
-  const primaryRole = getPrimaryUserRole();
-
   return (
-    <OffersProvider>
+    <>
       <Header fixed>
         <Search />
         <div className='ml-auto flex items-center space-x-4'>
@@ -193,7 +83,7 @@ export default function Offers() {
             </div>
           ) : (
             <OffersTable 
-              data={parsedOffers} 
+              data={offers} 
               columns={columns} 
               permissions={{
                 canApproveReject,
@@ -215,9 +105,17 @@ export default function Offers() {
           canUpdateDraft: hasActionPermission('UPDATE_DRAFT'),
           canUpdateAdmin: hasActionPermission('UPDATE_ADMIN')
         }}
-        onActionComplete={fetchOffers}
+        onActionComplete={refreshOffers}
       />
       <ChatBot />
+    </>
+  );
+}
+
+export default function Offers() {
+  return (
+    <OffersProvider>
+      <OffersContent />
     </OffersProvider>
   )
 } 
