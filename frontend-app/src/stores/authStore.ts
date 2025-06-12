@@ -14,7 +14,7 @@ export interface UserGroup {
   roles: UserRole[];
 }
 
-export interface AuthUser extends Omit<ApiUser, 'is_active' | 'is_superuser' | 'full_name'> {
+export interface AuthUser extends Omit<ApiUser, 'is_active' | 'is_superuser' | 'is_super_admin' | 'full_name'> {
   isActive: boolean;
   isSuperAdmin: boolean;
   fullName: string | null;
@@ -106,7 +106,7 @@ export const useAuthStore = create<AppState>()((set, get) => ({
         const authUser: AuthUser = {
           ...apiUser,
           isActive: apiUser.is_active ?? true,
-          isSuperAdmin: apiUser.is_superuser ?? false,
+          isSuperAdmin: apiUser.is_super_admin ?? false,
           fullName: apiUser.full_name ?? apiUser.username,
           email: apiUser.email ?? '',
           groups: userGroups,

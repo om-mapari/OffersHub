@@ -19,18 +19,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useTenantsContext } from "../context/tenants-context";
 import { CreateTenantInput, createTenantSchema } from "../data/schema";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TenantsCreateDialog() {
-  const { isCreateDialogOpen, setIsCreateDialogOpen, createTenant, isLoading } = useTenantsContext();
+  const { isCreateDialogOpen, setIsCreateDialogOpen, createTenant, isLoading, error } = useTenantsContext();
 
   const form = useForm<CreateTenantInput>({
     resolver: zodResolver(createTenantSchema),
     defaultValues: {
       name: "",
-      description: "",
     },
   });
 
@@ -62,22 +62,14 @@ export function TenantsCreateDialog() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Brief description of the tenant"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
             <DialogFooter>
               <Button
                 type="button"

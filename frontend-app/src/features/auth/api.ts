@@ -108,6 +108,7 @@ export interface User {
   email?: string;
   is_active?: boolean;
   is_superuser?: boolean;
+  is_super_admin?: boolean;
   created_at?: string;
   id?: string;
   avatar?: string;
@@ -166,7 +167,9 @@ export async function getCurrentUser(token: string): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return handleResponse<User>(response);
+    const userData = await handleResponse<User>(response);
+    console.log('Raw user data from API:', userData);
+    return userData;
   });
 }
 

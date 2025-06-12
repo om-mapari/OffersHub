@@ -32,6 +32,60 @@ interface CampaignsContextType {
   setIsCompleteDialogOpen: (isOpen: boolean) => void;
 }
 
+// Create a fallback context with no-op functions
+const createFallbackContext = (): CampaignsContextType => ({
+  campaigns: [],
+  isLoading: false,
+  error: null,
+  fetchCampaigns: async () => {
+    console.error('CampaignsProvider not available - cannot fetch campaigns');
+  },
+  createCampaign: async () => {
+    console.error('CampaignsProvider not available - cannot create campaign');
+    return null;
+  },
+  selectedCampaign: null,
+  setSelectedCampaign: () => {
+    console.error('CampaignsProvider not available - cannot set selected campaign');
+  },
+  isCreateDialogOpen: false,
+  setIsCreateDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isViewDialogOpen: false,
+  setIsViewDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isEditDialogOpen: false,
+  setIsEditDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isDeleteDialogOpen: false,
+  setIsDeleteDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isApproveDialogOpen: false,
+  setIsApproveDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isActivateDialogOpen: false,
+  setIsActivateDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isPauseDialogOpen: false,
+  setIsPauseDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isResumeDialogOpen: false,
+  setIsResumeDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isCompleteDialogOpen: false,
+  setIsCompleteDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+});
+
 const CampaignsContext = createContext<CampaignsContextType | undefined>(undefined);
 
 export function CampaignsProvider({ children }: { children: ReactNode }) {
@@ -140,7 +194,8 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
 export function useCampaigns() {
   const context = useContext(CampaignsContext);
   if (context === undefined) {
-    throw new Error('useCampaigns must be used within a CampaignsProvider');
+    console.warn('useCampaigns must be used within a CampaignsProvider. Using fallback context.');
+    return createFallbackContext();
   }
   return context;
 } 

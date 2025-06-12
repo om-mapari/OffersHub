@@ -29,6 +29,7 @@ import { Route as AuthenticatedUsersIndexImport } from './routes/_authenticated/
 import { Route as AuthenticatedTenantsIndexImport } from './routes/_authenticated/tenants/index'
 import { Route as AuthenticatedSettingsIndexImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedOffersIndexImport } from './routes/_authenticated/offers/index'
+import { Route as AuthenticatedCampaignsIndexImport } from './routes/_authenticated/campaigns/index'
 import { Route as AuthenticatedSettingsNotificationsImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsDisplayImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceImport } from './routes/_authenticated/settings/appearance'
@@ -147,6 +148,13 @@ const AuthenticatedOffersIndexRoute = AuthenticatedOffersIndexImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedOffersRouteRoute,
 } as any)
+
+const AuthenticatedCampaignsIndexRoute =
+  AuthenticatedCampaignsIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCampaignsRouteRoute,
+  } as any)
 
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsImport.update({
@@ -306,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsNotificationsImport
       parentRoute: typeof AuthenticatedSettingsRouteImport
     }
+    '/_authenticated/campaigns/': {
+      id: '/_authenticated/campaigns/'
+      path: '/'
+      fullPath: '/campaigns/'
+      preLoaderRoute: typeof AuthenticatedCampaignsIndexImport
+      parentRoute: typeof AuthenticatedCampaignsRouteImport
+    }
     '/_authenticated/offers/': {
       id: '/_authenticated/offers/'
       path: '/'
@@ -338,6 +353,20 @@ declare module '@tanstack/react-router' {
 }
 
 // Create and export the route tree
+
+interface AuthenticatedCampaignsRouteRouteChildren {
+  AuthenticatedCampaignsIndexRoute: typeof AuthenticatedCampaignsIndexRoute
+}
+
+const AuthenticatedCampaignsRouteRouteChildren: AuthenticatedCampaignsRouteRouteChildren =
+  {
+    AuthenticatedCampaignsIndexRoute: AuthenticatedCampaignsIndexRoute,
+  }
+
+const AuthenticatedCampaignsRouteRouteWithChildren =
+  AuthenticatedCampaignsRouteRoute._addFileChildren(
+    AuthenticatedCampaignsRouteRouteChildren,
+  )
 
 interface AuthenticatedOffersRouteRouteChildren {
   AuthenticatedOffersIndexRoute: typeof AuthenticatedOffersIndexRoute
@@ -405,7 +434,7 @@ const AuthenticatedUsersRouteRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedCampaignsRouteRoute: typeof AuthenticatedCampaignsRouteRoute
+  AuthenticatedCampaignsRouteRoute: typeof AuthenticatedCampaignsRouteRouteWithChildren
   AuthenticatedOffersRouteRoute: typeof AuthenticatedOffersRouteRouteWithChildren
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedTenantsRouteRoute: typeof AuthenticatedTenantsRouteRouteWithChildren
@@ -414,7 +443,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedCampaignsRouteRoute: AuthenticatedCampaignsRouteRoute,
+  AuthenticatedCampaignsRouteRoute:
+    AuthenticatedCampaignsRouteRouteWithChildren,
   AuthenticatedOffersRouteRoute: AuthenticatedOffersRouteRouteWithChildren,
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedTenantsRouteRoute: AuthenticatedTenantsRouteRouteWithChildren,
@@ -427,7 +457,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 export interface FileRoutesByFullPath {
   '': typeof AuthenticatedRouteRouteWithChildren
-  '/campaigns': typeof AuthenticatedCampaignsRouteRoute
+  '/campaigns': typeof AuthenticatedCampaignsRouteRouteWithChildren
   '/offers': typeof AuthenticatedOffersRouteRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/tenants': typeof AuthenticatedTenantsRouteRouteWithChildren
@@ -444,6 +474,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/campaigns/': typeof AuthenticatedCampaignsIndexRoute
   '/offers/': typeof AuthenticatedOffersIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tenants/': typeof AuthenticatedTenantsIndexRoute
@@ -451,7 +482,6 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
-  '/campaigns': typeof AuthenticatedCampaignsRouteRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/401': typeof errors401Route
@@ -464,6 +494,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/campaigns': typeof AuthenticatedCampaignsIndexRoute
   '/offers': typeof AuthenticatedOffersIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tenants': typeof AuthenticatedTenantsIndexRoute
@@ -473,7 +504,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRouteRoute
+  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRouteRouteWithChildren
   '/_authenticated/offers': typeof AuthenticatedOffersRouteRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/_authenticated/tenants': typeof AuthenticatedTenantsRouteRouteWithChildren
@@ -490,6 +521,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/campaigns/': typeof AuthenticatedCampaignsIndexRoute
   '/_authenticated/offers/': typeof AuthenticatedOffersIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tenants/': typeof AuthenticatedTenantsIndexRoute
@@ -517,13 +549,13 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
+    | '/campaigns/'
     | '/offers/'
     | '/settings/'
     | '/tenants/'
     | '/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/campaigns'
     | '/forgot-password'
     | '/sign-in'
     | '/401'
@@ -536,6 +568,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
+    | '/campaigns'
     | '/offers'
     | '/settings'
     | '/tenants'
@@ -560,6 +593,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
+    | '/_authenticated/campaigns/'
     | '/_authenticated/offers/'
     | '/_authenticated/settings/'
     | '/_authenticated/tenants/'
@@ -622,7 +656,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/campaigns": {
       "filePath": "_authenticated/campaigns/route.tsx",
-      "parent": "/_authenticated"
+      "parent": "/_authenticated",
+      "children": [
+        "/_authenticated/campaigns/"
+      ]
     },
     "/_authenticated/offers": {
       "filePath": "_authenticated/offers/route.tsx",
@@ -696,6 +733,10 @@ export const routeTree = rootRoute
     "/_authenticated/settings/notifications": {
       "filePath": "_authenticated/settings/notifications.tsx",
       "parent": "/_authenticated/settings"
+    },
+    "/_authenticated/campaigns/": {
+      "filePath": "_authenticated/campaigns/index.tsx",
+      "parent": "/_authenticated/campaigns"
     },
     "/_authenticated/offers/": {
       "filePath": "_authenticated/offers/index.tsx",

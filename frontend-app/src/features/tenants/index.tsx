@@ -10,13 +10,29 @@ import { TenantsPrimaryButtons } from './components/tenants-primary-buttons'
 import { TenantsTable } from './components/tenants-table'
 import TenantsProvider, { useTenantsContext } from './context/tenants-context'
 import { tenantListSchema } from './data/schema'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 function TenantsContent() {
-  const { tenants, isLoading } = useTenantsContext()
+  const { tenants, isLoading, error } = useTenantsContext()
+  const { user } = useAuth()
+  
+  // Check if user is super admin
+  if (!user?.isSuperAdmin) {
+    return (
+      <Alert variant="destructive" className="mt-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Access Denied</AlertTitle>
+        <AlertDescription>
+          You must be a Super Admin to access tenant management.
+        </AlertDescription>
+      </Alert>
+    )
+  }
   
   // Parse tenant list
-  const tenantList = tenantListSchema.parse(tenants)
+  const tenantList = tenants.length > 0 ? tenantListSchema.parse(tenants) : []
 
   return (
     <>
@@ -29,6 +45,13 @@ function TenantsContent() {
         </div>
         <TenantsPrimaryButtons />
       </div>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       
       {isLoading && tenants.length === 0 ? (
         <div className="flex h-[400px] w-full items-center justify-center">

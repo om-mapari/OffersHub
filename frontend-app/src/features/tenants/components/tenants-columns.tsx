@@ -19,58 +19,22 @@ export const columns: ColumnDef<Tenant>[] = [
     },
   },
   {
-    accessorKey: "description",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Description" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="max-w-[500px] truncate">
-          {row.original.description || "—"}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "createdBy",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created By" />
-    ),
-    cell: ({ row }) => {
-      return <div>{row.getValue("createdBy")}</div>;
-    },
-  },
-  {
-    accessorKey: "createdAt",
+    accessorKey: "created_at",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Created At" />
     ),
     cell: ({ row }) => {
+      // created_at is already transformed to Date in the schema
+      const date = row.original.created_at;
       return (
         <div>
-          {format(row.original.createdAt, "MMM d, yyyy")}
+          {format(date, "MMM d, yyyy")}
         </div>
       );
     },
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      return (
-        <DataTableRowActions
-          row={row}
-          actions={[
-            {
-              label: "Edit",
-              action: "edit",
-            },
-            {
-              label: "Delete",
-              action: "delete",
-            },
-          ]}
-        />
-      );
-    },
+    cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ]; 

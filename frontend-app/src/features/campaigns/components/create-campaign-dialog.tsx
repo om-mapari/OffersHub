@@ -83,7 +83,7 @@ interface StructuredCriterion {
 export function CreateCampaignDialog() {
   const { isCreateDialogOpen, setIsCreateDialogOpen, createCampaign } = useCampaigns()
   const { currentTenant } = useTenant()
-  const { isAuthenticated } = useAuth()
+  const { token } = useAuth()
   const [offers, setOffers] = useState<Offer[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectionCriteria, setSelectionCriteria] = useState<StructuredCriterion[]>([])
@@ -112,7 +112,7 @@ export function CreateCampaignDialog() {
 
   // Fetch offers for dropdown
   useEffect(() => {
-    if (currentTenant && isCreateDialogOpen && isAuthenticated) {
+    if (currentTenant && isCreateDialogOpen && token) {
       setIsLoading(true)
       campaignsApi.getOffers(currentTenant.name)
         .then(data => {
@@ -127,11 +127,11 @@ export function CreateCampaignDialog() {
           setIsLoading(false)
         })
     }
-  }, [currentTenant, isCreateDialogOpen, isAuthenticated])
+  }, [currentTenant, isCreateDialogOpen, token])
 
   // Handle form submission
   const onSubmit = async (data: z.infer<typeof campaignCreateSchema>) => {
-    if (!isAuthenticated) {
+    if (!token) {
       toast.error('You must be authenticated to create a campaign', { duration: 10000 })
       return
     }

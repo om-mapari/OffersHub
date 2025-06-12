@@ -16,12 +16,7 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const tenant = row.original;
-  const { setSelectedTenant, setIsEditDialogOpen, setIsDeleteDialogOpen } = useTenantsContext();
-
-  const handleEdit = () => {
-    setSelectedTenant(tenant);
-    setIsEditDialogOpen(true);
-  };
+  const { setSelectedTenant, setIsDeleteDialogOpen } = useTenantsContext();
 
   const handleDelete = () => {
     setSelectedTenant(tenant);
@@ -37,9 +32,6 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleEdit}>
-          Edit
-        </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={handleDelete}
           className="text-destructive focus:text-destructive"
