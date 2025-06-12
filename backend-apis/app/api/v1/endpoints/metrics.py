@@ -6,6 +6,8 @@ from sqlalchemy.sql import text as sql_text
 
 from app import models, schemas
 from app.api.v1 import deps
+from app.models.campaign_customer import DeliveryStatus
+from app.models.campaign import CampaignStatus
 
 router = APIRouter()
 
@@ -113,40 +115,28 @@ async def get_campaign_customers(
     Get metrics about campaign customers for a specific tenant: sent, accepted, and percentage of accepted campaigns
     """
     try:
-        # Simplified implementation with raw SQL to bypass the ORM's use of enums
-        query = sql_text("""
-            SELECT 
-                cc.campaign_id, 
-                c.name as campaign_name,
-                COUNT(CASE WHEN cc.delivery_status = 'sent' THEN 1 ELSE NULL END) as sent,
-                COUNT(CASE WHEN cc.delivery_status = 'accepted' THEN 1 ELSE NULL END) as accepted
-            FROM 
-                campaign_customers cc
-            JOIN 
-                campaigns c ON cc.campaign_id = c.id
-            WHERE 
-                c.status = 'active' AND
-                cc.tenant_name = :tenant_name
-            GROUP BY 
-                cc.campaign_id, c.name
-            ORDER BY 
-                cc.campaign_id
-        """)
-        
-        # Execute the raw query
-        results = db.execute(query, {"tenant_name": tenant.name}).fetchall()
+        # Use ORM query similar to campaigns.py
+        results = db.query(
+            models.CampaignCustomer.campaign_id,
+            models.Campaign.name.label('campaign_name'),
+            func.count().filter(models.CampaignCustomer.delivery_status == DeliveryStatus.sent).label('sent'),
+            func.count().filter(models.CampaignCustomer.delivery_status == DeliveryStatus.accepted).label('accepted')
+        ).join(
+            models.Campaign, models.CampaignCustomer.campaign_id == models.Campaign.id
+        ).filter(
+            models.Campaign.status == CampaignStatus.active,
+            models.CampaignCustomer.tenant_name == tenant.name
+        ).group_by(
+            models.CampaignCustomer.campaign_id, models.Campaign.name
+        ).order_by(
+            models.CampaignCustomer.campaign_id
+        ).all()
         
         if not results:
             return schemas.CampaignCustomersResponse(campaigns=[])
         
-        # Process the results
         campaigns_summary = []
-        for row in results:
-            campaign_id = row[0]
-            campaign_name = row[1]
-            sent = row[2]
-            accepted = row[3]
-            
+        for campaign_id, campaign_name, sent, accepted in results:
             total_customers = sent + accepted
             
             percentage_accepted = 0.0
