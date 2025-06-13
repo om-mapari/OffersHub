@@ -4,12 +4,10 @@ import { IoMdClose } from 'react-icons/io';
 import { BiSend } from 'react-icons/bi';
 import { BsChatDots } from 'react-icons/bs';
 import { FaLightbulb } from 'react-icons/fa';
-
-// Azure OpenAI client configuration
-const AZURE_ENDPOINT = "";
-const AZURE_API_KEY = "";
-const AZURE_API_VERSION = "";
-const AZURE_DEPLOYMENT = "";
+import { useOffers } from '../offers/context/offers-context';
+import { useTenant } from '@/context/TenantContext';
+import { AZURE_CONFIG, isAzureConfigValid } from '@/config/env';
+import { campaignsApi } from '../campaigns/api/campaigns-api';
 
 interface Message {
   type: 'user' | 'bot';
@@ -25,30 +23,129 @@ const ChatBot = () => {
             content: "Hi there! 👋 I'm OffersHub AI, a specialized assistant for the OffersHub platform. How can I help you today?",
             suggestions: [
                 "What is OffersHub?",
-                "Tell me about campaign management",
-                "What are the different user roles?"
+                "List available offers",
+                "Show active campaigns"
             ]
         }
     ]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+    
+    // Access offers data and context
+    const { offers, rawOffers, primaryRole } = useOffers();
+    const { currentTenant } = useTenant();
 
-    // Fetch system prompt on component mount
-    useEffect(() => {
-        const fetchSystemPrompt = async () => {
-            try {
-                const response = await fetch('/src/features/ai-chat/system-prompt.md');
-                const text = await response.text();
-                setSystemPrompt(text);
-            } catch (error) {
-                console.error('Failed to load system prompt:', error);
-            }
-        };
+    // Function to get offer information for the chatbot
+    const getOffersData = async () => {
+        if (!currentTenant) {
+            return {
+                offers: [],
+                hasData: false,
+                message: "No tenant selected"
+            };
+        }
+
+        // If offers are already loaded in context
+        if (offers.length > 0) {
+            return {
+                offers,
+                hasData: true,
+                message: `${offers.length} offers available`
+            };
+        }
         
-        fetchSystemPrompt();
-    }, []);
+        try {
+            // Fetch offers if not already loaded
+            const fetchedOffers = await campaignsApi.getOffers(currentTenant.name);
+            return {
+                offers: fetchedOffers,
+                hasData: fetchedOffers.length > 0,
+                message: `${fetchedOffers.length} offers available`
+            };
+        } catch (error) {
+            console.error("Error fetching offers for chatbot:", error);
+            return {
+                offers: [],
+                hasData: false,
+                message: "Error fetching offers data"
+            };
+        }
+    };
+
+    // System prompt for the AI assistant with context
+    const getSystemPrompt = () => {
+        const tenantName = currentTenant?.name || "unknown";
+        const formattedTenantName = tenantName.split('_').map(part => 
+            part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+        ).join(' ');
+        
+        // Define system prompt with context about offers
+        return `You are OffersHub AI, a specialized assistant for the OffersHub platform.
+Your primary role is to help users navigate and utilize the OffersHub platform efficiently.
+
+CURRENT CONTEXT:
+- Current tenant: ${formattedTenantName}
+- User role: ${primaryRole}
+- Available offers: ${offers.length}
+
+You can access the following data to provide specific information:
+- Offers data with details on descriptions, types, status, and attributes
+- Basic campaign information
+
+When asked about offers or campaigns, provide specific information from the context data.
+For requests about listing offers, show a concise summary of available offers.
+When asked about a specific offer, provide its details including description, type, status, and attributes.
+
+ABOUT OFFERSHUB:
+OffersHub is a purpose-built platform for financial services companies to create, manage, and optimize personalized offers. It enables banks and financial institutions to deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
+
+Each tenant represents a financial product like "Credit Card", "Loan", etc. In each tenant, there will be offers created, and campaigns are created from these offers.
+
+USER ACCESS MODEL:
+- Users can belong to multiple user groups per tenant.
+- Default user groups: admin, read_only, create, approver.
+- A Super Admin can create tenants and manage users and their roles.
+
+PLATFORM FLOW:
+1. Super Admin creates a tenant → this auto-creates default user groups and prepares offer configuration.
+2. Tenants have offer data stored in a common offers table with a flexible data JSONB field for custom attributes.
+
+FREQUENTLY ASKED QUESTIONS:
+
+QQ-What is OfferHub?
+Offers hub is platform that simples offer and campaign management by optimizing process, levering workflow automation, real time analytics, AI-Powered personalization of offers, and robust data and integration capabilities.
+
+QQ-What is Campaigns?
+Marketing efforts designed to promote specific offers or services to a targeted audience. Campaigns can be executed through various channels such as email, social media, and advertisements.
+
+QQ-What is Manage Users?
+This involves overseeing the profiles and activities of users within the system. It includes tasks like adding new users, updating user information, and setting permissions.
+
+QQ-What is Manage Offer Data?
+Handling the information related to various offers, including their terms, conditions, validity, and performance metrics.
+
+QQ-What is Manage Business Rules?
+Setting and maintaining the rules that govern how offers are applied and processed. Business rules ensure that offers are executed correctly and comply with regulatory requirements.
+
+QQ-What is Reports and Dashboards?
+Tools that provide insights into the performance of offers and campaigns. Reports can include metrics like user engagement, conversion rates, and financial impact. Dashboards offer a visual representation of these metrics for easy analysis.
+
+QQ-What is Offer List?
+A comprehensive list of all active and past offers provided by the bank. This list helps in tracking and managing the offers effectively.
+
+QQ-What is Offer Create/Update?
+The process of creating new offers or updating existing ones. This includes defining the offer details, terms, and conditions.
+
+QQ-What is Campaign Execute?
+The implementation of marketing campaigns to promote offers. This involves scheduling, launching, and monitoring the campaign's progress.
+
+QQ-What is User Management?
+Similar to manage users, it involves the administration of user accounts, roles, and permissions within the system.
+
+Be brief, professional, and helpful. Format responses in a clear, readable manner.
+Always respect user roles and permissions. Do not expose sensitive information.`;
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,6 +172,14 @@ const ChatBot = () => {
         setIsLoading(true);
 
         try {
+            // Check if Azure OpenAI is configured
+            if (!isAzureConfigValid()) {
+                throw new Error("Azure OpenAI configuration is missing. Please check your environment variables.");
+            }
+
+            // Get offers data for context
+            const offersData = await getOffersData();
+            
             // Prepare conversation history for context
             const conversationHistory = messages.map(msg => ({
                 role: msg.type === 'user' ? 'user' : 'assistant',
@@ -87,20 +192,40 @@ const ChatBot = () => {
                 content: userMessage.content
             });
 
-            // Add system prompt if available
-            if (systemPrompt) {
-                conversationHistory.unshift({
-                    role: 'system',
-                    content: systemPrompt
-                });
+            // Add system prompt with context
+            const systemPrompt = getSystemPrompt();
+            conversationHistory.unshift({
+                role: 'system',
+                content: systemPrompt
+            });
+
+            // Add offers data as context
+            let contextMessage = "Here is the current offers data:\n";
+            if (offersData.hasData) {
+                contextMessage += JSON.stringify(offersData.offers.slice(0, 10).map(offer => ({
+                    id: offer.id,
+                    description: offer.offer_description,
+                    type: offer.offer_type,
+                    status: offer.status,
+                    attributes: offer.data || {} // Include offer attributes
+                })), null, 2);
+            } else {
+                contextMessage += offersData.message;
             }
+            
+            conversationHistory.push({
+                role: 'system',
+                content: `Context information: ${contextMessage}`
+            });
+
+            const { endpoint, apiKey, apiVersion, deployment } = AZURE_CONFIG;
 
             // Call Azure OpenAI API directly
-            const response = await fetch(`${AZURE_ENDPOINT}/openai/deployments/${AZURE_DEPLOYMENT}/chat/completions?api-version=${AZURE_API_VERSION}`, {
+            const response = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'api-key': AZURE_API_KEY
+                    'api-key': apiKey
                 },
                 body: JSON.stringify({
                     messages: conversationHistory,
@@ -119,11 +244,11 @@ const ChatBot = () => {
                 const botResponse = data.choices[0].message.content;
                 
                 // Generate follow-up suggestions based on the bot's response
-                const suggestionsResponse = await fetch(`${AZURE_ENDPOINT}/openai/deployments/${AZURE_DEPLOYMENT}/chat/completions?api-version=${AZURE_API_VERSION}`, {
+                const suggestionsResponse = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'api-key': AZURE_API_KEY
+                        'api-key': apiKey
                     },
                     body: JSON.stringify({
                         messages: [
@@ -166,7 +291,7 @@ const ChatBot = () => {
             console.error('Error calling AI service:', error);
             setMessages(prev => [...prev, { 
                 type: 'bot', 
-                content: 'Sorry, I encountered an error. Please try again later.' 
+                content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your Azure OpenAI configuration.` 
             }]);
         } finally {
             setIsLoading(false);
@@ -203,7 +328,7 @@ const ChatBot = () => {
                                         OffersHub AI
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        Your OffersHub platform assistant
+                                        {currentTenant ? `Assistant for ${currentTenant.name.replace(/_/g, ' ')}` : 'Your platform assistant'}
                                     </p>
                                 </div>
                                 <button
@@ -288,7 +413,7 @@ const ChatBot = () => {
                                     type="text"
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
-                                    placeholder="Ask about OffersHub..."
+                                    placeholder="Ask about offers or campaigns..."
                                     className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 
                                         bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200
                                         placeholder-slate-400 dark:placeholder-slate-500
