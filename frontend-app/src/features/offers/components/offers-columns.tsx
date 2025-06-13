@@ -55,12 +55,22 @@ export const columns: ColumnDef<Offer>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => (
-      <div>
-        <div className="font-medium">{row.getValue('offer_description')}</div>
-        <div className="text-sm text-muted-foreground">{row.original.offer_type}</div>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const description = row.getValue('offer_description') as string;
+      return (
+        <div className="max-w-[300px]">
+          <div 
+            className="font-medium truncate" 
+            title={description}
+          >
+            {description}
+          </div>
+          <div className="text-sm text-muted-foreground truncate">
+            {row.original.offer_type}
+          </div>
+        </div>
+      )
+    },
   },
   {
     accessorKey: 'offer_type',

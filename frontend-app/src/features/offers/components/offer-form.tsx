@@ -24,6 +24,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Offer } from "../data/schema";
 import offerTypesByTenant from "../data/offers_types_by_tenant.json";
+import { Sparkles, AlertCircle } from "lucide-react";
+import { generateOfferData } from "@/services/azure-openai";
+import { toast } from "sonner";
+import { useAzureConfig } from "@/hooks/use-azure-config";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface OfferFormProps {
   offer?: Offer;
@@ -49,6 +59,7 @@ type FormData = z.infer<typeof offerFormSchema> & {
 export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   const { currentTenant } = useTenant();
   const { token } = useAuth();
+  const { isValid: isAzureConfigValid, missingVars } = useAzureConfig();
   
   // State for tenant offer types
   const [offerTypes, setOfferTypes] = useState<string[]>([]);
@@ -67,6 +78,9 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   // For adding new key-value pairs to the JSON data
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
+  
+  // State for AI generation
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const form = useForm<z.infer<typeof offerFormSchema>>({
     resolver: zodResolver(offerFormSchema),
@@ -172,6 +186,85 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
     
     onSubmit(formData);
   };
+  
+  // Function to handle AI fill
+  const handleAIFill = async () => {
+    if (!currentTenant || !selectedOfferType || Object.keys(defaultAttributes).length === 0) {
+      toast.error("Please select an offer type first.");
+      return;
+    }
+
+    if (!isAzureConfigValid) {
+      toast.error("Azure OpenAI configuration is missing. Please check your environment variables.", {
+        description: `Missing: ${missingVars.join(', ')}`,
+        duration: 10000,
+      });
+      return;
+    }
+    
+    try {
+      setIsGenerating(true);
+      
+      // Show a loading toast
+      toast.loading("Generating offer data with AI...");
+      
+      const tenantName = currentTenant.name;
+      console.log('Generating AI offer for', { tenantName, selectedOfferType, defaultAttributes });
+      
+      const generatedData = await generateOfferData(
+        tenantName,
+        selectedOfferType,
+        defaultAttributes
+      );
+      
+      console.log('Generated offer data:', generatedData);
+      
+      // Update form values with generated data
+      form.setValue('offer_description', generatedData.description);
+      form.setValue('comments', generatedData.comments || '');
+      
+      // Update attribute values
+      const newJsonData: Record<string, any> = { ...jsonData };
+      
+      // Update default attributes with AI values
+      Object.entries(generatedData.attributeValues).forEach(([key, value]) => {
+        if (key in defaultAttributes) {
+          // For array values that might come as string
+          if (Array.isArray(defaultAttributes[key]) && typeof value === 'string') {
+            try {
+              newJsonData[key] = value.split(',').map(item => item.trim());
+            } catch (e) {
+              newJsonData[key] = value;
+            }
+          } else {
+            newJsonData[key] = value;
+          }
+        }
+      });
+      
+      // Add custom attributes
+      Object.entries(generatedData.customAttributes || {}).forEach(([key, value]) => {
+        if (!(key in defaultAttributes)) {
+          newJsonData[key] = value;
+        }
+      });
+      
+      setJsonData(newJsonData);
+      
+      // Dismiss all toasts and show success
+      toast.dismiss();
+      toast.success("Form filled with AI-generated data.");
+    } catch (error) {
+      console.error('Error filling form with AI:', error);
+      toast.dismiss();
+      toast.error("Failed to generate data. Please try again or fill the form manually.", {
+        description: error instanceof Error ? error.message : "Unknown error",
+        duration: 10000,
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   if (!currentTenant) {
     return <div>Please select a tenant to create or edit an offer.</div>;
@@ -250,36 +343,103 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* Offer Type Selection */}
-          <FormField
-            control={form.control}
-            name="offer_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Offer Type</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    handleOfferTypeChange(value);
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an offer type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {offerTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type.replace(/_/g, ' ')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div className="flex-1">
+              <FormField
+                control={form.control}
+                name="offer_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Offer Type</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleOfferTypeChange(value);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select an offer type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {offerTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.replace(/_/g, ' ')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* AI Fill Button */}
+            <div className="w-full sm:w-auto">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={handleAIFill}
+                        disabled={!selectedOfferType || isGenerating || !isAzureConfigValid}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <svg 
+                              className="animate-spin -ml-1 mr-2 h-4 w-4" 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              fill="none" 
+                              viewBox="0 0 24 24"
+                            >
+                              <circle 
+                                className="opacity-25" 
+                                cx="12" cy="12" r="10" 
+                                stroke="currentColor" 
+                                strokeWidth="4"
+                              />
+                              <path 
+                                className="opacity-75" 
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            {!isAzureConfigValid ? (
+                              <AlertCircle className="mr-2 h-4 w-4 text-amber-500" />
+                            ) : (
+                              <Sparkles className="mr-2 h-4 w-4" />
+                            )}
+                            AI Fill
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!isAzureConfigValid && (
+                    <TooltipContent className="max-w-xs">
+                      <p>Azure OpenAI configuration is missing:</p>
+                      <ul className="list-disc pl-5 text-xs">
+                        {missingVars.map((variable) => (
+                          <li key={variable}>{variable}</li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-xs">Please check your .env file.</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
 
           {/* Offer Description */}
           <FormField
