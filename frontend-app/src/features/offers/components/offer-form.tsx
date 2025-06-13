@@ -193,6 +193,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
             handleAttributeChange(key, values);
           }}
           placeholder={`e.g., ${Array.isArray(templateValue) ? templateValue.join(", ") : ""}`}
+          className="w-full"
         />
       );
     } else if (typeof templateValue === 'number') {
@@ -202,6 +203,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           value={currentValue || ""}
           onChange={(e) => handleAttributeChange(key, parseFloat(e.target.value) || 0)}
           placeholder={`e.g., ${templateValue}`}
+          className="w-full"
         />
       );
     } else if (typeof templateValue === 'boolean') {
@@ -210,7 +212,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           value={currentValue ? "true" : "false"}
           onValueChange={(v) => handleAttributeChange(key, v === "true")}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select value" />
           </SelectTrigger>
           <SelectContent>
@@ -226,13 +228,14 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           value={currentValue || ""}
           onChange={(e) => handleAttributeChange(key, e.target.value)}
           placeholder={`e.g., ${templateValue}`}
+          className="w-full"
         />
       );
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-3xl mx-auto px-2">
       <div>
         <h2 className="text-xl font-bold tracking-tight">
           {offer ? "Edit Offer" : "Create New Offer"}
@@ -261,7 +264,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                   }}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select an offer type" />
                     </SelectTrigger>
                   </FormControl>
@@ -318,7 +321,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
 
           {/* Dynamic Attributes Section */}
           {selectedOfferType && (
-            <div className="space-y-3 border p-3 rounded-md">
+            <div className="space-y-3 border p-2 sm:p-3 rounded-md">
               <div>
                 <h3 className="text-md font-medium">Offer Attributes</h3>
                 <p className="text-xs text-muted-foreground">
@@ -326,13 +329,13 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {Object.keys(defaultAttributes).map((key) => (
-                  <div key={key} className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-sm font-medium capitalize col-span-1">
+                  <div key={key} className="flex flex-col sm:grid sm:grid-cols-3 gap-1 sm:gap-2 sm:items-center">
+                    <div className="text-sm font-medium capitalize mb-1 sm:mb-0 col-span-1">
                       {key.replace(/_/g, ' ')}:
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1 sm:col-span-2">
                       {renderAttributeInput(key, jsonData[key])}
                     </div>
                   </div>
@@ -342,7 +345,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           )}
 
           {/* Custom Attributes Section */}
-          <div className="space-y-3 border p-3 rounded-md">
+          <div className="space-y-3 border p-2 sm:p-3 rounded-md">
             <div>
               <h3 className="text-md font-medium">Custom Attributes</h3>
               <p className="text-xs text-muted-foreground">
@@ -361,16 +364,17 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                     .map(([key, value], index, array) => (
                       <div 
                         key={key} 
-                        className={`flex items-center justify-between ${index < array.length - 1 ? 'border-b pb-2 mb-2' : ''}`}
+                        className={`flex flex-wrap sm:flex-nowrap items-center justify-between ${index < array.length - 1 ? 'border-b pb-2 mb-2' : ''}`}
                       >
-                        <div className="truncate mr-2 max-w-[70%]">
-                          <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{" "}
-                          <span className="text-sm">{Array.isArray(value) ? value.join(", ") : String(value)}</span>
+                        <div className="truncate mr-2 max-w-full sm:max-w-[70%] mb-1 sm:mb-0">
+                          <span className="font-medium capitalize break-all">{key.replace(/_/g, ' ')}:</span>{" "}
+                          <span className="text-sm break-all">{Array.isArray(value) ? value.join(", ") : String(value)}</span>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeKeyValuePair(key)}
+                          className="ml-auto"
                         >
                           Remove
                         </Button>
@@ -387,26 +391,26 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
             {/* Add new key-value pair - Add a separator line for visual distinction */}
             <div className="border-t pt-3">
               <p className="text-xs font-medium mb-2">Add New Attribute</p>
-              <div className="grid grid-cols-7 gap-2 items-end">
-                <div className="col-span-3">
+              <div className="flex flex-col sm:grid sm:grid-cols-7 gap-3 sm:gap-2">
+                <div className="sm:col-span-3">
                   <FormLabel className="text-xs">Attribute Name</FormLabel>
                   <Input
                     value={newKey}
                     onChange={(e) => setNewKey(e.target.value)}
                     placeholder="e.g., campaign_code"
-                    className="h-8 text-sm"
+                    className="h-8 text-sm w-full mt-1"
                   />
                 </div>
-                <div className="col-span-3">
+                <div className="sm:col-span-3">
                   <FormLabel className="text-xs">Value</FormLabel>
                   <Input
                     value={newValue}
                     onChange={(e) => setNewValue(e.target.value)}
                     placeholder="e.g., SUMMER2023"
-                    className="h-8 text-sm"
+                    className="h-8 text-sm w-full mt-1"
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="sm:col-span-1 flex items-end">
                   <Button
                     type="button"
                     variant="outline"

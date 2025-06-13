@@ -210,8 +210,8 @@ export function OffersDialogs({
     <>
       {/* Create Offer Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">         
-          <div className="mt-4 pr-4">
+        <DialogContent className="sm:max-w-[800px] w-[95%] max-h-[90vh] overflow-y-auto">         
+          <div className="mt-4">
             <OfferForm
               onSubmit={handleFormSubmit}
               onCancel={() => setIsCreateDialogOpen(false)}
@@ -222,7 +222,7 @@ export function OffersDialogs({
       
       {/* Edit Offer Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] w-[95%] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Offer</DialogTitle>
             <DialogDescription>
@@ -230,7 +230,7 @@ export function OffersDialogs({
             </DialogDescription>
           </DialogHeader>
           
-          <div className="mt-4 pr-4">
+          <div className="mt-4">
             {selectedOffer && (
               <OfferForm
                 offer={selectedOffer}
@@ -244,7 +244,7 @@ export function OffersDialogs({
       
       {/* View Offer Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] w-[95%] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Offer Details</DialogTitle>
             <DialogDescription>
@@ -254,8 +254,8 @@ export function OffersDialogs({
           
           {selectedOffer && (
             <>
-              <div className="space-y-4 pr-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-sm font-medium">Description</h3>
                     <p>{selectedOffer.offer_description}</p>
@@ -296,7 +296,7 @@ export function OffersDialogs({
                 {selectedOffer.comments && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Comments</h3>
-                    <div className="rounded-md border p-4">
+                    <div className="rounded-md border p-3 sm:p-4">
                       <p>{selectedOffer.comments}</p>
                     </div>
                   </div>
@@ -304,11 +304,11 @@ export function OffersDialogs({
                 
                 <div>
                   <h3 className="text-sm font-medium mb-2">Offer Attributes</h3>
-                  <div className="rounded-md border p-4 space-y-2">
+                  <div className="rounded-md border p-3 sm:p-4 space-y-2">
                     {Object.entries(selectedOffer.data).map(([key, value]) => (
-                      <div key={key} className="flex justify-between">
+                      <div key={key} className="flex flex-col sm:flex-row sm:justify-between">
                         <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
-                        <span>{String(value)}</span>
+                        <span className="break-all">{String(value)}</span>
                       </div>
                     ))}
                   </div>
@@ -317,7 +317,7 @@ export function OffersDialogs({
             
               <DialogFooter className="mt-6">
                 {/* Action buttons based on permissions */}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 justify-end">
                   {canEditOffer() && (
                     <Button 
                       variant="outline" 
@@ -403,7 +403,7 @@ export function OffersDialogs({
       
       {/* Delete Offer Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95%] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Delete Offer</DialogTitle>
             <DialogDescription>
@@ -411,16 +411,18 @@ export function OffersDialogs({
             </DialogDescription>
           </DialogHeader>
           
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="sm:order-1 order-2"
             >
               Cancel
             </Button>
             <Button 
-              variant="destructive" 
+              variant="destructive"
               onClick={() => handleFormSubmit({ action: 'delete' })}
+              className="sm:order-2 order-1"
             >
               Delete
             </Button>
@@ -430,7 +432,7 @@ export function OffersDialogs({
       
       {/* Approve Offer Dialog */}
       <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95%] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Approve Offer</DialogTitle>
             <DialogDescription>
@@ -438,17 +440,18 @@ export function OffersDialogs({
             </DialogDescription>
           </DialogHeader>
           
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setIsApproveDialogOpen(false)}
+              className="sm:order-1 order-2" 
             >
               Cancel
             </Button>
             <Button 
               variant="default" 
               onClick={() => handleFormSubmit({ action: 'approve' })}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 sm:order-2 order-1"
             >
               Approve
             </Button>
@@ -458,7 +461,7 @@ export function OffersDialogs({
       
       {/* Reject Offer Dialog */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95%] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Reject Offer</DialogTitle>
             <DialogDescription>
@@ -466,16 +469,18 @@ export function OffersDialogs({
             </DialogDescription>
           </DialogHeader>
           
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setIsRejectDialogOpen(false)}
+              className="sm:order-1 order-2"
             >
               Cancel
             </Button>
             <Button 
               variant="destructive" 
               onClick={() => handleFormSubmit({ action: 'reject' })}
+              className="sm:order-2 order-1"
             >
               Reject
             </Button>
@@ -485,7 +490,7 @@ export function OffersDialogs({
       
       {/* Retire Offer Dialog */}
       <Dialog open={isRetireDialogOpen} onOpenChange={setIsRetireDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95%] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Retire Offer</DialogTitle>
             <DialogDescription>
@@ -493,17 +498,18 @@ export function OffersDialogs({
             </DialogDescription>
           </DialogHeader>
           
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setIsRetireDialogOpen(false)}
+              className="sm:order-1 order-2"
             >
               Cancel
             </Button>
             <Button 
               variant="default" 
               onClick={() => handleFormSubmit({ action: 'retire' })}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-orange-600 hover:bg-orange-700 sm:order-2 order-1"
             >
               Retire
             </Button>
