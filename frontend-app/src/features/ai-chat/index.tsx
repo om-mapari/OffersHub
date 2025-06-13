@@ -15,6 +15,35 @@ interface Message {
   suggestions?: string[];
 }
 
+// Function to format potential markdown to plain text
+const formatResponseText = (text: string): string => {
+    // Replace markdown headings with plain text
+    let formatted = text.replace(/^#{1,6}\s+(.+)$/gm, (_, title) => title);
+    
+    // Replace bullet points with plain dash bullets
+    formatted = formatted.replace(/^\*\s+(.+)$/gm, '• $1');
+    formatted = formatted.replace(/^-\s+(.+)$/gm, '• $1');
+
+    // Replace numbered lists with plain text
+    formatted = formatted.replace(/^\d+\.\s+(.+)$/gm, '$1');
+    
+    // Replace bold text
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '$1');
+    
+    // Replace italic text
+    formatted = formatted.replace(/\*(.+?)\*/g, '$1');
+    
+    // Replace code blocks with plain text
+    formatted = formatted.replace(/```[\s\S]*?```/g, (match) => {
+        return match.replace(/```(?:.*\n)?/g, '').replace(/```/g, '');
+    });
+    
+    // Replace inline code with plain text
+    formatted = formatted.replace(/`(.+?)`/g, '$1');
+    
+    return formatted;
+};
+
 const ChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
@@ -96,6 +125,14 @@ You can access the following data to provide specific information:
 When asked about offers or campaigns, provide specific information from the context data.
 For requests about listing offers, show a concise summary of available offers.
 When asked about a specific offer, provide its details including description, type, status, and attributes.
+
+FORMATTING INSTRUCTIONS:
+- DO NOT use markdown formatting in your responses.
+- Use plain text instead of markdown headings.
+- Use plain bullet points (•) instead of markdown bullets (* or -).
+- Don't use markdown bold or italic formatting.
+- Present information in a clean, readable format with proper spacing.
+- For lists, simply use numbers or bullet points without markdown.
 
 ABOUT OFFERSHUB:
 OffersHub is a purpose-built platform for financial services companies to create, manage, and optimize personalized offers. It enables banks and financial institutions to deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
@@ -241,7 +278,9 @@ Always respect user roles and permissions. Do not expose sensitive information.`
             const data = await response.json();
             
             if (data.choices && data.choices[0]) {
-                const botResponse = data.choices[0].message.content;
+                const rawBotResponse = data.choices[0].message.content;
+                // Format the response to remove markdown formatting
+                const botResponse = formatResponseText(rawBotResponse);
                 
                 // Generate follow-up suggestions based on the bot's response
                 const suggestionsResponse = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`, {
@@ -306,7 +345,7 @@ Always respect user roles and permissions. Do not expose sensitive information.`
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="absolute bottom-16 right-0 w-96 h-[500px] bg-white/95 dark:bg-slate-900/95 
+                        className="absolute bottom-16 right-0 w-[450px] h-[600px] bg-white/95 dark:bg-slate-900/95 
                             rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 
                             backdrop-blur-sm flex flex-col overflow-hidden"
                     >
@@ -356,7 +395,7 @@ Always respect user roles and permissions. Do not expose sensitive information.`
                                             </div>
                                         )}
                                         <div
-                                            className={`max-w-[80%] p-3 rounded-2xl ${
+                                            className={`max-w-[85%] p-3 rounded-2xl ${
                                                 message.type === 'user'
                                                     ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white'
                                                     : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
