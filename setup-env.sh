@@ -26,7 +26,7 @@ read -p "Azure OpenAI Deployment Model [gpt-4o-3]: " azure_deployment
 azure_deployment=${azure_deployment:-gpt-4o-3}
 
 # Update the .env file
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$(uname)" = "Darwin" ]; then
   # macOS
   sed -i '' "s|VITE_AZURE_ENDPOINT=.*|VITE_AZURE_ENDPOINT=${azure_endpoint}|" frontend-app/.env
   sed -i '' "s|VITE_AZURE_API_KEY=.*|VITE_AZURE_API_KEY=${azure_api_key}|" frontend-app/.env
