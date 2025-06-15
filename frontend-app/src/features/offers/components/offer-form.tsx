@@ -192,14 +192,6 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
       toast.error("Please select an offer type first.");
       return;
     }
-
-    if (!isAzureConfigValid) {
-      toast.error("Azure OpenAI configuration is missing. Please check your environment variables.", {
-        description: `Missing: ${missingVars.join(', ')}`,
-        duration: 10000,
-      });
-      return;
-    }
     
     try {
       setIsGenerating(true);
@@ -387,7 +379,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                         variant="outline"
                         className="w-full sm:w-auto"
                         onClick={handleAIFill}
-                        disabled={!selectedOfferType || isGenerating || !isAzureConfigValid}
+                        disabled={!selectedOfferType || isGenerating}
                       >
                         {isGenerating ? (
                           <>
@@ -413,28 +405,13 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                           </>
                         ) : (
                           <>
-                            {!isAzureConfigValid ? (
-                              <AlertCircle className="mr-2 h-4 w-4 text-amber-500" />
-                            ) : (
-                              <Sparkles className="mr-2 h-4 w-4" />
-                            )}
+                            <Sparkles className="mr-2 h-4 w-4" />
                             AI Fill
                           </>
                         )}
                       </Button>
                     </div>
                   </TooltipTrigger>
-                  {!isAzureConfigValid && (
-                    <TooltipContent className="max-w-xs">
-                      <p>Azure OpenAI configuration is missing:</p>
-                      <ul className="list-disc pl-5 text-xs">
-                        {missingVars.map((variable) => (
-                          <li key={variable}>{variable}</li>
-                        ))}
-                      </ul>
-                      <p className="mt-2 text-xs">Please check your .env file.</p>
-                    </TooltipContent>
-                  )}
                 </Tooltip>
               </TooltipProvider>
             </div>

@@ -160,14 +160,6 @@ export function CreateCampaignDialog() {
       return;
     }
 
-    if (!isAzureConfigValid) {
-      toast.error("Azure OpenAI configuration is missing. Please check your environment variables.", {
-        description: `Missing: ${missingVars.join(', ')}`,
-        duration: 10000,
-      });
-      return;
-    }
-
     if (!currentTenant) {
       toast.error("Tenant information is missing");
       return;
@@ -361,7 +353,7 @@ export function CreateCampaignDialog() {
                   variant="outline"
                   size="sm"
                   onClick={handleAIFill}
-                  disabled={!selectedOfferDetails || isGenerating || !isAzureConfigValid}
+                  disabled={!selectedOfferDetails || isGenerating}
                   className="h-8"
                 >
                   {isGenerating ? (

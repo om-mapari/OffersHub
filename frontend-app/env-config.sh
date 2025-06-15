@@ -23,33 +23,6 @@ if [ -n "$VITE_API_BASE_URL" ]; then
   cat "$TMP_FILE" > "$JS_FILE"
 fi
 
-if [ -n "$VITE_AZURE_ENDPOINT" ]; then
-  echo "Setting Azure OpenAI endpoint"
-  # Use a placeholder pattern that won't match real content
-  sed "s|\"endpoint\":\"[^\"]*\"|\"endpoint\":\"$VITE_AZURE_ENDPOINT\"|g" "$JS_FILE" > "$TMP_FILE"
-  cat "$TMP_FILE" > "$JS_FILE"
-fi
-
-if [ -n "$VITE_AZURE_API_KEY" ]; then
-  echo "Setting Azure OpenAI API key"
-  # Use a placeholder pattern that won't match real content
-  sed "s|\"apiKey\":\"[^\"]*\"|\"apiKey\":\"$VITE_AZURE_API_KEY\"|g" "$JS_FILE" > "$TMP_FILE"
-  cat "$TMP_FILE" > "$JS_FILE"
-fi
-
-if [ -n "$VITE_AZURE_API_VERSION" ]; then
-  echo "Setting Azure OpenAI API version"
-  # Use a placeholder pattern that won't match real content
-  sed "s|\"apiVersion\":\"[^\"]*\"|\"apiVersion\":\"$VITE_AZURE_API_VERSION\"|g" "$JS_FILE" > "$TMP_FILE"
-  cat "$TMP_FILE" > "$JS_FILE"
-fi
-
-if [ -n "$VITE_AZURE_DEPLOYMENT" ]; then
-  echo "Setting Azure OpenAI deployment"
-  # Use a placeholder pattern that won't match real content
-  sed "s|\"deployment\":\"[^\"]*\"|\"deployment\":\"$VITE_AZURE_DEPLOYMENT\"|g" "$JS_FILE" > "$TMP_FILE"
-  cat "$TMP_FILE" > "$JS_FILE"
-fi
 
 # Clean up
 rm "$TMP_FILE"

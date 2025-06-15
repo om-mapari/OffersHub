@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { AZURE_CONFIG, isAzureConfigValid } from '@/config/env';
 
 interface UseAzureConfigResult {
   isValid: boolean;
@@ -9,27 +8,18 @@ interface UseAzureConfigResult {
 
 /**
  * Hook to check if the Azure OpenAI configuration is valid
+ * Note: Since we're now using backend APIs, frontend Azure config is no longer required
  */
 export function useAzureConfig(): UseAzureConfigResult {
-  const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [missingVars, setMissingVars] = useState<string[]>([]);
 
   useEffect(() => {
-    // Check configuration on mount
-    const valid = isAzureConfigValid();
-    setIsValid(valid);
-
-    // Find missing environment variables
-    const missing: string[] = [];
-    if (!AZURE_CONFIG.endpoint) missing.push('VITE_AZURE_ENDPOINT');
-    if (!AZURE_CONFIG.apiKey) missing.push('VITE_AZURE_API_KEY');
-    if (!AZURE_CONFIG.apiVersion) missing.push('VITE_AZURE_API_VERSION');
-    if (!AZURE_CONFIG.deployment) missing.push('VITE_AZURE_DEPLOYMENT');
-    
-    setMissingVars(missing);
+    // We no longer need to check for Azure config since we're using backend APIs
     setIsLoading(false);
+    setMissingVars([]);
   }, []);
 
-  return { isValid, isLoading, missingVars };
+  // Always return isValid as true since we're using backend APIs now
+  return { isValid: true, isLoading, missingVars };
 } 
