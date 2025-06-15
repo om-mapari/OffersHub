@@ -155,7 +155,10 @@ export default function OffersProvider({ children }: OffersProviderProps) {
 
   // Function to fetch offers data
   const fetchOffers = useCallback(async () => {
-    if (!currentTenant || !token) return;
+    if (!currentTenant || !token) {
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -164,14 +167,22 @@ export default function OffersProvider({ children }: OffersProviderProps) {
       // Use cache for offers data
       const cacheKey = `offers-${currentTenant.name}`;
       const data = await fetchWithCache<any[]>(cacheKey, async () => {
-        const response = await fetch(
-          buildTenantApiUrl(currentTenant.name, '/offers/?skip=0&limit=100'), 
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+        // Make sure tenant name is defined before building the URL
+        const tenantName = currentTenant?.name;
+        if (!tenantName) {
+          console.warn('Tenant name is undefined in fetchOffers');
+          return [];
+        }
+        
+        console.log(`Fetching offers for tenant: ${tenantName}`);
+        const apiUrl = buildTenantApiUrl(tenantName, '/offers/?skip=0&limit=100');
+        console.log(`API URL: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
-        );
+        });
         
         if (!response.ok) {
           throw new Error(`Failed to fetch offers: ${await response.text()}`);

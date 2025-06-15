@@ -1,7 +1,6 @@
-import axios from 'axios';
 import { Campaign, CampaignCreate, CampaignUpdate, campaignListSchema, campaignSchema } from '../data/schema';
 import { useAuthStore } from '@/stores/authStore';
-import { API_BASE_URL } from '@/config/api';
+import { apiClient, tenantApiRequest } from '@/config/api';
 
 // Cache expiration time in milliseconds (5 minutes)
 const CACHE_EXPIRATION = 5 * 60 * 1000;
@@ -11,94 +10,69 @@ interface CacheEntry<T> {
   data: T;
   timestamp: number;
 }
-const apiCache: Record<string, CacheEntry<any>> = {};
 
-// Track ongoing fetch requests to prevent duplicate calls
-const ongoingFetches: Record<string, Promise<any>> = {};
+// Cache for API responses
+const apiCache = new Map<string, CacheEntry<any>>();
 
-// Helper function to get or set cached data
-async function getOrFetchData<T>(
-  cacheKey: string,
-  fetchFn: () => Promise<T>
-): Promise<T> {
-  const now = Date.now();
-  const cachedData = apiCache[cacheKey];
+// Helper function to get auth token
+const getAuthToken = (): string | null => {
+  const state = useAuthStore.getState();
+  return state.auth.accessToken;
+};
+
+// Helper function to get data from cache or fetch from API
+async function getOrFetchData<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
+  const cachedData = apiCache.get(cacheKey);
   
-  // Return cached data if it exists and hasn't expired
-  if (cachedData && now - cachedData.timestamp < CACHE_EXPIRATION) {
+  if (cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRATION) {
     console.log(`Using cached data for ${cacheKey}`);
     return cachedData.data;
   }
   
-  // If there's already an ongoing fetch for this key, return that promise
-  // This prevents duplicate requests if multiple components call the same API
-  // at the same time before the first one resolves
-  if (ongoingFetches[cacheKey] !== undefined) {
-    console.log(`Reusing in-progress fetch for ${cacheKey}`);
-    return ongoingFetches[cacheKey];
-  }
-  
-  // Fetch fresh data
   console.log(`Fetching fresh data for ${cacheKey}`);
+  const data = await fetchFn();
   
-  // Create a promise and store it to prevent duplicate requests
-  const fetchPromise = fetchFn().then(data => {
-    // Cache the successful result
-    apiCache[cacheKey] = {
-      data,
-      timestamp: now
-    };
-    // Remove from ongoing fetches
-    delete ongoingFetches[cacheKey];
-    return data;
-  }).catch(error => {
-    // Remove from ongoing fetches on error
-    delete ongoingFetches[cacheKey];
-    throw error;
+  apiCache.set(cacheKey, {
+    data,
+    timestamp: Date.now()
   });
   
-  // Store the promise
-  ongoingFetches[cacheKey] = fetchPromise;
-  
-  return fetchPromise;
+  return data;
 }
 
-// Helper to get the current auth token
-const getAuthToken = (): string | null => {
-  return useAuthStore.getState().auth.accessToken;
-};
-
-// Function to clear cache for a specific tenant
-export const clearCampaignsCache = (tenantName: string): void => {
+// Helper function to clear campaign cache for a tenant
+export function clearCampaignsCache(tenantName: string): void {
   const cacheKey = `campaigns-${tenantName}`;
-  if (apiCache[cacheKey]) {
-    delete apiCache[cacheKey];
-    console.log(`Cleared cache for ${cacheKey}`);
+  if (apiCache.has(cacheKey)) {
+    console.log(`Clearing cache for ${cacheKey}`);
+    apiCache.delete(cacheKey);
   }
-};
+}
+
+// Helper function to clear all caches
+export function clearAllCaches(): void {
+  console.log('Clearing all API caches');
+  apiCache.clear();
+}
 
 export const campaignsApi = {
   // Get all campaigns for a tenant
   getCampaigns: async (tenantName: string): Promise<Campaign[]> => {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication token not found');
+    if (!tenantName) {
+      throw new Error('Tenant name is required');
     }
     
     return getOrFetchData<Campaign[]>(`campaigns-${tenantName}`, async () => {
       try {
         console.log(`Fetching campaigns for tenant: ${tenantName}`);
-        const response = await axios.get(
-          `${API_BASE_URL}/tenants/${tenantName}/campaigns/`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-          }
+        
+        const data = await tenantApiRequest<any>(
+          'GET',
+          tenantName,
+          '/campaigns/'
         );
         
-        return campaignListSchema.parse(response.data);
+        return campaignListSchema.parse(data);
       } catch (error) {
         console.error('Error fetching campaigns:', error);
         throw error;
@@ -109,26 +83,21 @@ export const campaignsApi = {
   // Create a new campaign
   createCampaign: async (tenantName: string, campaignData: CampaignCreate): Promise<Campaign> => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication token not found');
+      if (!tenantName) {
+        throw new Error('Tenant name is required');
       }
 
-      const response = await axios.post(
-        `${API_BASE_URL}/tenants/${tenantName}/campaigns/`,
-        campaignData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-        }
+      const data = await tenantApiRequest<any>(
+        'POST',
+        tenantName,
+        '/campaigns/',
+        campaignData
       );
       
       // Clear cache after creating a new campaign
       clearCampaignsCache(tenantName);
       
-      return campaignSchema.parse(response.data);
+      return campaignSchema.parse(data);
     } catch (error) {
       console.error('Error creating campaign:', error);
       throw error;
@@ -138,26 +107,21 @@ export const campaignsApi = {
   // Update a campaign
   updateCampaign: async (tenantName: string, campaignId: number, campaignData: CampaignUpdate): Promise<Campaign> => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication token not found');
+      if (!tenantName) {
+        throw new Error('Tenant name is required');
       }
 
-      const response = await axios.patch(
-        `${API_BASE_URL}/tenants/${tenantName}/campaigns/${campaignId}`,
-        campaignData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-        }
+      const data = await tenantApiRequest<any>(
+        'PUT',
+        tenantName,
+        `/campaigns/${campaignId}`,
+        campaignData
       );
       
       // Clear cache after updating a campaign
       clearCampaignsCache(tenantName);
       
-      return campaignSchema.parse(response.data);
+      return campaignSchema.parse(data);
     } catch (error) {
       console.error('Error updating campaign:', error);
       throw error;
@@ -167,19 +131,14 @@ export const campaignsApi = {
   // Delete a campaign
   deleteCampaign: async (tenantName: string, campaignId: number): Promise<void> => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication token not found');
+      if (!tenantName) {
+        throw new Error('Tenant name is required');
       }
 
-      await axios.delete(
-        `${API_BASE_URL}/tenants/${tenantName}/campaigns/${campaignId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-        }
+      await tenantApiRequest(
+        'DELETE',
+        tenantName,
+        `/campaigns/${campaignId}`
       );
       
       // Clear cache after deleting a campaign
@@ -212,25 +171,19 @@ export const campaignsApi = {
 
   // Get offers for dropdown selection
   getOffers: async (tenantName: string) => {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication token not found');
+    if (!tenantName) {
+      throw new Error('Tenant name is required');
     }
     
     return getOrFetchData<any[]>(`offers-${tenantName}`, async () => {
       try {
         console.log(`Fetching offers for tenant: ${tenantName}`);
-        const response = await axios.get(
-          `${API_BASE_URL}/tenants/${tenantName}/offers/`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-          }
-        );
         
-        return response.data;
+        return await tenantApiRequest<any[]>(
+          'GET',
+          tenantName,
+          '/offers/'
+        );
       } catch (error) {
         console.error('Error fetching offers for campaign:', error);
         throw error;

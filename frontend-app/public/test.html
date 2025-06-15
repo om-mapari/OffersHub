@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button id="testButton">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testButton').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing API...';
+            
+            try {
+                // Test the API endpoint
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    resultDiv.textContent = 'Error: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html> 

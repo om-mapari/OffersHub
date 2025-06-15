@@ -19,7 +19,7 @@ export const campaignSchema = z.object({
   id: z.number(),
   tenant_name: z.string(),
   name: z.string(),
-  offer_id: z.number(),
+  offer_id: z.number().nullable(),
   description: z.string().optional(),
   selection_criteria: selectionCriteriaSchema,
   start_date: z.string(),
@@ -35,7 +35,7 @@ export const campaignListSchema = z.array(campaignSchema)
 // Define the campaign create schema
 export const campaignCreateSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
-  offer_id: z.number(),
+  offer_id: z.number().nullable(),
   description: z.string().optional(),
   selection_criteria: selectionCriteriaSchema,
   start_date: z.string(),

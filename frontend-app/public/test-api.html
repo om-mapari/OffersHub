@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>API Test</h1>
+    
+    <div>
+        <button id="testApi">Test API Endpoint</button>
+        <button id="testTenantApi">Test Tenant API</button>
+        <button id="testAuth">Test Auth API</button>
+    </div>
+    
+    <h2>Result:</h2>
+    <pre id="result">Click a button to test an API endpoint</pre>
+
+    <script>
+        // Test the API endpoint
+        document.getElementById('testApi').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing API...';
+            
+            try {
+                const response = await fetch('/api-test');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.textContent = 'Error: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Test the tenant API endpoint
+        document.getElementById('testTenantApi').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing Tenant API...';
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/tenants/credit_card/offers/?skip=0&limit=100', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.textContent = 'Error: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Test the auth API endpoint
+        document.getElementById('testAuth').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing Auth API...';
+            
+            try {
+                const response = await fetch('/api/v1/auth/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'grant_type=password&username=coderom&password=coderom'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.access_token);
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.textContent = 'Error: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -12,7 +12,6 @@ import {
   CustomerSegmentsResponse
 } from '../api/metrics';
 import { useTenant } from '@/context/TenantContext';
-import { useAuth } from '@/context/AuthContext';
 
 interface DashboardContextType {
   deliveryStatus: DeliveryStatusResponse | null;
@@ -46,7 +45,6 @@ const CACHE_EXPIRATION = 5 * 60 * 1000;
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const { currentTenant } = useTenant();
-  const { token } = useAuth();
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatusResponse | null>(null);
   const [offersMetrics, setOffersMetrics] = useState<OffersMetrics | null>(null);
   const [campaignsMetrics, setCampaignsMetrics] = useState<CampaignsMetrics | null>(null);
@@ -96,7 +94,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
   
   const fetchData = async () => {
-    if (!currentTenant || !token) {
+    if (!currentTenant) {
       setLoading(false);
       return;
     }
@@ -111,19 +109,19 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       
       const [delivery, offers, campaigns, customers, segments] = await Promise.all([
         fetchWithCache(`delivery-status-${tenantName}`, 
-          () => fetchDeliveryStatus(tenantName, token)),
+          () => fetchDeliveryStatus(tenantName)),
         fetchWithCache(`offers-metrics-${tenantName}`, 
-          () => fetchOffersMetrics(tenantName, token)),
+          () => fetchOffersMetrics(tenantName)),
         fetchWithCache(`campaigns-metrics-${tenantName}`, 
-          () => fetchCampaignsMetrics(tenantName, token)),
+          () => fetchCampaignsMetrics(tenantName)),
         fetchWithCache(`campaign-customers-${tenantName}`, 
-          () => fetchCampaignCustomers(tenantName, token)
+          () => fetchCampaignCustomers(tenantName)
             .catch(e => {
               console.error('Error fetching campaign customers:', e);
               return { campaigns: [] };
             })),
         fetchWithCache(`customer-segments-${tenantName}`, 
-          () => fetchCustomerSegments(tenantName, token)
+          () => fetchCustomerSegments(tenantName)
             .catch(e => {
               console.error('Error fetching customer segments:', e);
               return { total_customers: 0, segments: [] };
@@ -147,7 +145,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
-  // Only refetch data when tenant or token changes
+  // Only refetch data when tenant changes
   useEffect(() => {
     // Clear cache when tenant changes
     if (currentTenant) {
@@ -161,7 +159,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     return () => {
       console.log(`[${instanceIdRef.current}] DashboardProvider unmounted`);
     };
-  }, [currentTenant?.name, token]);
+  }, [currentTenant?.name]);
   
   // Calculate derived metrics
   const totalCustomers = deliveryStatus

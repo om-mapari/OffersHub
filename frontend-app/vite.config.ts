@@ -26,5 +26,26 @@ export default defineConfig({
     watch: {
       usePolling: true, // 👈 Required for file watching in Docker
     },
+    proxy: {
+      // Proxy all API routes to the backend
+      '/api/v1': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy tenant-specific routes
+      '/tenants': {
+        target: 'http://localhost:8000/api/v1',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
+      },
+      // Proxy user routes
+      '/users': {
+        target: 'http://localhost:8000/api/v1',
+        changeOrigin: true,
+        secure: false,
+      }
+    },
   },
 })

@@ -8,7 +8,6 @@ import {
   DeliveryStatusResponse
 } from '../api/metrics'
 import { useTenant } from '@/context/TenantContext'
-import { useAuth } from '@/context/AuthContext'
 import { useDashboardData } from '../context/DashboardContext'
 
 // Re-export the hook for backward compatibility if needed
@@ -16,7 +15,6 @@ export const useMetricsData = useDashboardData;
 
 export function useMetricsDataOld() {
   const { currentTenant } = useTenant()
-  const { token } = useAuth()
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatusResponse | null>(null)
   const [offersMetrics, setOffersMetrics] = useState<OffersMetrics | null>(null)
   const [campaignsMetrics, setCampaignsMetrics] = useState<CampaignsMetrics | null>(null)
@@ -25,7 +23,7 @@ export function useMetricsDataOld() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!currentTenant || !token) {
+      if (!currentTenant) {
         setLoading(false)
         return
       }
@@ -33,9 +31,9 @@ export function useMetricsDataOld() {
       try {
         setLoading(true)
         const [delivery, offers, campaigns] = await Promise.all([
-          fetchDeliveryStatus(currentTenant.name, token),
-          fetchOffersMetrics(currentTenant.name, token),
-          fetchCampaignsMetrics(currentTenant.name, token)
+          fetchDeliveryStatus(currentTenant.name),
+          fetchOffersMetrics(currentTenant.name),
+          fetchCampaignsMetrics(currentTenant.name)
         ])
         
         setDeliveryStatus(delivery)
@@ -51,7 +49,7 @@ export function useMetricsDataOld() {
     }
 
     fetchData()
-  }, [currentTenant, token])
+  }, [currentTenant])
 
   // Calculate total customers (sum of all delivery statuses)
   const totalCustomers = deliveryStatus

@@ -21,9 +21,13 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0
   const { campaigns } = useCampaigns()
   
-  // Extract unique offer IDs for filtering
+  // Extract unique offer IDs for filtering, filtering out null values
   const uniqueOfferIds = Array.from(
-    new Set(campaigns.map(campaign => campaign.offer_id.toString()))
+    new Set(
+      campaigns
+        .filter(campaign => campaign.offer_id !== null)
+        .map(campaign => campaign.offer_id!.toString())
+    )
   ).map(id => ({
     label: `Offer #${id}`,
     value: id,

@@ -1,0 +1,68 @@
+services:
+  postgres-offer-db-dev:
+    image: postgres:15-alpine
+    container_name: offer-management-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: offer_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+      - ./database-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend-apis-dev:
+    build:
+      context: ./backend-apis
+      dockerfile: Dockerfile.dev
+    container_name: offer-management-api
+    depends_on:
+      postgres-offer-db-dev:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-offer-db-dev:5432/offer_management
+      - PROJECT_NAME=Offer Management Platform
+      - SECRET_KEY=supersecretkey123notforproduction
+    volumes:
+      - ./backend-apis/app:/app/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend-app-dev:
+    build:
+      context: ./frontend-app
+      dockerfile: Dockerfile.dev
+    container_name: frontend-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend-app:/app
+      - /app/node_modules
+      - ./frontend-app/.env:/app/.env
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+      - VITE_AZURE_ENDPOINT=${VITE_AZURE_ENDPOINT}
+      - VITE_AZURE_API_KEY=${VITE_AZURE_API_KEY}
+      - VITE_AZURE_API_VERSION=${VITE_AZURE_API_VERSION}
+      - VITE_AZURE_DEPLOYMENT=${VITE_AZURE_DEPLOYMENT}
+    restart: unless-stopped
+    depends_on:
+      - backend-apis-dev
+
+volumes:
+  postgres-data-dev:

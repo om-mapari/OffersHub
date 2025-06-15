@@ -4,14 +4,14 @@
  */
 
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // Azure OpenAI Configuration
 export const AZURE_CONFIG = {
-  endpoint: import.meta.env.VITE_AZURE_ENDPOINT,
-  apiKey: import.meta.env.VITE_AZURE_API_KEY,
-  apiVersion: import.meta.env.VITE_AZURE_API_VERSION || '2023-05-15',
-  deployment: import.meta.env.VITE_AZURE_DEPLOYMENT,
+  endpoint: import.meta.env.VITE_AZURE_ENDPOINT || '',
+  apiKey: import.meta.env.VITE_AZURE_API_KEY || '',
+  apiVersion: import.meta.env.VITE_AZURE_API_VERSION || '',
+  deployment: import.meta.env.VITE_AZURE_DEPLOYMENT || '',
 };
 
 /**
