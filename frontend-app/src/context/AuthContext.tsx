@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
+import { createContext, useContext, ReactNode, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser as StoreUser, UserPasswordChange, LoginCredentials, UserRole as StoreUserRole } from '@/stores/authStore';
 import { clearAuthCache } from '@/features/auth/api';
 

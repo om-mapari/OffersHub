@@ -58,7 +58,6 @@ type FormData = z.infer<typeof offerFormSchema> & {
 
 export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   const { currentTenant } = useTenant();
-  const { token } = useAuth();
   const { isValid: isAzureConfigValid, missingVars } = useAzureConfig();
   
   // State for tenant offer types
@@ -271,7 +270,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   }
 
   // Render input field based on attribute type
-  const renderAttributeInput = (key: string, value: any) => {
+  const renderAttributeInput = (key: string) => {
     // Determine the input type based on the attribute value type in the template
     const templateValue = defaultAttributes[key];
     const currentValue = jsonData[key];
@@ -496,7 +495,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                       {key.replace(/_/g, ' ')}:
                     </div>
                     <div className="col-span-1 sm:col-span-2">
-                      {renderAttributeInput(key, jsonData[key])}
+                      {renderAttributeInput(key)}
                     </div>
                   </div>
                 ))}

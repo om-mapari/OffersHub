@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTenant } from "@/context/TenantContext";
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -97,30 +96,33 @@ const OPERATORS = [
 // Mock offers - in a real app, these would come from an API
 const MOCK_OFFERS: Offer[] = [
   {
-    id: "offer-1",
-    tenant_id: "tenant-1",
-    name: "Credit Card Offer",
+    id: 1,
+    tenant_name: "tenant-1",
     status: "approved",
-    created_by: "user-1",
     created_at: "2023-01-01",
     updated_at: "2023-01-01",
     data: { interest_rate: "12.99%" },
+    offer_description: "Credit Card Offer",
+    offer_type: "credit_card",
+    created_by_username: "user-1",
+    comments: null
   },
   {
-    id: "offer-2",
-    tenant_id: "tenant-1",
-    name: "Loan Offer",
+    id: 2,
+    tenant_name: "tenant-1",
     status: "approved",
-    created_by: "user-1",
-    created_at: "2023-01-02",
+    created_at: "2023-01-02", 
     updated_at: "2023-01-02",
     data: { loan_amount: "10000" },
+    offer_description: "Loan Offer",
+    offer_type: "loan",
+    created_by_username: "user-1",
+    comments: null
   },
 ];
 
 export function CampaignForm({ campaign, onSubmit, onCancel }: CampaignFormProps) {
   const { currentTenant } = useTenant();
-  const { user } = useAuth();
   
   // State for rules
   const [rules, setRules] = useState<Rule[]>(
@@ -239,8 +241,8 @@ export function CampaignForm({ campaign, onSubmit, onCancel }: CampaignFormProps
                   </FormControl>
                   <SelectContent>
                     {MOCK_OFFERS.map((offer) => (
-                      <SelectItem key={offer.id} value={offer.id}>
-                        {offer.name}
+                      <SelectItem key={offer.id} value={String(offer.id)}>
+                        {offer.offer_description}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -1,0 +1,19 @@
+Directory structure:
+└── frontend-app/
+     ├── CHANGELOG.md
+     ├── components.json
+     ├── cz.yaml
+     ├── dashboard.md
+     ├── Dockerfile
+     ├── eslint.config.js
+     ├── index.html
+     ├── knip.config.ts
+     ├── LICENSE
+     ├── netlify.toml
+     ├── package.json
+     ├── pnpm-lock.yaml
+     ├── README.md
+     ├── tsconfig.app.json
+     ├── tsconfig.json
+     ├── tsconfig.node.json
+     └── vite.config.ts

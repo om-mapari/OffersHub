@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { buildUserApiUrl } from "@/config/api";
 import { getUserTenants } from "@/features/auth/api";
 
 // Define Tenant interface based on API response
