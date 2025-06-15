@@ -50,6 +50,13 @@ def get_current_active_superuser(
     return current_user
 
 # Tenant and Role based dependencies
+
+# Function to get tenant directly by name (not from path parameter)
+def get_tenant_by_name_direct(db: Session, tenant_name: str) -> typing.Optional[models.Tenant]:
+    """Get a tenant by name directly, returning None if not found instead of raising an error."""
+    tenant = crud.tenant.get_by_name(db, name=tenant_name)
+    return tenant
+
 def get_tenant_by_name(
     tenant_name: str = Path(...),
     db: Session = Depends(get_db)

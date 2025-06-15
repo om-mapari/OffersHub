@@ -1,25 +1,3 @@
-Directory structure:
-└── frontend-app/
-     ├── CHANGELOG.md
-     ├── components.json
-     ├── cz.yaml
-     ├── dashboard.md
-     ├── Dockerfile
-     ├── eslint.config.js
-     ├── index.html
-     ├── knip.config.ts
-     ├── LICENSE
-     ├── netlify.toml
-     ├── package.json
-     ├── pnpm-lock.yaml
-     ├── README.md
-     ├── tsconfig.app.json
-     ├── tsconfig.json
-     ├── tsconfig.node.json
-     └── vite.config.ts
-
-
-
 version: '3'
 
 services:
@@ -54,6 +32,10 @@ services:
       SECRET_KEY: your_secret_key_here
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      AZURE_ENDPOINT: https://bh-in-openai-synapsesynergy.openai.azure.com/
+      AZURE_API_KEY: ff1cd87da4ba4304986e9bf652498906
+      AZURE_API_VERSION: 2024-12-01-preview
+      AZURE_DEPLOYMENT: gpt-4o-3
     ports:
       - "8000:8000"
     depends_on:

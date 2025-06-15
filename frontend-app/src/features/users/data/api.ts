@@ -1,5 +1,5 @@
 import { User, CreateUserInput, UpdateUserInput, UserTenantRole, CreateUserTenantRoleInput, DeleteUserTenantRoleInput } from './schema';
-import { API_BASE_URL } from '@/config/api';
+import { API_BASE_URL, buildTenantApiUrl } from '@/config/api';
 
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {

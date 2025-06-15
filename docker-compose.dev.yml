@@ -1,5 +1,5 @@
 services:
-  postgres-offer-db:
+  postgres-offer-db-dev:
     image: postgres:15-alpine
     container_name: offer-management-db
     environment:
@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data-dev:/var/lib/postgresql/data
       - ./database-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
@@ -19,18 +19,18 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  backend-apis:
+  backend-apis-dev:
     build:
       context: ./backend-apis
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile.dev
     container_name: offer-management-api
     depends_on:
-      postgres-offer-db:
+      postgres-offer-db-dev:
         condition: service_healthy
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres-offer-db:5432/offer_management
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-offer-db-dev:5432/offer_management
       - PROJECT_NAME=Offer Management Platform
       - SECRET_KEY=supersecretkey123notforproduction
     volumes:
@@ -43,10 +43,10 @@ services:
       retries: 3
       start_period: 10s
 
-  frontend-app:
+  frontend-app-dev:
     build:
       context: ./frontend-app
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile.dev
     container_name: frontend-app
     ports:
       - "3000:3000"
@@ -55,14 +55,14 @@ services:
       - /app/node_modules
       - ./frontend-app/.env:/app/.env
     environment:
-      - VITE_API_BASE_URL=http://offermanagerapp.southindia.cloudapp.azure.com:8000/api/v1
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
       - VITE_AZURE_ENDPOINT=${VITE_AZURE_ENDPOINT}
       - VITE_AZURE_API_KEY=${VITE_AZURE_API_KEY}
       - VITE_AZURE_API_VERSION=${VITE_AZURE_API_VERSION}
       - VITE_AZURE_DEPLOYMENT=${VITE_AZURE_DEPLOYMENT}
     restart: unless-stopped
     depends_on:
-      - backend-apis
+      - backend-apis-dev
 
 volumes:
-  postgres-data:
+  postgres-data-dev:

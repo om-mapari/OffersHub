@@ -18,14 +18,21 @@ RUN pnpm run build
 # Stage 2: Serve the built files using nginx
 FROM nginx:alpine
 
+# Install gettext for envsubst utility
+RUN apk add --no-cache gettext
+
 # Set nginx working directory
 WORKDIR /usr/share/nginx/html
 
 # Copy the built files from the builder stage
 COPY --from=builder /app/dist .
 
-# Copy frontend nginx configuration into correct directory
-COPY frontend.conf /etc/nginx/conf.d/frontend.conf
+# Copy nginx configuration
+COPY frontend.conf /etc/nginx/conf.d/default.conf
+
+# Create a script to replace environment variables in the main.js file at runtime
+COPY --from=builder /app/env-config.sh /docker-entrypoint.d/40-env-config.sh
+RUN chmod +x /docker-entrypoint.d/40-env-config.sh
 
 # Expose the production port
 EXPOSE 3000

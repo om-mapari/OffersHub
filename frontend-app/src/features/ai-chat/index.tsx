@@ -6,8 +6,7 @@ import { BsChatDots } from 'react-icons/bs';
 import { FaLightbulb } from 'react-icons/fa';
 import { useOffers } from '../offers/context/offers-context';
 import { useTenant } from '@/context/TenantContext';
-import { AZURE_CONFIG, isAzureConfigValid } from '@/config/env';
-import { campaignsApi } from '../campaigns/api/campaigns-api';
+import { apiClient } from '@/config/api';
 
 interface Message {
   type: 'user' | 'bot';
@@ -62,127 +61,8 @@ const ChatBot = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     
     // Access offers data and context
-    const { offers, rawOffers, primaryRole } = useOffers();
+    const { primaryRole } = useOffers();
     const { currentTenant } = useTenant();
-
-    // Function to get offer information for the chatbot
-    const getOffersData = async () => {
-        if (!currentTenant) {
-            return {
-                offers: [],
-                hasData: false,
-                message: "No tenant selected"
-            };
-        }
-
-        // If offers are already loaded in context
-        if (offers.length > 0) {
-            return {
-                offers,
-                hasData: true,
-                message: `${offers.length} offers available`
-            };
-        }
-        
-        try {
-            // Fetch offers if not already loaded
-            const fetchedOffers = await campaignsApi.getOffers(currentTenant.name);
-            return {
-                offers: fetchedOffers,
-                hasData: fetchedOffers.length > 0,
-                message: `${fetchedOffers.length} offers available`
-            };
-        } catch (error) {
-            console.error("Error fetching offers for chatbot:", error);
-            return {
-                offers: [],
-                hasData: false,
-                message: "Error fetching offers data"
-            };
-        }
-    };
-
-    // System prompt for the AI assistant with context
-    const getSystemPrompt = () => {
-        const tenantName = currentTenant?.name || "unknown";
-        const formattedTenantName = tenantName.split('_').map(part => 
-            part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-        ).join(' ');
-        
-        // Define system prompt with context about offers
-        return `You are OffersHub AI, a specialized assistant for the OffersHub platform.
-Your primary role is to help users navigate and utilize the OffersHub platform efficiently.
-
-CURRENT CONTEXT:
-- Current tenant: ${formattedTenantName}
-- User role: ${primaryRole}
-- Available offers: ${offers.length}
-
-You can access the following data to provide specific information:
-- Offers data with details on descriptions, types, status, and attributes
-- Basic campaign information
-
-When asked about offers or campaigns, provide specific information from the context data.
-For requests about listing offers, show a concise summary of available offers.
-When asked about a specific offer, provide its details including description, type, status, and attributes.
-
-FORMATTING INSTRUCTIONS:
-- DO NOT use markdown formatting in your responses.
-- Use plain text instead of markdown headings.
-- Use plain bullet points (•) instead of markdown bullets (* or -).
-- Don't use markdown bold or italic formatting.
-- Present information in a clean, readable format with proper spacing.
-- For lists, simply use numbers or bullet points without markdown.
-
-ABOUT OFFERSHUB:
-OffersHub is a purpose-built platform for financial services companies to create, manage, and optimize personalized offers. It enables banks and financial institutions to deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
-
-Each tenant represents a financial product like "Credit Card", "Loan", etc. In each tenant, there will be offers created, and campaigns are created from these offers.
-
-USER ACCESS MODEL:
-- Users can belong to multiple user groups per tenant.
-- Default user groups: admin, read_only, create, approver.
-- A Super Admin can create tenants and manage users and their roles.
-
-PLATFORM FLOW:
-1. Super Admin creates a tenant → this auto-creates default user groups and prepares offer configuration.
-2. Tenants have offer data stored in a common offers table with a flexible data JSONB field for custom attributes.
-
-FREQUENTLY ASKED QUESTIONS:
-
-QQ-What is OfferHub?
-Offers hub is platform that simples offer and campaign management by optimizing process, levering workflow automation, real time analytics, AI-Powered personalization of offers, and robust data and integration capabilities.
-
-QQ-What is Campaigns?
-Marketing efforts designed to promote specific offers or services to a targeted audience. Campaigns can be executed through various channels such as email, social media, and advertisements.
-
-QQ-What is Manage Users?
-This involves overseeing the profiles and activities of users within the system. It includes tasks like adding new users, updating user information, and setting permissions.
-
-QQ-What is Manage Offer Data?
-Handling the information related to various offers, including their terms, conditions, validity, and performance metrics.
-
-QQ-What is Manage Business Rules?
-Setting and maintaining the rules that govern how offers are applied and processed. Business rules ensure that offers are executed correctly and comply with regulatory requirements.
-
-QQ-What is Reports and Dashboards?
-Tools that provide insights into the performance of offers and campaigns. Reports can include metrics like user engagement, conversion rates, and financial impact. Dashboards offer a visual representation of these metrics for easy analysis.
-
-QQ-What is Offer List?
-A comprehensive list of all active and past offers provided by the bank. This list helps in tracking and managing the offers effectively.
-
-QQ-What is Offer Create/Update?
-The process of creating new offers or updating existing ones. This includes defining the offer details, terms, and conditions.
-
-QQ-What is Campaign Execute?
-The implementation of marketing campaigns to promote offers. This involves scheduling, launching, and monitoring the campaign's progress.
-
-QQ-What is User Management?
-Similar to manage users, it involves the administration of user accounts, roles, and permissions within the system.
-
-Be brief, professional, and helpful. Format responses in a clear, readable manner.
-Always respect user roles and permissions. Do not expose sensitive information.`;
-    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -209,15 +89,7 @@ Always respect user roles and permissions. Do not expose sensitive information.`
         setIsLoading(true);
 
         try {
-            // Check if Azure OpenAI is configured
-            if (!isAzureConfigValid()) {
-                throw new Error("Azure OpenAI configuration is missing. Please check your environment variables.");
-            }
-
-            // Get offers data for context
-            const offersData = await getOffersData();
-            
-            // Prepare conversation history for context
+            // Prepare the conversation history
             const conversationHistory = messages.map(msg => ({
                 role: msg.type === 'user' ? 'user' : 'assistant',
                 content: msg.content
@@ -229,108 +101,24 @@ Always respect user roles and permissions. Do not expose sensitive information.`
                 content: userMessage.content
             });
 
-            // Add system prompt with context
-            const systemPrompt = getSystemPrompt();
-            conversationHistory.unshift({
-                role: 'system',
-                content: systemPrompt
+            // Call the backend AI chat API using apiClient
+            const response = await apiClient.post(`/ai/chat`, {
+                messages: conversationHistory,
+                tenant_name: currentTenant?.name
             });
 
-            // Add offers data as context
-            let contextMessage = "Here is the current offers data:\n";
-            if (offersData.hasData) {
-                contextMessage += JSON.stringify(offersData.offers.slice(0, 10).map(offer => ({
-                    id: offer.id,
-                    description: offer.offer_description,
-                    type: offer.offer_type,
-                    status: offer.status,
-                    attributes: offer.data || {} // Include offer attributes
-                })), null, 2);
-            } else {
-                contextMessage += offersData.message;
-            }
+            const { message, suggestions } = response.data;
             
-            conversationHistory.push({
-                role: 'system',
-                content: `Context information: ${contextMessage}`
-            });
-
-            const { endpoint, apiKey, apiVersion, deployment } = AZURE_CONFIG;
-
-            // Call Azure OpenAI API directly
-            const response = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'api-key': apiKey
-                },
-                body: JSON.stringify({
-                    messages: conversationHistory,
-                    max_tokens: 1000,
-                    temperature: 0.7,
-                    top_p: 0.95,
-                    frequency_penalty: 0,
-                    presence_penalty: 0,
-                    stop: null
-                }),
-            });
-
-            const data = await response.json();
-            
-            if (data.choices && data.choices[0]) {
-                const rawBotResponse = data.choices[0].message.content;
-                // Format the response to remove markdown formatting
-                const botResponse = formatResponseText(rawBotResponse);
-                
-                // Generate follow-up suggestions based on the bot's response
-                const suggestionsResponse = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'api-key': apiKey
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: 'system',
-                                content: 'Based on the previous conversation, generate 2-3 short follow-up questions the user might want to ask next. Return only the questions as a JSON array of strings. Make them concise and directly related to OffersHub functionality.'
-                            },
-                            ...conversationHistory,
-                            {
-                                role: 'assistant',
-                                content: botResponse
-                            }
-                        ],
-                        max_tokens: 250,
-                        temperature: 0.7,
-                        response_format: { type: "json_object" }
-                    }),
-                });
-                
-                const suggestionsData = await suggestionsResponse.json();
-                let suggestions: string[] = [];
-                
-                try {
-                    const parsedSuggestions = JSON.parse(suggestionsData.choices[0].message.content);
-                    suggestions = Array.isArray(parsedSuggestions.suggestions) ? parsedSuggestions.suggestions : [];
-                } catch (error) {
-                    console.error('Failed to parse suggestions:', error);
-                    suggestions = [];
-                }
-                
-                setMessages(prev => [...prev, { 
-                    type: 'bot', 
-                    content: botResponse,
-                    suggestions
-                }]);
-            } else {
-                throw new Error('Invalid response format');
-            }
+            setMessages(prev => [...prev, { 
+                type: 'bot', 
+                content: message.content,
+                suggestions: suggestions || []
+            }]);
         } catch (error) {
             console.error('Error calling AI service:', error);
             setMessages(prev => [...prev, { 
                 type: 'bot', 
-                content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your Azure OpenAI configuration.` 
+                content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again later.` 
             }]);
         } finally {
             setIsLoading(false);
