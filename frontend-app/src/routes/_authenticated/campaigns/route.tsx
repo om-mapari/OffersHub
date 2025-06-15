@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Campaigns from '@/features/campaigns'
+import { CampaignsProvider } from '@/features/campaigns/context/campaigns-context'
 
 export const Route = createFileRoute("/_authenticated/campaigns")({
   component: CampaignsPage,
@@ -7,6 +8,8 @@ export const Route = createFileRoute("/_authenticated/campaigns")({
 
 function CampaignsPage() {
   return (
-        <Campaigns />
+    <CampaignsProvider>
+      <Campaigns />
+    </CampaignsProvider>
   );
 } 

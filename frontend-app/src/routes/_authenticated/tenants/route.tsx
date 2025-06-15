@@ -3,8 +3,4 @@ import Tenants from "@/features/tenants";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   component: Tenants,
-});
-
-function TenantsPage() {
-  return <Tenants />;
-} 
+}); 

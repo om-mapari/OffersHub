@@ -24,6 +24,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Offer } from "../data/schema";
 import offerTypesByTenant from "../data/offers_types_by_tenant.json";
+import { Sparkles, AlertCircle } from "lucide-react";
+import { generateOfferData } from "@/services/azure-openai";
+import { toast } from "sonner";
+import { useAzureConfig } from "@/hooks/use-azure-config";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface OfferFormProps {
   offer?: Offer;
@@ -48,7 +58,7 @@ type FormData = z.infer<typeof offerFormSchema> & {
 
 export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   const { currentTenant } = useTenant();
-  const { token } = useAuth();
+  const { isValid: isAzureConfigValid, missingVars } = useAzureConfig();
   
   // State for tenant offer types
   const [offerTypes, setOfferTypes] = useState<string[]>([]);
@@ -67,6 +77,9 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
   // For adding new key-value pairs to the JSON data
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
+  
+  // State for AI generation
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const form = useForm<z.infer<typeof offerFormSchema>>({
     resolver: zodResolver(offerFormSchema),
@@ -172,13 +185,92 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
     
     onSubmit(formData);
   };
+  
+  // Function to handle AI fill
+  const handleAIFill = async () => {
+    if (!currentTenant || !selectedOfferType || Object.keys(defaultAttributes).length === 0) {
+      toast.error("Please select an offer type first.");
+      return;
+    }
+
+    if (!isAzureConfigValid) {
+      toast.error("Azure OpenAI configuration is missing. Please check your environment variables.", {
+        description: `Missing: ${missingVars.join(', ')}`,
+        duration: 10000,
+      });
+      return;
+    }
+    
+    try {
+      setIsGenerating(true);
+      
+      // Show a loading toast
+      toast.loading("Generating offer data with AI...");
+      
+      const tenantName = currentTenant.name;
+      console.log('Generating AI offer for', { tenantName, selectedOfferType, defaultAttributes });
+      
+      const generatedData = await generateOfferData(
+        tenantName,
+        selectedOfferType,
+        defaultAttributes
+      );
+      
+      console.log('Generated offer data:', generatedData);
+      
+      // Update form values with generated data
+      form.setValue('offer_description', generatedData.description);
+      form.setValue('comments', generatedData.comments || '');
+      
+      // Update attribute values
+      const newJsonData: Record<string, any> = { ...jsonData };
+      
+      // Update default attributes with AI values
+      Object.entries(generatedData.attributeValues).forEach(([key, value]) => {
+        if (key in defaultAttributes) {
+          // For array values that might come as string
+          if (Array.isArray(defaultAttributes[key]) && typeof value === 'string') {
+            try {
+              newJsonData[key] = value.split(',').map(item => item.trim());
+            } catch (e) {
+              newJsonData[key] = value;
+            }
+          } else {
+            newJsonData[key] = value;
+          }
+        }
+      });
+      
+      // Add custom attributes
+      Object.entries(generatedData.customAttributes || {}).forEach(([key, value]) => {
+        if (!(key in defaultAttributes)) {
+          newJsonData[key] = value;
+        }
+      });
+      
+      setJsonData(newJsonData);
+      
+      // Dismiss all toasts and show success
+      toast.dismiss();
+      toast.success("Form filled with AI-generated data.");
+    } catch (error) {
+      console.error('Error filling form with AI:', error);
+      toast.dismiss();
+      toast.error("Failed to generate data. Please try again or fill the form manually.", {
+        description: error instanceof Error ? error.message : "Unknown error",
+        duration: 10000,
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   if (!currentTenant) {
     return <div>Please select a tenant to create or edit an offer.</div>;
   }
 
   // Render input field based on attribute type
-  const renderAttributeInput = (key: string, value: any) => {
+  const renderAttributeInput = (key: string) => {
     // Determine the input type based on the attribute value type in the template
     const templateValue = defaultAttributes[key];
     const currentValue = jsonData[key];
@@ -193,6 +285,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
             handleAttributeChange(key, values);
           }}
           placeholder={`e.g., ${Array.isArray(templateValue) ? templateValue.join(", ") : ""}`}
+          className="w-full"
         />
       );
     } else if (typeof templateValue === 'number') {
@@ -202,6 +295,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           value={currentValue || ""}
           onChange={(e) => handleAttributeChange(key, parseFloat(e.target.value) || 0)}
           placeholder={`e.g., ${templateValue}`}
+          className="w-full"
         />
       );
     } else if (typeof templateValue === 'boolean') {
@@ -210,7 +304,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           value={currentValue ? "true" : "false"}
           onValueChange={(v) => handleAttributeChange(key, v === "true")}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select value" />
           </SelectTrigger>
           <SelectContent>
@@ -226,13 +320,14 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           value={currentValue || ""}
           onChange={(e) => handleAttributeChange(key, e.target.value)}
           placeholder={`e.g., ${templateValue}`}
+          className="w-full"
         />
       );
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-3xl mx-auto px-2">
       <div>
         <h2 className="text-xl font-bold tracking-tight">
           {offer ? "Edit Offer" : "Create New Offer"}
@@ -247,36 +342,103 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* Offer Type Selection */}
-          <FormField
-            control={form.control}
-            name="offer_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Offer Type</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    handleOfferTypeChange(value);
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an offer type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {offerTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type.replace(/_/g, ' ')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div className="flex-1">
+              <FormField
+                control={form.control}
+                name="offer_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Offer Type</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleOfferTypeChange(value);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select an offer type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {offerTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.replace(/_/g, ' ')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* AI Fill Button */}
+            <div className="w-full sm:w-auto">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={handleAIFill}
+                        disabled={!selectedOfferType || isGenerating || !isAzureConfigValid}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <svg 
+                              className="animate-spin -ml-1 mr-2 h-4 w-4" 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              fill="none" 
+                              viewBox="0 0 24 24"
+                            >
+                              <circle 
+                                className="opacity-25" 
+                                cx="12" cy="12" r="10" 
+                                stroke="currentColor" 
+                                strokeWidth="4"
+                              />
+                              <path 
+                                className="opacity-75" 
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            {!isAzureConfigValid ? (
+                              <AlertCircle className="mr-2 h-4 w-4 text-amber-500" />
+                            ) : (
+                              <Sparkles className="mr-2 h-4 w-4" />
+                            )}
+                            AI Fill
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!isAzureConfigValid && (
+                    <TooltipContent className="max-w-xs">
+                      <p>Azure OpenAI configuration is missing:</p>
+                      <ul className="list-disc pl-5 text-xs">
+                        {missingVars.map((variable) => (
+                          <li key={variable}>{variable}</li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-xs">Please check your .env file.</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
 
           {/* Offer Description */}
           <FormField
@@ -318,7 +480,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
 
           {/* Dynamic Attributes Section */}
           {selectedOfferType && (
-            <div className="space-y-3 border p-3 rounded-md">
+            <div className="space-y-3 border p-2 sm:p-3 rounded-md">
               <div>
                 <h3 className="text-md font-medium">Offer Attributes</h3>
                 <p className="text-xs text-muted-foreground">
@@ -326,14 +488,14 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {Object.keys(defaultAttributes).map((key) => (
-                  <div key={key} className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-sm font-medium capitalize col-span-1">
+                  <div key={key} className="flex flex-col sm:grid sm:grid-cols-3 gap-1 sm:gap-2 sm:items-center">
+                    <div className="text-sm font-medium capitalize mb-1 sm:mb-0 col-span-1">
                       {key.replace(/_/g, ' ')}:
                     </div>
-                    <div className="col-span-2">
-                      {renderAttributeInput(key, jsonData[key])}
+                    <div className="col-span-1 sm:col-span-2">
+                      {renderAttributeInput(key)}
                     </div>
                   </div>
                 ))}
@@ -342,7 +504,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
           )}
 
           {/* Custom Attributes Section */}
-          <div className="space-y-3 border p-3 rounded-md">
+          <div className="space-y-3 border p-2 sm:p-3 rounded-md">
             <div>
               <h3 className="text-md font-medium">Custom Attributes</h3>
               <p className="text-xs text-muted-foreground">
@@ -361,16 +523,17 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
                     .map(([key, value], index, array) => (
                       <div 
                         key={key} 
-                        className={`flex items-center justify-between ${index < array.length - 1 ? 'border-b pb-2 mb-2' : ''}`}
+                        className={`flex flex-wrap sm:flex-nowrap items-center justify-between ${index < array.length - 1 ? 'border-b pb-2 mb-2' : ''}`}
                       >
-                        <div className="truncate mr-2 max-w-[70%]">
-                          <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{" "}
-                          <span className="text-sm">{Array.isArray(value) ? value.join(", ") : String(value)}</span>
+                        <div className="truncate mr-2 max-w-full sm:max-w-[70%] mb-1 sm:mb-0">
+                          <span className="font-medium capitalize break-all">{key.replace(/_/g, ' ')}:</span>{" "}
+                          <span className="text-sm break-all">{Array.isArray(value) ? value.join(", ") : String(value)}</span>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeKeyValuePair(key)}
+                          className="ml-auto"
                         >
                           Remove
                         </Button>
@@ -387,26 +550,26 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
             {/* Add new key-value pair - Add a separator line for visual distinction */}
             <div className="border-t pt-3">
               <p className="text-xs font-medium mb-2">Add New Attribute</p>
-              <div className="grid grid-cols-7 gap-2 items-end">
-                <div className="col-span-3">
+              <div className="flex flex-col sm:grid sm:grid-cols-7 gap-3 sm:gap-2">
+                <div className="sm:col-span-3">
                   <FormLabel className="text-xs">Attribute Name</FormLabel>
                   <Input
                     value={newKey}
                     onChange={(e) => setNewKey(e.target.value)}
                     placeholder="e.g., campaign_code"
-                    className="h-8 text-sm"
+                    className="h-8 text-sm w-full mt-1"
                   />
                 </div>
-                <div className="col-span-3">
+                <div className="sm:col-span-3">
                   <FormLabel className="text-xs">Value</FormLabel>
                   <Input
                     value={newValue}
                     onChange={(e) => setNewValue(e.target.value)}
                     placeholder="e.g., SUMMER2023"
-                    className="h-8 text-sm"
+                    className="h-8 text-sm w-full mt-1"
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="sm:col-span-1 flex items-end">
                   <Button
                     type="button"
                     variant="outline"

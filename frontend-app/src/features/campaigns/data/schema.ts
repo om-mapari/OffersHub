@@ -25,7 +25,7 @@ export const campaignSchema = z.object({
   start_date: z.string(),
   end_date: z.string(),
   status: campaignStatusSchema,
-  created_by_username: z.string(),
+  created_by_username: z.string().nullable(),
   created_at: z.string(),
 })
 

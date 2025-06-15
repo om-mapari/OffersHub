@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Campaign, CampaignCreate } from '../data/schema';
-import { campaignsApi } from '../api/campaigns-api';
+import { campaignsApi, clearCampaignsCache } from '../api/campaigns-api';
 import { useTenant } from '@/context/TenantContext';
 import { toast } from 'sonner';
+
+// We don't need this anymore as caching is handled in the API layer
+// const ongoingRequests = new Map<string, Promise<any>>();
 
 interface CampaignsContextType {
   campaigns: Campaign[];
@@ -32,6 +35,60 @@ interface CampaignsContextType {
   setIsCompleteDialogOpen: (isOpen: boolean) => void;
 }
 
+// Create a fallback context with no-op functions
+const createFallbackContext = (): CampaignsContextType => ({
+  campaigns: [],
+  isLoading: false,
+  error: null,
+  fetchCampaigns: async () => {
+    console.error('CampaignsProvider not available - cannot fetch campaigns');
+  },
+  createCampaign: async () => {
+    console.error('CampaignsProvider not available - cannot create campaign');
+    return null;
+  },
+  selectedCampaign: null,
+  setSelectedCampaign: () => {
+    console.error('CampaignsProvider not available - cannot set selected campaign');
+  },
+  isCreateDialogOpen: false,
+  setIsCreateDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isViewDialogOpen: false,
+  setIsViewDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isEditDialogOpen: false,
+  setIsEditDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isDeleteDialogOpen: false,
+  setIsDeleteDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isApproveDialogOpen: false,
+  setIsApproveDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isActivateDialogOpen: false,
+  setIsActivateDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isPauseDialogOpen: false,
+  setIsPauseDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isResumeDialogOpen: false,
+  setIsResumeDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+  isCompleteDialogOpen: false,
+  setIsCompleteDialogOpen: () => {
+    console.error('CampaignsProvider not available - cannot open dialog');
+  },
+});
+
 const CampaignsContext = createContext<CampaignsContextType | undefined>(undefined);
 
 export function CampaignsProvider({ children }: { children: ReactNode }) {
@@ -50,6 +107,8 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState<boolean>(false);
   
   const { currentTenant } = useTenant();
+  // We still need this ref to prevent state updates during fetch
+  const isFetchingRef = useRef<boolean>(false);
 
   const fetchCampaigns = useCallback(async () => {
     if (!currentTenant) {
@@ -57,17 +116,27 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Check if we're already fetching in this component
+    if (isFetchingRef.current) {
+      console.log('Component fetch already in progress, skipping duplicate request');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+    isFetchingRef.current = true;
     
     try {
+      // The API layer now handles caching
       const data = await campaignsApi.getCampaigns(currentTenant.name);
       setCampaigns(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch campaigns'));
       toast.error('Failed to fetch campaigns', { duration: 10000 });
+      throw err;
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, [currentTenant]);
 
@@ -140,7 +209,8 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
 export function useCampaigns() {
   const context = useContext(CampaignsContext);
   if (context === undefined) {
-    throw new Error('useCampaigns must be used within a CampaignsProvider');
+    console.warn('useCampaigns must be used within a CampaignsProvider. Using fallback context.');
+    return createFallbackContext();
   }
   return context;
 } 

@@ -1,8 +1,5 @@
 import {
-  IconBarrierBlock,
   IconBrowserCheck,
-  IconBug,
-  IconError404,
   IconLock,
   IconNotification,
   IconPalette,

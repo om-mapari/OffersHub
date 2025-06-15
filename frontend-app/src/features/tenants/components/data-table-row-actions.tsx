@@ -16,12 +16,17 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const tenant = row.original;
-  const { setSelectedTenant, setIsEditDialogOpen, setIsDeleteDialogOpen } = useTenantsContext();
-
-  const handleEdit = () => {
-    setSelectedTenant(tenant);
-    setIsEditDialogOpen(true);
-  };
+  
+  // Try to use the context, but don't throw if it's not available
+  let contextValue;
+  try {
+    contextValue = useTenantsContext();
+  } catch (error) {
+    console.warn("DataTableRowActions: TenantsContext not available");
+    return null;
+  }
+  
+  const { setSelectedTenant, setIsDeleteDialogOpen } = contextValue;
 
   const handleDelete = () => {
     setSelectedTenant(tenant);
@@ -37,9 +42,6 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleEdit}>
-          Edit
-        </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={handleDelete}
           className="text-destructive focus:text-destructive"

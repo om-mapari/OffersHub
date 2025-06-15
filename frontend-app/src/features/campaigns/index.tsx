@@ -22,43 +22,43 @@ function CampaignsContent() {
   const { currentTenant } = useTenant()
 
   // Check permissions
-  const canManageCampaigns = !!user?.isSuperAdmin || 
-    !!(currentTenant && hasPermission('admin', currentTenant.name)) || 
+  const canManageCampaigns = !!user?.isSuperAdmin ||
+    !!(currentTenant && hasPermission('admin', currentTenant.name)) ||
     !!(currentTenant && hasPermission('create', currentTenant.name))
-    
-  const canReadCampaigns = !!user?.isSuperAdmin || 
+
+  const canReadCampaigns = !!user?.isSuperAdmin ||
     !!(currentTenant && (
-      hasPermission('admin', currentTenant.name) || 
-      hasPermission('create', currentTenant.name) || 
-      hasPermission('approver', currentTenant.name) || 
+      hasPermission('admin', currentTenant.name) ||
+      hasPermission('create', currentTenant.name) ||
+      hasPermission('approver', currentTenant.name) ||
       hasPermission('read_only', currentTenant.name)
     ))
 
-  const canApprove = !!user?.isSuperAdmin || 
+  const canApprove = !!user?.isSuperAdmin ||
     !!(currentTenant && hasPermission('approver', currentTenant.name))
-    
-  const canActivate = !!user?.isSuperAdmin || 
+
+  const canActivate = !!user?.isSuperAdmin ||
     !!(currentTenant && (
-      hasPermission('admin', currentTenant.name) || 
+      hasPermission('admin', currentTenant.name) ||
       hasPermission('create', currentTenant.name)
     ))
-    
+
   const canPause = canActivate
   const canResume = canActivate
   const canComplete = canActivate
-  
-  const canEdit = !!user?.isSuperAdmin || 
+
+  const canEdit = !!user?.isSuperAdmin ||
     !!(currentTenant && hasPermission('create', currentTenant.name))
-    
-  const canDelete = !!user?.isSuperAdmin || 
+
+  const canDelete = !!user?.isSuperAdmin ||
     !!(currentTenant && hasPermission('admin', currentTenant.name))
 
-  const userRole = currentTenant ? 
-    (user?.isSuperAdmin ? 'Super Admin' : 
-    hasPermission('admin', currentTenant.name) ? 'Admin' : 
-    hasPermission('create', currentTenant.name) ? 'Create' : 
-    hasPermission('approver', currentTenant.name) ? 'Approver' : 
-    hasPermission('read_only', currentTenant.name) ? 'Read Only' : 'None') : 'None';
+  const userRole = currentTenant ?
+    (user?.isSuperAdmin ? 'Super Admin' :
+      hasPermission('admin', currentTenant.name) ? 'Admin' :
+        hasPermission('create', currentTenant.name) ? 'Create' :
+          hasPermission('approver', currentTenant.name) ? 'Approver' :
+            hasPermission('read_only', currentTenant.name) ? 'Read Only' : 'None') : 'None';
 
   return (
     <>
@@ -76,30 +76,29 @@ function CampaignsContent() {
           <div>
             <h2 className='text-2xl font-bold tracking-tight'>Campaigns</h2>
             <p className='text-muted-foreground'>
-  {currentTenant ? (
-    <>
-      Manage campaigns for{' '}
-      <strong className="font-bold">
-        {currentTenant.name
-          .split('_')
-          .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-          .join(' ')}
-      </strong>
-    </>
-  ) : (
-    "Select a tenant to manage campaigns"
-  )}
-</p>
+              {currentTenant ? (
+                <>
+                  Manage campaigns for{' '}
+                  <strong className="font-bold text-primary">
+                    {currentTenant.name
+                      .split('_')
+                      .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                      .join(' ')}
+                  </strong>
+                </>
+              ) : (
+                "Select a tenant to manage campaigns"
+              )}
+            </p>
 
             <div className="mt-2 flex items-center">
               <span className="text-sm font-medium mr-2">Your role:</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                userRole === 'Super Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
-                userRole === 'Admin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                userRole === 'Create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                userRole === 'Approver' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' :
-                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-              }`}>
+              <span className={`text-xs px-2 py-1 rounded-full ${userRole === 'Super Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
+                  userRole === 'Admin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                    userRole === 'Create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                      userRole === 'Approver' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                }`}>
                 {userRole}
               </span>
             </div>
@@ -129,10 +128,10 @@ function CampaignsContent() {
           )}
         </div>
       </Main>
-      
+
       <CreateCampaignDialog />
       <CampaignEditDialog />
-      <CampaignsDialogs 
+      <CampaignsDialogs
         permissions={{
           canApprove,
           canActivate,

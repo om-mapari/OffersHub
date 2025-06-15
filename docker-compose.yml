@@ -22,7 +22,7 @@ services:
   backend-apis:
     build:
       context: ./backend-apis
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: offer-management-api
     depends_on:
       postgres-offer-db:
@@ -46,15 +46,20 @@ services:
   frontend-app:
     build:
       context: ./frontend-app
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: frontend-app
     ports:
       - "3000:3000"
     volumes:
       - ./frontend-app:/app
       - /app/node_modules
+      - ./frontend-app/.env:/app/.env
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_BASE_URL=http://offermanagerapp.southindia.cloudapp.azure.com:8000/api/v1
+      - VITE_AZURE_ENDPOINT=${VITE_AZURE_ENDPOINT}
+      - VITE_AZURE_API_KEY=${VITE_AZURE_API_KEY}
+      - VITE_AZURE_API_VERSION=${VITE_AZURE_API_VERSION}
+      - VITE_AZURE_DEPLOYMENT=${VITE_AZURE_DEPLOYMENT}
     restart: unless-stopped
     depends_on:
       - backend-apis

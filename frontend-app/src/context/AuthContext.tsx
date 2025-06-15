@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
+import { createContext, useContext, ReactNode, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser as StoreUser, UserPasswordChange, LoginCredentials, UserRole as StoreUserRole } from '@/stores/authStore';
+import { clearAuthCache } from '@/features/auth/api';
 
 // Define user roles
 export type UserRole = StoreUserRole;
@@ -38,6 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth,
   } = useAuthStore(state => state.auth);
 
+  // Debug user object
+  useEffect(() => {
+    console.log('AuthContext - Current user:', user);
+    if (user) {
+      console.log('AuthContext - isSuperAdmin:', user.isSuperAdmin);
+    }
+  }, [user]);
+
   // Local ref to track if this instance initiated auth
   const didInitRef = useRef(false);
 
@@ -55,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       console.log('Starting global auth initialization');
+      // Clear auth cache on initialization to force fresh data
+      clearAuthCache();
+      
       authInitialized = true;
       didInitRef.current = true;
       

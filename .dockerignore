@@ -1,0 +1,11 @@
+node_modules
+.git
+.gitignore
+README.md
+npm-debug.log
+Dockerfile*
+docker-compose*
+
+# Don't ignore .env files since we need them for Vite
+# .env
+# .env.* 

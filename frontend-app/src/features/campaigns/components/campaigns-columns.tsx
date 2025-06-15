@@ -136,7 +136,7 @@ export const columns: ColumnDef<Campaign>[] = [
     accessorKey: 'created_by_username',
     header: 'Created By',
     cell: ({ row }) => (
-      <div>{row.getValue('created_by_username')}</div>
+      <div>{row.getValue('created_by_username') || 'System'}</div>
     ),
   },
   {

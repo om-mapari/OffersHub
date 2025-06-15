@@ -11,7 +11,7 @@ import { campaignCreateSchema, CampaignCreate } from '../data/schema'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon, Plus, Trash } from 'lucide-react'
+import { CalendarIcon, Plus, Trash, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useTenant } from '@/context/TenantContext'
@@ -20,6 +20,22 @@ import { Offer } from '@/features/offers/data/schema'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useAzureConfig } from '@/hooks/use-azure-config'
+import { generateCampaignData } from '@/services/azure-openai'
+
+// Type for structured selection criteria
+interface StructuredCriterion {
+  criterion: string;
+  operator: string;
+  value: string;
+}
+
+// Helper function to truncate offer description
+const truncateDescription = (description: string, maxLength = 35): string => {
+  return description.length > maxLength 
+    ? `${description.substring(0, maxLength)}...` 
+    : description;
+};
 
 // Define the selection criteria options from selection-criterion.md
 const SELECTION_CRITERIA = [
@@ -73,22 +89,18 @@ const SELECTION_CRITERIA = [
   }
 ]
 
-// Type for structured selection criteria
-interface StructuredCriterion {
-  criterion: string;
-  operator: string;
-  value: string;
-}
-
 export function CreateCampaignDialog() {
   const { isCreateDialogOpen, setIsCreateDialogOpen, createCampaign } = useCampaigns()
   const { currentTenant } = useTenant()
-  const { isAuthenticated } = useAuth()
+  const { token } = useAuth()
+  const { isValid: isAzureConfigValid, missingVars } = useAzureConfig()
   const [offers, setOffers] = useState<Offer[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [selectionCriteria, setSelectionCriteria] = useState<StructuredCriterion[]>([])
   const [startDate, setStartDate] = useState<Date | undefined>(new Date())
   const [endDate, setEndDate] = useState<Date | undefined>(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
+  const [selectedOfferDetails, setSelectedOfferDetails] = useState<Offer | null>(null)
 
   const form = useForm<z.infer<typeof campaignCreateSchema>>({
     resolver: zodResolver(campaignCreateSchema),
@@ -112,8 +124,8 @@ export function CreateCampaignDialog() {
 
   // Fetch offers for dropdown
   useEffect(() => {
-    if (currentTenant && isCreateDialogOpen && isAuthenticated) {
-      setIsLoading(true)
+    if (currentTenant && isCreateDialogOpen && token) {
+      setIsLoading(true);
       campaignsApi.getOffers(currentTenant.name)
         .then(data => {
           // Filter only approved offers
@@ -127,11 +139,78 @@ export function CreateCampaignDialog() {
           setIsLoading(false)
         })
     }
-  }, [currentTenant, isCreateDialogOpen, isAuthenticated])
+  }, [currentTenant, isCreateDialogOpen, token])
+
+  // Update selected offer details when offer_id changes
+  useEffect(() => {
+    const selectedOfferId = form.getValues('offer_id')?.toString();
+    if (!selectedOfferId || isLoading) {
+      setSelectedOfferDetails(null);
+      return;
+    }
+    
+    const offer = offers.find((o: Offer) => o.id.toString() === selectedOfferId);
+    setSelectedOfferDetails(offer || null);
+  }, [form.watch('offer_id'), offers, isLoading]);
+
+  // Handle AI Fill button click
+  const handleAIFill = async () => {
+    if (!selectedOfferDetails) {
+      toast.error("Please select an offer first");
+      return;
+    }
+
+    if (!isAzureConfigValid) {
+      toast.error("Azure OpenAI configuration is missing. Please check your environment variables.", {
+        description: `Missing: ${missingVars.join(', ')}`,
+        duration: 10000,
+      });
+      return;
+    }
+
+    if (!currentTenant) {
+      toast.error("Tenant information is missing");
+      return;
+    }
+
+    setIsGenerating(true);
+    toast.loading("Generating campaign data with AI...");
+
+    try {
+      const generatedData = await generateCampaignData(
+        selectedOfferDetails,
+        currentTenant.name
+      );
+
+      // Update form with generated data
+      form.setValue('name', generatedData.name);
+      form.setValue('description', generatedData.description);
+
+      // Update selection criteria
+      const newCriteria = generatedData.selectionCriteria.map(criterion => ({
+        criterion: criterion.criterion,
+        operator: criterion.operator,
+        value: criterion.value
+      }));
+      setSelectionCriteria(newCriteria);
+
+      toast.dismiss();
+      toast.success("Campaign data generated successfully");
+    } catch (error) {
+      console.error('Error generating campaign data:', error);
+      toast.dismiss();
+      toast.error("Failed to generate campaign data", {
+        description: error instanceof Error ? error.message : "Unknown error",
+        duration: 10000,
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Handle form submission
   const onSubmit = async (data: z.infer<typeof campaignCreateSchema>) => {
-    if (!isAuthenticated) {
+    if (!token) {
       toast.error('You must be authenticated to create a campaign', { duration: 10000 })
       return
     }
@@ -274,23 +353,74 @@ export function CreateCampaignDialog() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="offer_id">Select Offer</Label>
+              <div className="flex items-end justify-between mb-1">
+                <Label htmlFor="offer_id">Select Offer</Label>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAIFill}
+                  disabled={!selectedOfferDetails || isGenerating || !isAzureConfigValid}
+                  className="h-8"
+                >
+                  {isGenerating ? (
+                    <>
+                      <svg 
+                        className="animate-spin -ml-1 mr-2 h-4 w-4" 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" 
+                        viewBox="0 0 24 24"
+                      >
+                        <circle 
+                          className="opacity-25" 
+                          cx="12" cy="12" r="10" 
+                          stroke="currentColor" 
+                          strokeWidth="4"
+                        />
+                        <path 
+                          className="opacity-75" 
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      AI Fill
+                    </>
+                  )}
+                </Button>
+              </div>
               <Select
                 onValueChange={(value) => form.setValue('offer_id', parseInt(value))}
                 defaultValue={form.getValues('offer_id')?.toString()}
               >
-                <SelectTrigger>
+                <SelectTrigger className="truncate">
                   <SelectValue placeholder="Select an offer" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px]">
                   {isLoading ? (
                     <SelectItem value="loading" disabled>Loading offers...</SelectItem>
                   ) : offers.length > 0 ? (
-                    offers.map((offer: Offer) => (
-                      <SelectItem key={offer.id} value={offer.id.toString()}>
-                        {offer.offer_description} ({offer.offer_type})
-                      </SelectItem>
-                    ))
+                    offers.map((offer: Offer) => {
+                      const truncatedDesc = truncateDescription(offer.offer_description);
+                      
+                      return (
+                        <SelectItem 
+                          key={offer.id} 
+                          value={offer.id.toString()}
+                          title={offer.offer_description}
+                          className="flex items-center"
+                        >
+                          <div className="truncate">
+                            {truncatedDesc} ({offer.offer_type})
+                          </div>
+                        </SelectItem>
+                      );
+                    })
                   ) : (
                     <SelectItem value="none" disabled>No approved offers available</SelectItem>
                   )}
@@ -298,6 +428,23 @@ export function CreateCampaignDialog() {
               </Select>
               {form.formState.errors.offer_id && (
                 <p className="text-sm text-red-500">{form.formState.errors.offer_id.message}</p>
+              )}
+              
+              {selectedOfferDetails && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  <span 
+                    title={selectedOfferDetails.offer_description} 
+                    className="cursor-help hover:text-foreground transition-colors"
+                  >
+                    {truncateDescription(selectedOfferDetails.offer_description, 50)} ({selectedOfferDetails.offer_type})
+                  </span>
+                </div>
+              )}
+
+              {!selectedOfferDetails && !isLoading && (
+                <div className="mt-1 text-xs text-amber-500">
+                  <span>Select an offer to enable AI Fill</span>
+                </div>
               )}
             </div>
 

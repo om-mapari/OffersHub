@@ -20,7 +20,7 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['offermanagerappv2.southindia.cloudapp.azure.com'],
+    allowedHosts: ['offermanagerapp.southindia.cloudapp.azure.com'],
     port: 3000,       // 👈 use port 3000
     host: '0.0.0.0',  // 👈 required for Docker
     watch: {

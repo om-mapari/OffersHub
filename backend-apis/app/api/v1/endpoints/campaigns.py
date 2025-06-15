@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.models.campaign import CampaignStatus
 from app.api.v1 import deps
+import psycopg2
+from app import email_sender
+from app.services.campaign_processing_service import campaign_service
+from app.services.campaign_activation_service import campaign_activation_service
 
 router = APIRouter()
 
@@ -98,12 +102,25 @@ def update_campaign(
         models.Campaign.id == campaign_id,
         models.Campaign.tenant_name == tenant.name
     ).first()
-    
+    print("API Full Request received for updating campaign :", campaign_update)
     if not campaign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
     
     # Update the campaign using the CRUD utility
     updated_campaign = crud.campaign.update(db, db_obj=campaign, obj_in=campaign_update)
+    print(f"Updated campaign: {updated_campaign.id}, Status: {updated_campaign.status}")
+    
+    # Handle campaign status changes
+    if updated_campaign.status == CampaignStatus.active:
+        # Use our campaign activation service to handle the activated campaign
+        notified_customers = campaign_activation_service.process_activated_campaign(db, updated_campaign.id)
+        print(f"Campaign {updated_campaign.id} activated, {len(notified_customers)} customers notified")
+
+    if updated_campaign.status == CampaignStatus.approved:
+        # Use our campaign processing service to handle the approved campaign
+        customer_ids = campaign_service.process_approved_campaign(db, updated_campaign.id)
+        print(f"Campaign {updated_campaign.id} processed, {len(customer_ids)} customers matched")
+
     return updated_campaign
 
 @router.delete("/{campaign_id}", dependencies=[Depends(can_manage_campaigns)])

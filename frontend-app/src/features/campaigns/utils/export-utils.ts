@@ -11,7 +11,7 @@ function prepareCampaignDataForExcel(campaigns: Campaign[]): Record<string, any>
     'Status': campaign.status,
     'Start Date': new Date(campaign.start_date).toLocaleDateString(),
     'End Date': new Date(campaign.end_date).toLocaleDateString(),
-    'Created By': campaign.created_by_username,
+    'Created By': campaign.created_by_username || 'System',
     'Created At': new Date(campaign.created_at).toLocaleDateString(),
   }))
 }

@@ -44,7 +44,7 @@ export const Header = ({
       <SidebarTrigger variant='outline' className='scale-125 sm:scale-100' />
       <Separator orientation='vertical' className='h-6' />
       {/* Only show tenant selector if user is not a Super Admin and has access to multiple tenants */}
-      {user && !user.isSuperAdmin && (
+      {user && (
         <>
           <TenantSelector />
           <Separator orientation='vertical' className='h-6' />
