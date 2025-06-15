@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     metrics, # Will be mounted under tenants
     customers,
     test,
+    ai, # AI endpoints
 )
 
 api_router = APIRouter()
@@ -23,6 +24,9 @@ api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 # Current User specific routes
 api_router.include_router(users.router, prefix="/users", tags=["Users - Current User"])
+
+# AI endpoints
+api_router.include_router(ai.router, prefix="/ai", tags=["AI Features"])
 
 # Super Admin routes
 api_router.include_router(sa_tenants.router, prefix="/sa/tenants", tags=["Super Admin - Tenants"])

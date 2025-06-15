@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     
     # Optional CORS settings
     BACKEND_CORS_ORIGINS: list = []
+    
+    # Azure OpenAI settings
+    AZURE_ENDPOINT: str = os.environ.get("AZURE_ENDPOINT", "")
+    AZURE_API_KEY: str = os.environ.get("AZURE_API_KEY", "")
+    AZURE_API_VERSION: str = os.environ.get("AZURE_API_VERSION", "2023-05-15")
+    AZURE_DEPLOYMENT: str = os.environ.get("AZURE_DEPLOYMENT", "")
 
     model_config = {
         "env_file": ".env",

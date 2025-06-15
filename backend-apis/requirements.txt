@@ -11,6 +11,7 @@ alembic
 greenlet # Required by SQLAlchemy for async ORM features, good to have if future plans involve asyncpg
 python-multipart # Required for form data handling
 markdown
+openai>=1.0.0 # For Azure OpenAI integration
 
 # Testing dependencies
 pytest
