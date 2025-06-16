@@ -20,9 +20,10 @@ TMP_FILE=$(mktemp)
 if [ -n "$VITE_API_BASE_URL" ]; then
   echo "Setting API base URL to: $VITE_API_BASE_URL"
   
-  # Replace both relative paths and hardcoded localhost URLs
+  # Replace both relative paths, localhost URLs, and any hardcoded server IPs
   sed -e "s|/api/v1|$VITE_API_BASE_URL|g" \
       -e "s|http://localhost:8000/api/v1|$VITE_API_BASE_URL|g" \
+      -e "s|http://135.13.8.201:8000/api/v1|$VITE_API_BASE_URL|g" \
       "$JS_FILE" > "$TMP_FILE"
   
   cat "$TMP_FILE" > "$JS_FILE"
