@@ -19,10 +19,15 @@ TMP_FILE=$(mktemp)
 # Replace the environment variables
 if [ -n "$VITE_API_BASE_URL" ]; then
   echo "Setting API base URL to: $VITE_API_BASE_URL"
-  sed "s|/api/v1|$VITE_API_BASE_URL|g" "$JS_FILE" > "$TMP_FILE"
+  
+  # Replace both relative paths and hardcoded localhost URLs
+  sed -e "s|/api/v1|$VITE_API_BASE_URL|g" \
+      -e "s|http://localhost:8000/api/v1|$VITE_API_BASE_URL|g" \
+      "$JS_FILE" > "$TMP_FILE"
+  
   cat "$TMP_FILE" > "$JS_FILE"
+  echo "API base URL replaced successfully"
 fi
-
 
 # Clean up
 rm "$TMP_FILE"
