@@ -1,5 +1,5 @@
 import { Tenant, CreateTenantInput, UpdateTenantInput } from './schema';
-import { API_BASE_URL, buildTenantApiUrl } from '@/config/api';
+import { apiClient, API_BASE_URL } from '@/config/api';
 
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -11,63 +11,55 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 // Get all tenants (Super Admin only)
-export async function getAllTenants(token: string): Promise<Tenant[]> {
-  const response = await fetch(`${API_BASE_URL}/sa/tenants/?skip=0&limit=100`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-  
-  return handleResponse<Tenant[]>(response);
+export async function getAllTenants(): Promise<Tenant[]> {
+  try {
+    const response = await apiClient.get('/sa/tenants/?skip=0&limit=100');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching tenants:', error);
+    throw error;
+  }
 }
 
 // Get tenant by name (Super Admin only)
-export async function getTenantByName(name: string, token: string): Promise<Tenant> {
-  const response = await fetch(`${API_BASE_URL}/sa/tenants/${name}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-  
-  return handleResponse<Tenant>(response);
+export async function getTenantByName(name: string): Promise<Tenant> {
+  try {
+    const response = await apiClient.get(`/sa/tenants/${name}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching tenant ${name}:`, error);
+    throw error;
+  }
 }
 
 // Create a new tenant (Super Admin only)
-export async function createTenant(data: CreateTenantInput, token: string): Promise<Tenant> {
-  const response = await fetch(`${API_BASE_URL}/sa/tenants/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(data)
-  });
-  
-  return handleResponse<Tenant>(response);
+export async function createTenant(data: CreateTenantInput): Promise<Tenant> {
+  try {
+    const response = await apiClient.post('/sa/tenants/', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating tenant:', error);
+    throw error;
+  }
 }
 
 // Update a tenant (Super Admin only)
-export async function updateTenant(name: string, data: UpdateTenantInput, token: string): Promise<Tenant> {
-  const response = await fetch(`${API_BASE_URL}/sa/tenants/${name}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(data)
-  });
-  
-  return handleResponse<Tenant>(response);
+export async function updateTenant(name: string, data: UpdateTenantInput): Promise<Tenant> {
+  try {
+    const response = await apiClient.put(`/sa/tenants/${name}`, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating tenant ${name}:`, error);
+    throw error;
+  }
 }
 
 // Delete a tenant (Super Admin only)
-export async function deleteTenant(name: string, token: string): Promise<{ msg: string }> {
-  const response = await fetch(`${API_BASE_URL}/sa/tenants/${name}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-  
-  return handleResponse<{ msg: string }>(response);
+export async function deleteTenant(name: string): Promise<void> {
+  try {
+    await apiClient.delete(`/sa/tenants/${name}`);
+  } catch (error) {
+    console.error(`Error deleting tenant ${name}:`, error);
+    throw error;
+  }
 } 

@@ -53,8 +53,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Define production environment variables for the frontend here
+      # Direct connection to the backend API
       - VITE_API_BASE_URL=http://135.13.8.201:8000/api/v1
+      - PORT=3000
     restart: unless-stopped
     depends_on:
       - backend-apis

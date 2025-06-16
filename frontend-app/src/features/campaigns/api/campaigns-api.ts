@@ -1,7 +1,5 @@
 import { Campaign, CampaignCreate, CampaignUpdate, campaignListSchema, campaignSchema } from '../data/schema';
-import { useAuthStore } from '@/stores/authStore';
 import { apiClient, API_BASE_URL } from '@/config/api';
-import axios from 'axios';
 
 // Cache expiration time in milliseconds (5 minutes)
 const CACHE_EXPIRATION = 5 * 60 * 1000;
@@ -14,12 +12,6 @@ interface CacheEntry<T> {
 
 // Cache for API responses
 const apiCache = new Map<string, CacheEntry<any>>();
-
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  const state = useAuthStore.getState();
-  return state.auth.accessToken;
-};
 
 // Helper function to get data from cache or fetch from API
 async function getOrFetchData<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
@@ -67,17 +59,7 @@ export const campaignsApi = {
       try {
         console.log(`Fetching campaigns for tenant: ${tenantName}`);
         
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('Authentication required');
-        }
-        
-        const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/campaigns/`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
+        const response = await apiClient.get(`/tenants/${tenantName}/campaigns/`);
         return campaignListSchema.parse(response.data);
       } catch (error) {
         console.error('Error fetching campaigns:', error);
@@ -92,17 +74,8 @@ export const campaignsApi = {
       if (!tenantName) {
         throw new Error('Tenant name is required');
       }
-
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
       
-      const response = await axios.post(`${API_BASE_URL}/tenants/${tenantName}/campaigns/`, campaignData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.post(`/tenants/${tenantName}/campaigns/`, campaignData);
       
       // Clear cache after creating a new campaign
       clearCampaignsCache(tenantName);
@@ -120,17 +93,8 @@ export const campaignsApi = {
       if (!tenantName) {
         throw new Error('Tenant name is required');
       }
-
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
       
-      const response = await axios.put(`${API_BASE_URL}/tenants/${tenantName}/campaigns/${campaignId}`, campaignData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.put(`/tenants/${tenantName}/campaigns/${campaignId}`, campaignData);
       
       // Clear cache after updating a campaign
       clearCampaignsCache(tenantName);
@@ -148,17 +112,8 @@ export const campaignsApi = {
       if (!tenantName) {
         throw new Error('Tenant name is required');
       }
-
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
       
-      await axios.delete(`${API_BASE_URL}/tenants/${tenantName}/campaigns/${campaignId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      await apiClient.delete(`/tenants/${tenantName}/campaigns/${campaignId}`);
       
       // Clear cache after deleting a campaign
       clearCampaignsCache(tenantName);
@@ -198,17 +153,7 @@ export const campaignsApi = {
       try {
         console.log(`Fetching offers for tenant: ${tenantName}`);
         
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('Authentication required');
-        }
-        
-        const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/offers/`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
+        const response = await apiClient.get(`/tenants/${tenantName}/offers/`);
         return response.data;
       } catch (error) {
         console.error('Error fetching offers for campaign:', error);

@@ -1,5 +1,5 @@
 // Import the API_BASE_URL from the central configuration
-import { API_BASE_URL } from '@/config/api';
+import { API_BASE_URL, apiClient } from '@/config/api';
 
 // Simple cache implementation for API responses
 interface CacheEntry<T> {
@@ -67,56 +67,39 @@ async function getOrFetchData<T>(
   return fetchPromise;
 }
 
-// Helper function to clear cache
-export function clearAuthCache(): void {
+// Clears all API caches - useful when logging out or changing tenants
+export function clearAuthCache() {
   Object.keys(apiCache).forEach(key => {
     delete apiCache[key];
   });
-  // Also clear ongoing fetches
-  Object.keys(ongoingFetches).forEach(key => {
-    delete ongoingFetches[key];
-  });
-  console.log('Auth API cache cleared');
+  console.log('All auth cache entries cleared');
 }
 
-export interface LoginError {
-  detail?: string | { msg: string }[];
-}
-
-// As per OpenAPI spec: Body_login_for_access_token_api_v1_auth_token_post
-export interface LoginCredentials {
-  grant_type?: string; // Optional: 'password', 'refresh_token', etc.
-  username?: string;
-  password?: string;
-  scope?: string; // Optional: space-separated list of scopes
-  client_id?: string; // Optional
-  client_secret?: string; // Optional
+// Auth related types
+export interface User {
+  username: string;
+  full_name?: string;
+  is_super_admin?: boolean;
+  created_at?: string;
+  [key: string]: any;
 }
 
 export interface Token {
   access_token: string;
   token_type: string;
-  // Optional fields like refresh_token, expires_in, etc.
-  refresh_token?: string;
-  expires_in?: number;
 }
 
-// Matches the User schema from OpenAPI
-export interface User {
-  username: string;
-  full_name: string | null;
-  email?: string;
-  is_active?: boolean;
-  is_superuser?: boolean;
-  is_super_admin?: boolean;
-  created_at?: string;
-  id?: string;
-  avatar?: string;
+export interface Msg {
+  msg: string;
 }
 
-export interface UserTenantInfo {
-  tenant_name: string;
-  roles: string[];
+export interface LoginCredentials {
+  username?: string;
+  password?: string;
+  grant_type?: string;
+  scope?: string;
+  client_id?: string;
+  client_secret?: string;
 }
 
 export interface UserPasswordChange {
@@ -124,16 +107,9 @@ export interface UserPasswordChange {
   new_password: string;
 }
 
-export interface Msg {
-  msg: string;
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-    throw errorData;
-  }
-  return response.json() as Promise<T>;
+export interface UserTenantInfo {
+  tenant_name: string;
+  roles: string[];
 }
 
 export async function loginForAccessToken(credentials: LoginCredentials): Promise<Token> {
@@ -150,26 +126,32 @@ export async function loginForAccessToken(credentials: LoginCredentials): Promis
   // Clear cache on login to ensure fresh data
   clearAuthCache();
   
-  const response = await fetch(`${API_BASE_URL}/auth/token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData,
-  });
-  return handleResponse<Token>(response);
+  try {
+    const response = await apiClient.post('/auth/token', formData.toString(), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
 }
 
 export async function getCurrentUser(token: string): Promise<User> {
   return getOrFetchData<User>(`current-user-${token.substring(0, 10)}`, async () => {
     console.log('Fetching current user from:', `${API_BASE_URL}/auth/me`);
     
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const userData = await handleResponse<User>(response);
-    console.log('Raw user data from API:', userData);
-    return userData;
+    try {
+      const response = await apiClient.get('/auth/me');
+      const userData = response.data;
+      console.log('Raw user data from API:', userData);
+      return userData;
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      throw error;
+    }
   });
 }
 
@@ -177,18 +159,22 @@ export async function getUserTenants(token: string): Promise<UserTenantInfo[]> {
   return getOrFetchData<UserTenantInfo[]>(`user-tenants-${token.substring(0, 10)}`, async () => {
     console.log('Fetching user tenants from:', `${API_BASE_URL}/users/me/tenants`);
     
-    const response = await fetch(`${API_BASE_URL}/users/me/tenants`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return handleResponse<UserTenantInfo[]>(response);
+    try {
+      const response = await apiClient.get('/users/me/tenants');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user tenants:', error);
+      throw error;
+    }
   });
 }
 
 export async function changeUserPassword(data: UserPasswordChange, token: string): Promise<Msg> {
-  const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data),
-  });
-  return handleResponse<Msg>(response);
+  try {
+    const response = await apiClient.post('/auth/change-password', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error changing password:', error);
+    throw error;
+  }
 } 
