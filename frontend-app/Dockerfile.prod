@@ -12,8 +12,8 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of the application files
 COPY . .
 
-# Build the app for production
-RUN pnpm run build
+# Build the app for production with the production environment
+RUN pnpm run build -- --mode production
 
 # Stage 2: Serve the built files using nginx
 FROM nginx:alpine

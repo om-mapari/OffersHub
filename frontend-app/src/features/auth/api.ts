@@ -1,5 +1,5 @@
-// Using VITE_API_BASE_URL from .env or defaulting to localhost:8000
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Import the API_BASE_URL from the central configuration
+import { API_BASE_URL } from '@/config/api';
 
 // Simple cache implementation for API responses
 interface CacheEntry<T> {
