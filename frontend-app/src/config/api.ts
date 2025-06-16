@@ -104,13 +104,17 @@ export const tenantApiRequest = async <T>(
   }
   
   const url = buildTenantApiUrl(tenantName, path);
+  const token = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
   
   try {
     const response = await apiClient.request<T>({
       method,
       url,
       data,
-      params
+      params,
+      headers: token ? {
+        Authorization: `Bearer ${token}`
+      } : undefined
     });
     
     return response.data;
