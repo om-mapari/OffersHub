@@ -1,10 +1,10 @@
 import Cookies from 'js-cookie'
 import { create } from 'zustand'
 import * as authApi from '@/features/auth/api'
+import { API_BASE_URL } from '@/config/api'
 import type { User as ApiUser, Token, UserPasswordChange as ApiUserPasswordChange, Msg, LoginCredentials as ApiLoginCredentials, UserTenantInfo } from '@/features/auth/api'
 
 const ACCESS_TOKEN_COOKIE_KEY = 'app_access_token' // Use a more specific key
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 // Define UserRole and AuthUser based on your application's needs and API response
 export type UserRole = "super_admin" | "admin" | "read_only" | "create" | "approver" | string; // Allow string for flexibility
