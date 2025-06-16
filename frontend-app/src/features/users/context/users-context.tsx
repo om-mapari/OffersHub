@@ -59,7 +59,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const data = await usersApi.getAllUsers(token);
+      const data = await usersApi.getAllUsers();
       setUsers(data);
     } catch (error: any) {
       console.error("Failed to load users:", error);
@@ -90,7 +90,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const roles = await usersApi.getUserTenantRoles(token, username, tenantName);
+      const roles = await usersApi.getUserTenantRoles(username, tenantName);
       setUserTenantRoles(roles);
     } catch (error: any) {
       console.error("Failed to load user tenant roles:", error);
@@ -112,7 +112,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const newUser = await usersApi.createUser(data, token);
+      const newUser = await usersApi.createUser(data);
       setUsers((prev) => [...prev, newUser]);
       setIsCreateDialogOpen(false);
       toast.success("User created successfully");
@@ -136,7 +136,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const updatedUser = await usersApi.updateUser(username, data, token);
+      const updatedUser = await usersApi.updateUser(username, data);
       setUsers((prev) => prev.map((user) => user.username === username ? updatedUser : user));
       setIsEditDialogOpen(false);
       toast.success("User updated successfully");
@@ -160,7 +160,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      await usersApi.deleteUser(username, token);
+      await usersApi.deleteUser(username);
       setUsers((prev) => prev.filter((user) => user.username !== username));
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
@@ -213,7 +213,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const newRole = await usersApi.assignRoleToUser(data, token);
+      const newRole = await usersApi.assignRoleToUser(data);
       setUserTenantRoles((prev) => [...prev, newRole]);
       setIsAssignRoleDialogOpen(false);
       toast.success("Role assigned successfully");
@@ -237,7 +237,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      await usersApi.removeRoleFromUser(data, token);
+      await usersApi.removeRoleFromUser(data);
       setUserTenantRoles((prev) => 
         prev.filter((role) => 
           !(role.username === data.username && 

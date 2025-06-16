@@ -29,17 +29,17 @@ export function TenantsProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   // Get auth context for token
-  const { token, user } = useAuth();
+  const { user } = useAuth();
 
   // Load tenants on initial render if user is super admin
   const fetchTenants = useCallback(async () => {
-    if (!token || !user?.isSuperAdmin) return;
+    if (!user?.isSuperAdmin) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await tenantsApi.getAllTenants(token);
+      const data = await tenantsApi.getAllTenants();
       setTenants(data);
     } catch (error) {
       console.error("Failed to load tenants:", error);
@@ -47,7 +47,7 @@ export function TenantsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [token, user]);
+  }, [user]);
 
   // Refresh tenants data
   const refreshTenants = useCallback(async () => {
@@ -59,17 +59,12 @@ export function TenantsProvider({ children }: { children: ReactNode }) {
   }, [fetchTenants]);
 
   // Create a new tenant
-  const createTenant = async (data: CreateTenantInput) => {
-    if (!token) {
-      setError("You must be logged in to create a tenant");
-      return;
-    }
-    
+  const createTenant = async (data: CreateTenantInput) => {    
     setIsLoading(true);
     setError(null);
     
     try {
-      const newTenant = await tenantsApi.createTenant(data, token);
+      const newTenant = await tenantsApi.createTenant(data);
       setTenants((prev) => [...prev, newTenant]);
       setIsCreateDialogOpen(false);
     } catch (error: any) {
@@ -82,16 +77,11 @@ export function TenantsProvider({ children }: { children: ReactNode }) {
 
   // Delete a tenant
   const deleteTenant = async (name: string) => {
-    if (!token) {
-      setError("You must be logged in to delete a tenant");
-      return;
-    }
-    
     setIsLoading(true);
     setError(null);
     
     try {
-      await tenantsApi.deleteTenant(name, token);
+      await tenantsApi.deleteTenant(name);
       setTenants((prev) => prev.filter((tenant) => tenant.name !== name));
       setIsDeleteDialogOpen(false);
       setSelectedTenant(null);

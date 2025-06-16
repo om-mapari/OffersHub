@@ -27,7 +27,7 @@ RUN npm install -g serve
 COPY --from=builder /app/dist /app
 
 # Copy the .env.production file
-COPY --from=builder /app/.env.production /app/.env.production
+COPY .env.production /app/.env.production
 
 # Expose the port the app will run on
 EXPOSE 3000
