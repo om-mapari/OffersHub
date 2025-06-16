@@ -1,12 +1,5 @@
 import { useAuthStore } from '@/stores/authStore';
-import { API_BASE_URL } from '@/config/api';
-import axios from 'axios';
-
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  const state = useAuthStore.getState();
-  return state.auth.accessToken;
-};
+import { apiClient, API_BASE_URL } from '@/config/api';
 
 // Dashboard API functions
 export const dashboardApi = {
@@ -16,18 +9,8 @@ export const dashboardApi = {
       throw new Error('Tenant name is required');
     }
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
     try {
-      const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/metrics/delivery-status`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      const response = await apiClient.get(`/tenants/${tenantName}/metrics/delivery-status`);
       return response.data;
     } catch (error) {
       console.error('Error fetching delivery status metrics:', error);
@@ -41,18 +24,8 @@ export const dashboardApi = {
       throw new Error('Tenant name is required');
     }
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
     try {
-      const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/metrics/offers-metrics`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      const response = await apiClient.get(`/tenants/${tenantName}/metrics/offers-metrics`);
       return response.data;
     } catch (error) {
       console.error('Error fetching offers metrics:', error);
@@ -66,18 +39,8 @@ export const dashboardApi = {
       throw new Error('Tenant name is required');
     }
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
     try {
-      const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/metrics/campaigns-metrics`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      const response = await apiClient.get(`/tenants/${tenantName}/metrics/campaigns-metrics`);
       return response.data;
     } catch (error) {
       console.error('Error fetching campaigns metrics:', error);
@@ -91,18 +54,8 @@ export const dashboardApi = {
       throw new Error('Tenant name is required');
     }
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
     try {
-      const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/metrics/campaign-customers`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      const response = await apiClient.get(`/tenants/${tenantName}/metrics/campaign-customers`);
       return response.data;
     } catch (error) {
       console.error('Error fetching campaign customers:', error);
@@ -116,22 +69,12 @@ export const dashboardApi = {
       throw new Error('Tenant name is required');
     }
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
     try {
-      const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/metrics/customer-segments`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
+      const response = await apiClient.get(`/tenants/${tenantName}/metrics/customer-segments`);
       return response.data;
     } catch (error) {
       console.error('Error fetching customer segments:', error);
       throw error;
     }
   }
-}; 
+};
