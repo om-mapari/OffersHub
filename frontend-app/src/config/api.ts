@@ -72,18 +72,19 @@ apiClient.interceptors.response.use(
 export const buildTenantApiUrl = (tenantName: string | undefined, path: string): string => {
   if (!tenantName) {
     console.warn('Tenant name is undefined in buildTenantApiUrl');
-    return `/error${path}`;
+    return `${API_BASE_URL}/error${path}`;
   }
   
-  // Always use the same pattern for tenant APIs
-  return `/tenants/${tenantName}${path}`;
+  // Use the API_BASE_URL for all tenant-specific requests
+  return `${API_BASE_URL}/tenants/${tenantName}${path}`;
 };
 
 /**
  * Helper function to build user-specific API URLs
  */
 export const buildUserApiUrl = (path: string): string => {
-  return `/users${path}`;
+  // Use the API_BASE_URL for all user-specific requests
+  return `${API_BASE_URL}/users${path}`;
 };
 
 /**
