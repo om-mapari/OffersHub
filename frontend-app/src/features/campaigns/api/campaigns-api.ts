@@ -1,6 +1,7 @@
 import { Campaign, CampaignCreate, CampaignUpdate, campaignListSchema, campaignSchema } from '../data/schema';
 import { useAuthStore } from '@/stores/authStore';
-import { apiClient, tenantApiRequest } from '@/config/api';
+import { apiClient, API_BASE_URL } from '@/config/api';
+import axios from 'axios';
 
 // Cache expiration time in milliseconds (5 minutes)
 const CACHE_EXPIRATION = 5 * 60 * 1000;
@@ -66,13 +67,18 @@ export const campaignsApi = {
       try {
         console.log(`Fetching campaigns for tenant: ${tenantName}`);
         
-        const data = await tenantApiRequest<any>(
-          'GET',
-          tenantName,
-          '/campaigns/'
-        );
+        const token = getAuthToken();
+        if (!token) {
+          throw new Error('Authentication required');
+        }
         
-        return campaignListSchema.parse(data);
+        const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/campaigns/`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        return campaignListSchema.parse(response.data);
       } catch (error) {
         console.error('Error fetching campaigns:', error);
         throw error;
@@ -87,17 +93,21 @@ export const campaignsApi = {
         throw new Error('Tenant name is required');
       }
 
-      const data = await tenantApiRequest<any>(
-        'POST',
-        tenantName,
-        '/campaigns/',
-        campaignData
-      );
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      const response = await axios.post(`${API_BASE_URL}/tenants/${tenantName}/campaigns/`, campaignData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       
       // Clear cache after creating a new campaign
       clearCampaignsCache(tenantName);
       
-      return campaignSchema.parse(data);
+      return campaignSchema.parse(response.data);
     } catch (error) {
       console.error('Error creating campaign:', error);
       throw error;
@@ -111,17 +121,21 @@ export const campaignsApi = {
         throw new Error('Tenant name is required');
       }
 
-      const data = await tenantApiRequest<any>(
-        'PUT',
-        tenantName,
-        `/campaigns/${campaignId}`,
-        campaignData
-      );
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      const response = await axios.put(`${API_BASE_URL}/tenants/${tenantName}/campaigns/${campaignId}`, campaignData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       
       // Clear cache after updating a campaign
       clearCampaignsCache(tenantName);
       
-      return campaignSchema.parse(data);
+      return campaignSchema.parse(response.data);
     } catch (error) {
       console.error('Error updating campaign:', error);
       throw error;
@@ -135,11 +149,16 @@ export const campaignsApi = {
         throw new Error('Tenant name is required');
       }
 
-      await tenantApiRequest(
-        'DELETE',
-        tenantName,
-        `/campaigns/${campaignId}`
-      );
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      await axios.delete(`${API_BASE_URL}/tenants/${tenantName}/campaigns/${campaignId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       
       // Clear cache after deleting a campaign
       clearCampaignsCache(tenantName);
@@ -179,11 +198,18 @@ export const campaignsApi = {
       try {
         console.log(`Fetching offers for tenant: ${tenantName}`);
         
-        return await tenantApiRequest<any[]>(
-          'GET',
-          tenantName,
-          '/offers/'
-        );
+        const token = getAuthToken();
+        if (!token) {
+          throw new Error('Authentication required');
+        }
+        
+        const response = await axios.get(`${API_BASE_URL}/tenants/${tenantName}/offers/`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        return response.data;
       } catch (error) {
         console.error('Error fetching offers for campaign:', error);
         throw error;
