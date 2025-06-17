@@ -160,7 +160,9 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
+.cursor/
 *.sln
 *.sw?
 *.jpg
 prompts
+userinput.py

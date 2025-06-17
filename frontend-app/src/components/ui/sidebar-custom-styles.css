@@ -1,0 +1,10 @@
+/* Custom styles for sidebar */
+
+.sidebar-collapsed .hidden-when-collapsed {
+  display: none;
+}
+
+/* Ensure proper spacing in the header */
+.sidebar-header-content {
+  width: 100%;
+} 

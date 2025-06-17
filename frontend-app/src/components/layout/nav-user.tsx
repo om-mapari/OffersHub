@@ -40,6 +40,11 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const { logout, user: authUser } = useAuth()
 
+  // Get username from email or use the provided one
+  const username = authUser?.username || user.email.split('@')[0]
+  const displayName = authUser?.fullName || user.name
+  const initials = displayName.substring(0, 2).toUpperCase()
+
   const handleLogout = () => {
     logout('/sign-in')
   }
@@ -53,15 +58,17 @@ export function NavUser({
               <SidebarMenuItem
                 className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
               >
-              <Avatar className='h-8 w-8 rounded-lg'>
-                <AvatarImage src={authUser?.avatar || user.avatar} alt={authUser?.fullName || user.name} />
-                <AvatarFallback className='rounded-lg'>SN</AvatarFallback>
-              </Avatar>
-              <div className='grid flex-1 text-left text-sm leading-tight'>
-                <span className='truncate font-semibold'>{authUser?.fullName || user.name}</span>
-                <span className='truncate text-xs'>{user.email}</span>
-              </div>
-              <ChevronsUpDown className='ml-auto size-4' />
+                <div className='flex w-full items-center gap-2'>
+                  <Avatar className='h-8 w-8 shrink-0 rounded-lg'>
+                    <AvatarImage src={authUser?.avatar || user.avatar} alt={displayName} />
+                    <AvatarFallback className='rounded-lg'>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className='flex-1 overflow-hidden'>
+                    <p className='truncate font-medium leading-none'>{displayName}</p>
+                    <p className='truncate text-xs text-muted-foreground'>@{username}</p>
+                  </div>
+                  <ChevronsUpDown className='ml-auto h-4 w-4 shrink-0 opacity-70' />
+                </div>
               </SidebarMenuItem>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -71,46 +78,50 @@ export function NavUser({
               sideOffset={20}
               alignOffset={-24}
             >
-            <DropdownMenuLabel className='p-0 font-normal'>
-              <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
-                <Avatar className='h-8 w-8 rounded-lg'>
-                  <AvatarImage src={authUser?.avatar || user.avatar} alt={authUser?.fullName || user.name} />
-                  <AvatarFallback className='rounded-lg'>SN</AvatarFallback>
-                </Avatar>
-                <div className='grid flex-1 text-left text-sm leading-tight'>
-                  <span className='truncate font-semibold'>{authUser?.fullName || user.name}</span>
-                  <span className='truncate text-xs'>{user.email}</span>
+              <DropdownMenuLabel className='p-0 font-normal'>
+                <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
+                  <Avatar className='h-8 w-8 rounded-lg'>
+                    <AvatarImage src={authUser?.avatar || user.avatar} alt={displayName} />
+                    <AvatarFallback className='rounded-lg'>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className='flex-1 overflow-hidden'>
+                    <p className='truncate font-medium'>{displayName}</p>
+                    <p className='truncate text-xs text-muted-foreground'>@{username}</p>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className='bg-sidebar-accent' />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <User />
-                Profile
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className='bg-sidebar-accent' />
+              <DropdownMenuGroup>
+                <Link to="/settings">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                </Link>
+                <Link to="/settings">
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuItem>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <History className="mr-2 h-4 w-4" />
+                  Recent Activity
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Keyboard className="mr-2 h-4 w-4" />
+                  Keyboard shortcuts
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <History />
-                Recent Activity
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Keyboard />
-                Keyboard shortcuts
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
-              Log out
-            </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </>
