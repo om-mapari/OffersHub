@@ -5,8 +5,8 @@ services:
     image: postgres:15-alpine
     container_name: offer-management-db
     environment:
-      POSTGRES_USER: 1
-      POSTGRES_PASSWORD: 1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: omom
       POSTGRES_DB: offer_management
     ports:
       - "5432:5432"
@@ -33,7 +33,7 @@ services:
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       AZURE_ENDPOINT: ${AZURE_ENDPOINT:-https://bh-in-openai-synapsesynergy.openai.azure.com/}
-      AZURE_API_KEY: ${AZURE_API_KEY:-1}
+      AZURE_API_KEY: ${AZURE_API_KEY:-1234567890}
       AZURE_API_VERSION: ${AZURE_API_VERSION:-2024-12-01-preview}
       AZURE_DEPLOYMENT: ${AZURE_DEPLOYMENT:-gpt-4o-3}
     ports:
