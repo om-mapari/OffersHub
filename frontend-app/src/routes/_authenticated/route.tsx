@@ -16,10 +16,22 @@ export const Route = createFileRoute('/_authenticated')({
     // After initialization, check if user is authenticated
     if (!auth.accessToken) {
       // If not authenticated, redirect to sign-in
+      // Use string conversion for the redirect path to avoid [object Object]
+      const redirectPath = String(location.pathname || '/');
+      
+      // For the root path, simply redirect to sign-in without query parameters
+      if (redirectPath === '/' || redirectPath === '') {
+        throw redirect({
+          to: '/sign-in',
+          replace: true,
+        });
+      }
+      
+      // For other paths, include the redirect parameter
       throw redirect({
         to: '/sign-in',
         search: {
-          redirect: location.pathname + location.search,
+          redirect: redirectPath,
         },
         replace: true,
       });

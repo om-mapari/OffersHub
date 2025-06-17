@@ -54,8 +54,15 @@ const queryClient = new QueryClient({
         if (error.response?.status === 401) {
           toast.error('Session expired!', { duration: 10000 })
           useAuthStore.getState().auth.reset()
-          const redirect = `${router.history.location.href}`
-          router.navigate({ to: '/sign-in', search: { redirect } })
+          const redirect = String(router.history.location.pathname || '/')
+          
+          // For the root path, redirect to sign-in without query parameters
+          if (redirect === '/' || redirect === '') {
+            router.navigate({ to: '/sign-in', replace: true })
+          } else {
+            // For other paths, include the redirect parameter
+            router.navigate({ to: '/sign-in', search: { redirect }, replace: true })
+          }
         }
         if (error.response?.status === 500) {
           toast.error('Internal Server Error!', { duration: 10000 })

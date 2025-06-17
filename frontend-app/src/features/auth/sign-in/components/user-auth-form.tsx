@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { IconBrandWindows } from '@tabler/icons-react'
+import { IconBrandWindows, IconWand } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -49,6 +49,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     },
   })
 
+  // Function to fill form with test credentials
+  const fillTestCredentials = () => {
+    form.setValue('username', 'coderom')
+    form.setValue('password', 'coderom')
+  }
+
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
     try {
@@ -66,6 +72,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         redirectPath = '/'
       }
       
+      // Navigate to the dashboard or the specified redirect path
       navigate({ to: redirectPath, replace: true })
     } catch (error: any) {
       const errorMsg = error?.detail?.[0]?.msg || error?.detail || 'Login failed. Please check your credentials.'
@@ -111,9 +118,24 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             </FormItem>
           )}
         />
-        <Button type='submit' className='w-full bg-primary text-white hover:bg-primary/90' disabled={isLoading}>
+        <Button 
+          type='submit' 
+          className='w-full bg-primary text-white hover:bg-primary/90' 
+          disabled={isLoading}
+        >
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
+        
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-blue-500 text-blue-500 hover:bg-blue-500/10 flex items-center justify-center"
+          onClick={fillTestCredentials}
+        >
+          {IconWand ? <IconWand className="mr-2 h-4 w-4" /> : <span className="mr-2">✨</span>}
+          Auto-fill with Test Credentials
+        </Button>
+        
         <div className='relative'>
           <div className='absolute inset-0 flex items-center'>
             <span className='w-full border-t' />
