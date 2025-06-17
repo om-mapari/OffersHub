@@ -21,8 +21,16 @@ export const apiClient = axios.create({
 
 // Interceptor to add auth token to requests
 apiClient.interceptors.request.use((config) => {
-  // Get token from cookie (same as auth store)
-  const token = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
+  // Try to get token from multiple sources
+  let token = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
+  
+  // If no token in cookies, try sessionStorage as fallback
+  if (!token && typeof window !== 'undefined') {
+    const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_COOKIE_KEY);
+    if (sessionToken) {
+      token = sessionToken;
+    }
+  }
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

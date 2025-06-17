@@ -56,9 +56,15 @@ export const useAuthStore = create<AppState>()((set, get) => ({
     setUser: (user) => set(state => ({ auth: { ...state.auth, user, error: null } })),
     setAccessToken: (accessToken) => {
       if (accessToken) {
-        Cookies.set(ACCESS_TOKEN_COOKIE_KEY, accessToken, { expires: 7, secure: import.meta.env.PROD, sameSite: 'Lax' });
+        // Modified cookie settings to work better in production environments
+        Cookies.set(ACCESS_TOKEN_COOKIE_KEY, accessToken, { 
+          expires: 7, 
+          secure: import.meta.env.PROD, 
+          sameSite: 'None',
+          path: '/'
+        });
       } else {
-        Cookies.remove(ACCESS_TOKEN_COOKIE_KEY);
+        Cookies.remove(ACCESS_TOKEN_COOKIE_KEY, { path: '/' });
       }
       set(state => ({ auth: { ...state.auth, accessToken, error: null } }));
     },
@@ -68,7 +74,15 @@ export const useAuthStore = create<AppState>()((set, get) => ({
         console.log('Attempting login with credentials:', { ...credentials, password: '***' });
         const tokenData: Token = await authApi.loginForAccessToken(credentials);
         console.log('Login successful, token received:', { access_token: tokenData.access_token ? '***' : null });
+        
+        // Store token in memory and cookie
         get().auth.setAccessToken(tokenData.access_token);
+        
+        // Store token in sessionStorage as a fallback
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(ACCESS_TOKEN_COOKIE_KEY, tokenData.access_token);
+        }
+        
         await get().auth.fetchCurrentUser();
       } catch (error) {
         console.error("Login failed:", error);
@@ -79,11 +93,32 @@ export const useAuthStore = create<AppState>()((set, get) => ({
       // isLoading will be set to false by fetchCurrentUser or in finally block if fetchCurrentUser is not awaited fully here.
     },
     fetchCurrentUser: async () => {
-      const token = get().auth.accessToken;
+      // Try to get token from multiple sources
+      let token = get().auth.accessToken;
+      
+      // If no token in state, try cookies
+      if (!token) {
+        const cookieToken = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
+        if (cookieToken) {
+          token = cookieToken;
+        }
+      }
+      
+      // If still no token, try sessionStorage
+      if (!token && typeof window !== 'undefined') {
+        const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_COOKIE_KEY);
+        // If found in sessionStorage, update state and cookie
+        if (sessionToken) {
+          token = sessionToken;
+          get().auth.setAccessToken(sessionToken);
+        }
+      }
+      
       if (!token) {
         set(state => ({ auth: { ...state.auth, user: null, isLoading: false } }));
         return;
       }
+      
       set(state => ({ auth: { ...state.auth, isLoading: true, error: null } }));
       try {
         console.log('Fetching current user with token:', token ? '***' : null);
@@ -128,7 +163,18 @@ export const useAuthStore = create<AppState>()((set, get) => ({
       }
       console.log('Initializing auth store');
       set(state => ({ auth: { ...state.auth, isLoading: true } }));
-      const token = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
+      
+      // Try to get token from multiple sources
+      let token = Cookies.get(ACCESS_TOKEN_COOKIE_KEY);
+      
+      // If no token in cookies, try sessionStorage
+      if (!token && typeof window !== 'undefined') {
+        const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_COOKIE_KEY);
+        if (sessionToken) {
+          token = sessionToken;
+        }
+      }
+      
       console.log('Initializing auth, token exists:', !!token);
       if (token) {
         get().auth.setAccessToken(token); // Ensure token is in state
@@ -145,6 +191,12 @@ export const useAuthStore = create<AppState>()((set, get) => ({
       // Optionally: Call a backend /logout endpoint
       // await authApi.logoutUser(get().auth.accessToken);
       authApi.clearAuthCache(); // Clear API cache on logout
+      
+      // Clear sessionStorage
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(ACCESS_TOKEN_COOKIE_KEY);
+      }
+      
       get().auth.reset();
     },
     changePassword: async (data: UserPasswordChange) => {
@@ -165,7 +217,7 @@ export const useAuthStore = create<AppState>()((set, get) => ({
     reset: () => {
       authApi.clearAuthCache(); // Clear API cache on reset
       set(state => {
-        Cookies.remove(ACCESS_TOKEN_COOKIE_KEY);
+        Cookies.remove(ACCESS_TOKEN_COOKIE_KEY, { path: '/' });
         return {
           auth: {
             ...state.auth,
