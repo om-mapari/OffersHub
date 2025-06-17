@@ -5,4 +5,5 @@ dist
 .vscode
 *.log
 .env*
-!.env.example 
+!.env.production
+!.env.example

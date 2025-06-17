@@ -55,7 +55,7 @@ export function AssignRoleDialog() {
   useEffect(() => {
     if (isAssignRoleDialogOpen && token) {
       setIsLoadingTenants(true)
-      getAllTenants(token)
+      getAllTenants()
         .then(data => {
           setTenants(data)
           setIsLoadingTenants(false)

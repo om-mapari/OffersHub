@@ -1,6 +1,5 @@
 import { Campaign, CampaignCreate, CampaignUpdate, campaignListSchema, campaignSchema } from '../data/schema';
-import { useAuthStore } from '@/stores/authStore';
-import { apiClient, tenantApiRequest } from '@/config/api';
+import { apiClient, API_BASE_URL } from '@/config/api';
 
 // Cache expiration time in milliseconds (5 minutes)
 const CACHE_EXPIRATION = 5 * 60 * 1000;
@@ -13,12 +12,6 @@ interface CacheEntry<T> {
 
 // Cache for API responses
 const apiCache = new Map<string, CacheEntry<any>>();
-
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  const state = useAuthStore.getState();
-  return state.auth.accessToken;
-};
 
 // Helper function to get data from cache or fetch from API
 async function getOrFetchData<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
@@ -66,13 +59,8 @@ export const campaignsApi = {
       try {
         console.log(`Fetching campaigns for tenant: ${tenantName}`);
         
-        const data = await tenantApiRequest<any>(
-          'GET',
-          tenantName,
-          '/campaigns/'
-        );
-        
-        return campaignListSchema.parse(data);
+        const response = await apiClient.get(`/tenants/${tenantName}/campaigns/`);
+        return campaignListSchema.parse(response.data);
       } catch (error) {
         console.error('Error fetching campaigns:', error);
         throw error;
@@ -86,18 +74,13 @@ export const campaignsApi = {
       if (!tenantName) {
         throw new Error('Tenant name is required');
       }
-
-      const data = await tenantApiRequest<any>(
-        'POST',
-        tenantName,
-        '/campaigns/',
-        campaignData
-      );
+      
+      const response = await apiClient.post(`/tenants/${tenantName}/campaigns/`, campaignData);
       
       // Clear cache after creating a new campaign
       clearCampaignsCache(tenantName);
       
-      return campaignSchema.parse(data);
+      return campaignSchema.parse(response.data);
     } catch (error) {
       console.error('Error creating campaign:', error);
       throw error;
@@ -110,18 +93,13 @@ export const campaignsApi = {
       if (!tenantName) {
         throw new Error('Tenant name is required');
       }
-
-      const data = await tenantApiRequest<any>(
-        'PUT',
-        tenantName,
-        `/campaigns/${campaignId}`,
-        campaignData
-      );
+      
+      const response = await apiClient.put(`/tenants/${tenantName}/campaigns/${campaignId}`, campaignData);
       
       // Clear cache after updating a campaign
       clearCampaignsCache(tenantName);
       
-      return campaignSchema.parse(data);
+      return campaignSchema.parse(response.data);
     } catch (error) {
       console.error('Error updating campaign:', error);
       throw error;
@@ -134,12 +112,8 @@ export const campaignsApi = {
       if (!tenantName) {
         throw new Error('Tenant name is required');
       }
-
-      await tenantApiRequest(
-        'DELETE',
-        tenantName,
-        `/campaigns/${campaignId}`
-      );
+      
+      await apiClient.delete(`/tenants/${tenantName}/campaigns/${campaignId}`);
       
       // Clear cache after deleting a campaign
       clearCampaignsCache(tenantName);
@@ -179,11 +153,8 @@ export const campaignsApi = {
       try {
         console.log(`Fetching offers for tenant: ${tenantName}`);
         
-        return await tenantApiRequest<any[]>(
-          'GET',
-          tenantName,
-          '/offers/'
-        );
+        const response = await apiClient.get(`/tenants/${tenantName}/offers/`);
+        return response.data;
       } catch (error) {
         console.error('Error fetching offers for campaign:', error);
         throw error;
