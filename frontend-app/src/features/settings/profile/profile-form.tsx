@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
@@ -22,9 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 
 const profileFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, {
+      message: 'Name must be at least 2 characters.',
+    })
+    .max(50, {
+      message: 'Name must not be longer than 50 characters.',
+    }),
   username: z
     .string()
     .min(2, {
@@ -38,25 +45,15 @@ const profileFormSchema = z.object({
       required_error: 'Please select an email to display.',
     })
     .email(),
-  bio: z.string().max(160).min(4),
-  urls: z
-    .array(
-      z.object({
-        value: z.string().url({ message: 'Please enter a valid URL.' }),
-      })
-    )
-    .optional(),
 })
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 // This can come from your database or API.
 const defaultValues: Partial<ProfileFormValues> = {
-  bio: 'I own a computer.',
-  urls: [
-    { value: 'https://shadcn.com' },
-    { value: 'http://twitter.com/shadcn' },
-  ],
+  name: 'John Doe',
+  username: 'johndoe',
+  email: 'm@example.com',
 }
 
 export default function ProfileForm() {
@@ -66,17 +63,28 @@ export default function ProfileForm() {
     mode: 'onChange',
   })
 
-  const { fields, append } = useFieldArray({
-    name: 'urls',
-    control: form.control,
-  })
-
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => showSubmittedData(data))}
-        className='space-y-8'
+        className='space-y-6'
       >
+        <FormField
+          control={form.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder='John Doe' {...field} />
+              </FormControl>
+              <FormDescription>
+                This is your full name as it will appear on your profile.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name='username'
@@ -84,7 +92,7 @@ export default function ProfileForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder='shadcn' {...field} />
+                <Input placeholder='johndoe' {...field} />
               </FormControl>
               <FormDescription>
                 This is your public display name. It can be your real name or a
@@ -114,65 +122,12 @@ export default function ProfileForm() {
               </Select>
               <FormDescription>
                 You can manage verified email addresses in your{' '}
-                <Link to='/'>email settings</Link>.
+                <Link to='/settings'>email settings</Link>.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name='bio'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bio</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Tell us a little bit about yourself'
-                  className='resize-none'
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                You can <span>@mention</span> other users and organizations to
-                link to them.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div>
-          {fields.map((field, index) => (
-            <FormField
-              control={form.control}
-              key={field.id}
-              name={`urls.${index}.value`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={cn(index !== 0 && 'sr-only')}>
-                    URLs
-                  </FormLabel>
-                  <FormDescription className={cn(index !== 0 && 'sr-only')}>
-                    Add links to your website, blog, or social media profiles.
-                  </FormDescription>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            className='mt-2'
-            onClick={() => append({ value: '' })}
-          >
-            Add URL
-          </Button>
-        </div>
         <Button type='submit'>Update profile</Button>
       </form>
     </Form>
