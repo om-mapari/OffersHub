@@ -1,176 +1,137 @@
+---
+
 # 💼 OfferHub
 
-## 📖 Overview
+## 📖 Overview  
+OffersHub is a platform designed for financial services companies to create, manage, and optimize personalized offers. It enables banks and financial institutions to deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
 
-OfferHub is a purpose-built platform for financial services companies to create, manage, and optimize personalized offers. It enables banks and financial institutions to deliver targeted promotions that enhance customer engagement, drive retention, and fuel growth.
+---
 
-## ✨ Features
+## ✨ Features  
+- 📊 Centralized dashboard for managing offers and promotions  
+- 🧩 Personalized offer creation tailored to customer segments  
+- 📈 Real-time monitoring of offer performance and conversion rates  
+- 🧠 Actionable insights to refine marketing strategies and outreach  
 
-- 📊 Centralized dashboard for managing offers and promotions
-- 🧩 Personalized offer creation tailored to customer segments
-- 📈 Real-time monitoring of offer performance and conversion rates
-- 🧠 Actionable insights to refine marketing strategies and outreach
+---
 
-## 🏦 Use Case
+## 🏦 Use Case  
+Financial institutions can use OffersHub to craft and deliver highly relevant offers that resonate with individual customers, improving the overall customer experience and increasing customer lifetime value (CLTV).
 
-Financial institutions leverage OfferHub to craft and deliver highly relevant offers that resonate with individual customers. This improves the overall customer experience and increases customer lifetime value (CLTV).
+---
 
-## 🚀 Getting Started
+## 🚀 Getting Started  
 
-This repository contains a full-stack web application with the following components:
+This repository contains a full-stack web application with the following components:  
+- 🐘 PostgreSQL – Relational database for storing offer data  
+- 🧠 FastAPI – Backend API service  
+- 🌐 React – Frontend user interface for managing offers  
 
-- 🐘 PostgreSQL – Relational database for storing offer data
-- 🧠 FastAPI – Backend API service
-- 🌐 Frontend App – User interface for managing offers
+---
 
-All services are containerized using Docker Compose.
+## 🛠️ Local Development Setup  
 
-## 🧰 Available Services
+### 🔧 Backend Setup  
+1. Navigate to the backend directory: `cd backend-apis`  
+2. Create a Python virtual environment: `python -m venv venv`  
+3. Activate the virtual environment:  
+    - 🖥️ On Windows: `venv\Scripts\activate`  
+    - 🍎 On macOS/Linux: `source venv/bin/activate`  
+4. Install dependencies: `pip install -r requirements.txt`  
+5. Create a `.env` file from the template: `cp .env.example .env`  
+6. Edit `.env` with your configuration settings.  
+7. Start the FastAPI server: `uvicorn app.main:app --reload`  
 
-| Service | Description | Port |
-|---------|-------------|------|
-| postgres-db | PostgreSQL database | 5432 |
-| backend-apis | FastAPI backend APIs | 8000 |
-| frontend-app | Frontend web client | 3000 |
+🚀 The API will be accessible at `http://localhost:8000`.  
+📚 API Documentation: `http://localhost:8000/docs`  
 
-## ⚙️ Usage
+---
 
-### ▶️ Start All Services
+### 🌐 Frontend Setup  
+1. Navigate to the frontend directory: `cd frontend-app`  
+2. Install dependencies using pnpm: `pnpm install`  
+3. Start the development server: `pnpm run dev`  
 
-Build and run all containers in the background:
+🎉 The frontend will be accessible at `http://localhost:3000`.
 
-```bash
-docker-compose up -d --build
-```
+---
 
-Or in the foreground:
+## 🐳 Docker Development Setup  
 
-```bash
-docker-compose up --build
-```
+To set up a local development environment using Docker:  
+1. Start the services:  
+   `docker-compose -f docker-compose.dev.yml up -d --build`  
 
-### 🛑 Stop All Services
 
-```bash
-docker-compose down
-```
+🎯 Services will be available at:  
+   - 🧠 Backend: `http://localhost:8000`  
+   - 🌐 Frontend: `http://localhost:3000`  
 
-### 📄 View Live Logs
+---
 
-```bash
-docker-compose logs -f
-```
+## 🚢 Production Deployment  
 
-### Convert the file to Unix-style line endings:
-dos2unix ./database-init/00-init-db.sh
+### 🌍 Setting Up Environment Variables  
+1. Make the `set_env_variables.sh` script executable:  
+   `chmod +x set_env_variables.sh`  
+2. Run the script:  
+   `./set_env_variables.sh`  
 
-## 🔧 Setup (Local Development)
+### 🏭 Starting Production Services  
+1. Build and start production services:  
+   `docker-compose up -d --build`  
 
-1. Create a Python virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+⚠️ **Important:**  
+For Windows users, ensure shell scripts like `database-init/00-init-db.sh` are converted to Unix format:  
+`dos2unix ./database-init/00-init-db.sh`
 
-3. Set up your PostgreSQL database.
+---
 
-4. Create a `.env` file from `.env.example` and update the `DATABASE_URL` and `SECRET_KEY`.
-   ```bash
-   cp .env.example .env
-   # Then edit .env
-   ```
+## 🧪 Testing  
 
-5. Initialize the database (if using Alembic, run migrations):
-   ```bash
-   # (Assuming Alembic is set up)
-   # alembic upgrade head
-   ```
+A comprehensive test suite has been set up to validate all API endpoints. To run the tests:  
 
-## 🚀 Running the Application (Local)
+1. Navigate to the backend directory:  
+   `cd backend-apis`  
+2. Activate the virtual environment:  
+    - 🍎 On macOS/Linux: `source venv/bin/activate`  
+    - 🖥️ On Windows: `venv\Scripts\activate`  
+3. Run the tests:  
+   `pytest -xvs tests/api/v1/ --cov=app --cov-report=term-missing`  
 
-```bash
-uvicorn app.main:app --reload
-```
+🛠️ This will:  
+   - Run all tests in the `tests/api/v1/` directory  
+   - Output verbose test results  
+   - Display test coverage and highlight missing lines from the code.  
 
-The API will be available at `http://127.0.0.1:8000`.
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
+---
 
-## 📚 API Documentation
+## 📌 Available Services  
 
-The API follows RESTful principles and is organized into the following main sections:
+| 🛠️ Service      | 📝 Description                 | 🌐 Local Port    | 🌍 Production Port |  
+|------------------|--------------------------------|------------------|--------------------|  
+| 📋 postgres-db   | PostgreSQL database           | 5432             | 5432               |  
+| 🧠 backend-apis  | FastAPI backend APIs          | 8000             | 8000               |  
+| 🌐 frontend-app  | Frontend web client           | 3000             | 3000               |  
 
-### Authentication Endpoints
+---
 
-- `POST /api/v1/auth/token` - OAuth2 compatible token login
-- `GET /api/v1/auth/me` - Get current authenticated user
-- `POST /api/v1/auth/change-password` - Change user's password
+## 👤 Contact & Contributions  
 
-### User Management
+We would love to hear from you! Whether it's feedback, ideas, or contributions, feel free to reach out:  
 
-- `GET /api/v1/users/me` - Get current user profile
-- `GET /api/v1/users/me/tenants` - Get tenants and roles for current user
+- 💼 **LinkedIn:** [Om Mapari](https://www.linkedin.com/in/om-mapari/)  
+- 💻 **GitHub:** [Om Mapari](https://www.github.com/om-mapari/)  
 
-### Super Admin - Tenant Management
+🤝 **Contributions**:  
+We welcome contributions to make OffersHub even better! If you'd like to contribute:  
+1. Fork the repository.  
+2. Make your desired updates or feature additions.  
+3. Create a pull request with a detailed explanation of your changes.  
 
-- `POST /api/v1/sa/tenants/` - Create new tenant
-- `GET /api/v1/sa/tenants/` - List all tenants
-- `GET /api/v1/sa/tenants/{tenant_name}` - Get specific tenant
-- `PUT /api/v1/sa/tenants/{tenant_name}` - Update tenant details
-- `DELETE /api/v1/sa/tenants/{tenant_name}` - Delete tenant
+For discussions or suggestions, feel free to connect with me on LinkedIn or open an issue on GitHub. Let's collaborate and build something amazing together!  
 
-### Super Admin - User Management
+---
 
-- `POST /api/v1/sa/users/` - Create new user
-- `GET /api/v1/sa/users/` - List all users
-- `GET /api/v1/sa/users/{username}` - Get specific user
-- `PUT /api/v1/sa/users/{username}` - Update user details
-- `DELETE /api/v1/sa/users/{username}` - Delete user
 
-For complete API documentation, visit the Swagger UI at `http://127.0.0.1:8000/docs` when the application is running.
-
-## 🧪 Testing the API
-
-A comprehensive test suite has been set up to test all API endpoints. Tests use pytest and are located in the `tests/api/v1/` directory.
-
-### Running the tests
-
-Run the tests directly with pytest:
-
-```bash
-pytest -xvs tests/api/v1/ --cov=app --cov-report=term-missing
-```
-
-This command will:
-- Run all tests in the `tests/api/v1/` directory
-- Show verbose output (-v)
-- Show each test case as it executes (-x)
-- Show stdout for failed tests (-s)
-- Generate a coverage report for the app directory (--cov=app)
-- Show missing lines in the coverage report (--cov-report=term-missing)
-
-### Test Structure
-
-The tests are organized by resource type:
-
-- `test_auth.py` - Authentication endpoints (login, token verification)
-- `test_users.py` - User profile management
-- `test_tenants.py` - Tenant management and user-tenant relationships
-- `test_offers.py` - Offer creation, approval workflows, and management
-
-### Adding New Tests
-
-When adding new API features, add corresponding tests by:
-
-1. Create a new test file in `tests/api/v1/` if testing a new resource
-2. Use the existing fixtures from `conftest.py` for database access, authentication, etc.
-3. Follow the pattern of existing tests for consistency
-
-### Test Environment
-
-Tests use an in-memory SQLite database by default to keep tests isolated and fast.
