@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronsUpDown, Plus } from 'lucide-react'
+import { ChevronsUpDown, Plus, Building2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { cn } from '@/lib/utils'
 
 export function TeamSwitcher({
   teams,
@@ -25,7 +26,8 @@ export function TeamSwitcher({
     plan: string
   }[]
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, state } = useSidebar()
+  const isCollapsed = state === 'collapsed'
   const [activeTeam, setActiveTeam] = React.useState(teams[0])
 
   return (
@@ -38,18 +40,23 @@ export function TeamSwitcher({
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
             >
               <div className='text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-              <img
-                  src="/images/barclays2.png"
-                  alt={activeTeam.name}
-                  className='size-8 object-contain'
-                />              </div>
-              <div className='grid flex-1 text-left text-lg leading-tight'>
+                {isCollapsed ? (
+                  <Building2 className="h-5 w-5" />
+                ) : (
+                  <img
+                    src="/images/barclays2.png"
+                    alt={activeTeam.name}
+                    className='size-8 object-contain'
+                  />
+                )}
+              </div>
+              <div className={cn('grid flex-1 text-left text-lg leading-tight', isCollapsed && 'hidden')}>
                 <span className='truncate font-semibold'>
                   {activeTeam.name}
                 </span>
                 <span className='truncate text-xs'>{activeTeam.plan}</span>
               </div>
-              <ChevronsUpDown className='ml-auto' />
+              <ChevronsUpDown className={cn('ml-auto', isCollapsed && 'hidden')} />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -69,8 +76,8 @@ export function TeamSwitcher({
               >
                 <div className='flex size-6 items-center justify-center rounded-sm border overflow-hidden'>
                   <img
-                  src="/images/barclays2.png"
-                  alt={team.name}
+                    src="/images/barclays2.png"
+                    alt={team.name}
                     className='size-4 object-contain'
                   />
                 </div>

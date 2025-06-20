@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DataTableFacetedFilter } from '@/features/offers/components/data-table-faceted-filter'
 import { DataTableViewOptions } from '@/features/offers/components/data-table-view-options'
-import { Check, Clock, Pause, FileText, Tag } from 'lucide-react'
+import { Check, Clock, Pause, FileText, Tag, RefreshCw } from 'lucide-react'
 import { Campaign } from '../data/schema'
 import { DataTableExport } from './data-table-export'
 import { useCampaigns } from '../context/campaigns-context'
@@ -19,7 +19,7 @@ export function DataTableToolbar<TData>({
   data,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
-  const { campaigns } = useCampaigns()
+  const { campaigns, refreshCampaigns } = useCampaigns()
   
   // Extract unique offer IDs for filtering, filtering out null values
   const uniqueOfferIds = Array.from(
@@ -35,19 +35,31 @@ export function DataTableToolbar<TData>({
   }))
 
   return (
-    <div className='flex items-center justify-between'>
-      <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-        <Input
-          placeholder='Filter campaigns...'
-          value={
-            (table.getColumn('name')?.getFilterValue() as string) ?? ''
-          }
-          onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
-          }
-          className='h-8 w-[150px] lg:w-[250px]'
-        />
-        <div className='flex gap-x-2'>
+    <div className='flex flex-col space-y-3 md:flex-row md:items-center md:justify-between md:space-y-0'>
+      <div className='flex flex-1 flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0'>
+        <div className='flex w-full items-center space-x-2 md:w-auto'>
+          <Input
+            placeholder='Filter campaigns...'
+            value={
+              (table.getColumn('name')?.getFilterValue() as string) ?? ''
+            }
+            onChange={(event) =>
+              table.getColumn('name')?.setFilterValue(event.target.value)
+            }
+            className='h-8 w-full md:w-[250px]'
+          />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 px-2 flex-shrink-0" 
+            onClick={() => refreshCampaigns()}
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only md:not-sr-only md:ml-2">Refresh</span>
+          </Button>
+        </div>
+        <div className='flex flex-wrap gap-2'>
           {table.getColumn('status') && (
             <DataTableFacetedFilter
               column={table.getColumn('status')}
@@ -69,17 +81,17 @@ export function DataTableToolbar<TData>({
               options={uniqueOfferIds}
             />
           )}
+          {isFiltered && (
+            <Button
+              variant='ghost'
+              onClick={() => table.resetColumnFilters()}
+              className='h-8 px-2 lg:px-3'
+            >
+              Reset
+              <Cross2Icon className='ml-2 h-4 w-4' />
+            </Button>
+          )}
         </div>
-        {isFiltered && (
-          <Button
-            variant='ghost'
-            onClick={() => table.resetColumnFilters()}
-            className='h-8 px-2 lg:px-3'
-          >
-            Reset
-            <Cross2Icon className='ml-2 h-4 w-4' />
-          </Button>
-        )}
       </div>
       <div className="flex items-center space-x-2">
         <DataTableExport table={table} data={data} />

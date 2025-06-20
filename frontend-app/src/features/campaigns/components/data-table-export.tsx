@@ -33,9 +33,9 @@ export function DataTableExport<TData>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8">
-          <FileDown className="mr-2 h-4 w-4" />
-          Export
+        <Button variant="outline" size="sm" className="h-8 px-2 md:px-3">
+          <FileDown className="h-4 w-4 md:mr-2" />
+          <span className="sr-only md:not-sr-only">Export</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
