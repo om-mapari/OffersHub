@@ -1,9 +1,11 @@
 import os
 import json
 import re
-from typing import Any, Dict, List, Optional
+import asyncio
+from typing import Any, Dict, List, Optional, AsyncIterator
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -28,6 +30,9 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     message: ChatMessage
     suggestions: List[str] = []
+
+class StreamingChatRequest(ChatRequest):
+    stream: bool = True
 
 class OfferFillRequest(BaseModel):
     tenant_name: str
@@ -108,26 +113,12 @@ def format_response_text(text: str) -> str:
     
     return formatted
 
-# AI Chat Endpoint
-@router.post("/chat", response_model=ChatResponse)
-async def chat(
-    request: ChatRequest,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_user),
+# Function to prepare conversation for chat endpoints
+def prepare_conversation(
+    request,
+    db: Session,
+    current_user: models.User
 ):
-    """
-    Process chat messages and generate AI responses
-    """
-    # Get Azure OpenAI client
-    client = get_azure_openai_client()
-    deployment = settings.AZURE_DEPLOYMENT
-    
-    if not deployment:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Azure OpenAI deployment name is missing"
-        )
-    
     # Get tenant information if provided
     tenant = None
     if request.tenant_name:
@@ -280,6 +271,31 @@ Always respect user roles and permissions. Do not expose sensitive information."
     # Add user conversation history
     for msg in request.messages:
         conversation.append({"role": msg.role, "content": msg.content})
+        
+    return conversation, tenant_name
+
+# AI Chat Endpoint
+@router.post("/chat", response_model=ChatResponse)
+async def chat(
+    request: ChatRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    """
+    Process chat messages and generate AI responses
+    """
+    # Get Azure OpenAI client
+    client = get_azure_openai_client()
+    deployment = settings.AZURE_DEPLOYMENT
+    
+    if not deployment:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Azure OpenAI deployment name is missing"
+        )
+    
+    # Prepare the conversation
+    conversation, tenant_name = prepare_conversation(request, db, current_user)
     
     try:
         # Call Azure OpenAI
@@ -303,7 +319,21 @@ Always respect user roles and permissions. Do not expose sensitive information."
         suggestions_prompt = [
             {
                 "role": "system", 
-                "content": "Based on the previous conversation, generate 2-3 short follow-up questions the user might want to ask next. Return only the questions as a JSON array of strings. Make them concise and directly related to OffersHub functionality."
+                "content": """
+You are a suggestions generator for a chat system. Your job is to generate exactly 3 follow-up questions based on the conversation.
+
+Based on the PREVIOUS CONVERSATION ONLY, generate exactly 3 follow-up questions that are:
+1. DIRECTLY RELATED to the most recent message content and topics discussed
+2. CONTEXTUALLY RELEVANT to the user's previous questions and interests
+3. DIVERSE, covering different aspects of what was just discussed
+4. SPECIFIC to the content of the conversation, not generic about OffersHub
+5. CONCISE, under 10 words when possible
+
+IMPORTANT: You MUST return ONLY a valid JSON object with this exact format:
+{"suggestions": ["question 1", "question 2", "question 3"]}
+
+NO explanation or other text before or after the JSON.
+"""
             }
         ]
         suggestions_prompt.extend(conversation)
@@ -323,12 +353,65 @@ Always respect user roles and permissions. Do not expose sensitive information."
         # Parse suggestions
         suggestions = []
         try:
+            # Log the raw response for debugging
+            print(f"Raw suggestions response: {suggestions_content}")
+            
+            # Try multiple parsing approaches
             suggestions_data = json.loads(suggestions_content)
-            if isinstance(suggestions_data, dict) and "suggestions" in suggestions_data:
-                suggestions = suggestions_data["suggestions"]
+            
+            # Handle various formats that might be returned
+            if isinstance(suggestions_data, dict):
+                if "suggestions" in suggestions_data:
+                    suggestions = suggestions_data["suggestions"]
+                elif "questions" in suggestions_data:
+                    suggestions = suggestions_data["questions"]
+                elif "followUpQuestions" in suggestions_data:
+                    suggestions = suggestions_data["followUpQuestions"]
+                else:
+                    # Try to find any key that might contain an array of strings
+                    for key, value in suggestions_data.items():
+                        if isinstance(value, list) and all(isinstance(item, str) for item in value):
+                            suggestions = value
+                            break
+            elif isinstance(suggestions_data, list):
+                # If it's already a list, use it directly
+                suggestions = suggestions_data
+            
+            # Ensure we have exactly 3 suggestions
+            if len(suggestions) > 3:
+                suggestions = suggestions[:3]
+            while len(suggestions) < 3:
+                # Add diverse fallback questions if we don't have enough
+                fallback_questions = [
+                    "Show me my active campaigns",
+                    "How do I create a new targeted offer?",
+                    "Explain campaign performance metrics",
+                    "What targeting options are available?",
+                    "How can I improve offer acceptance rates?",
+                    "Show me campaign delivery statistics",
+                    "How to analyze customer segments?",
+                    "What are the best campaign settings?",
+                    "Compare my top-performing campaigns",
+                    "How to set up automated follow-ups?"
+                ]
+                # Pick a random question that's not already in suggestions
+                import random
+                for _ in range(10):  # Try up to 10 times to find unique questions
+                    q = random.choice(fallback_questions)
+                    if q not in suggestions:
+                        suggestions.append(q)
+                        break
+                
+                # If we still don't have enough, add a generic one
+                if len(suggestions) < 3:
+                    suggestions.append("How can I optimize my campaign strategy?")
         except Exception:
-            # If parsing fails, just return an empty list
-            suggestions = []
+            # If parsing fails, provide default suggestions
+            suggestions = [
+                "Show me my active campaigns",
+                "How do I create a new targeted offer?",
+                "Explain campaign performance metrics"
+            ]
         
         return {
             "message": {"role": "assistant", "content": bot_response},
@@ -340,6 +423,174 @@ Always respect user roles and permissions. Do not expose sensitive information."
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating AI response: {str(e)}"
         )
+
+# Streaming Chat Endpoint
+@router.post("/chat/stream")
+async def stream_chat(
+    request: StreamingChatRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    """
+    Process chat messages and stream AI responses
+    """
+    # Get Azure OpenAI client
+    client = get_azure_openai_client()
+    deployment = settings.AZURE_DEPLOYMENT
+    
+    if not deployment:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Azure OpenAI deployment name is missing"
+        )
+    
+    # Prepare the conversation
+    conversation, tenant_name = prepare_conversation(request, db, current_user)
+    
+    async def generate_response() -> AsyncIterator[str]:
+        try:
+            # Initial JSON structure
+            yield '{"type":"start"}\n'
+            
+            # Streaming the chat completion
+            full_content = ""
+            
+            # Stream the response
+            stream = client.chat.completions.create(
+                model=deployment,
+                messages=conversation,
+                max_tokens=1000,
+                temperature=0.7,
+                stream=True,
+                top_p=0.95,
+                frequency_penalty=0,
+                presence_penalty=0
+            )
+            
+            for chunk in stream:
+                if chunk.choices and len(chunk.choices) > 0:
+                    content_delta = chunk.choices[0].delta.content
+                    if content_delta is not None:
+                        full_content += content_delta
+                        formatted_delta = format_response_text(content_delta)
+                        # Sending content chunk as SSE
+                        yield json.dumps({"type":"chunk", "content": formatted_delta}) + "\n"
+                        # Small delay to control streaming rate
+                        await asyncio.sleep(0.01)
+            
+            # When streaming is complete, generate follow-up suggestions
+            suggestions_prompt = [
+                {
+                    "role": "system", 
+                    "content": """
+You are a suggestions generator for a chat system. Your job is to generate exactly 3 follow-up questions based on the conversation.
+
+Based on the PREVIOUS CONVERSATION ONLY, generate exactly 3 follow-up questions that are:
+1. DIRECTLY RELATED to the most recent message content and topics discussed
+2. CONTEXTUALLY RELEVANT to the user's previous questions and interests
+3. DIVERSE, covering different aspects of what was just discussed
+4. SPECIFIC to the content of the conversation, not generic about OffersHub
+5. CONCISE, under 10 words when possible
+
+IMPORTANT: You MUST return ONLY a valid JSON object with this exact format:
+{"suggestions": ["question 1", "question 2", "question 3"]}
+
+NO explanation or other text before or after the JSON.
+"""
+                }
+            ]
+            suggestions_prompt.extend(conversation)
+            suggestions_prompt.append({"role": "assistant", "content": full_content})
+            
+            # Call Azure OpenAI for suggestions
+            suggestions_response = client.chat.completions.create(
+                model=deployment,
+                messages=suggestions_prompt,
+                max_tokens=250,
+                temperature=0.7,
+                response_format={"type": "json_object"}
+            )
+            
+            suggestions_content = suggestions_response.choices[0].message.content
+            
+            # Parse suggestions
+            suggestions = []
+            try:
+                # Log the raw response for debugging
+                print(f"Raw suggestions response: {suggestions_content}")
+                
+                # Try multiple parsing approaches
+                suggestions_data = json.loads(suggestions_content)
+                
+                # Handle various formats that might be returned
+                if isinstance(suggestions_data, dict):
+                    if "suggestions" in suggestions_data:
+                        suggestions = suggestions_data["suggestions"]
+                    elif "questions" in suggestions_data:
+                        suggestions = suggestions_data["questions"]
+                    elif "followUpQuestions" in suggestions_data:
+                        suggestions = suggestions_data["followUpQuestions"]
+                    else:
+                        # Try to find any key that might contain an array of strings
+                        for key, value in suggestions_data.items():
+                            if isinstance(value, list) and all(isinstance(item, str) for item in value):
+                                suggestions = value
+                                break
+                elif isinstance(suggestions_data, list):
+                    # If it's already a list, use it directly
+                    suggestions = suggestions_data
+                
+                # Ensure we have exactly 3 suggestions
+                if len(suggestions) > 3:
+                    suggestions = suggestions[:3]
+                while len(suggestions) < 3:
+                    # Add diverse fallback questions if we don't have enough
+                    fallback_questions = [
+                        "Show me my active campaigns",
+                        "How do I create a new targeted offer?",
+                        "Explain campaign performance metrics",
+                        "What targeting options are available?",
+                        "How can I improve offer acceptance rates?",
+                        "Show me campaign delivery statistics",
+                        "How to analyze customer segments?",
+                        "What are the best campaign settings?",
+                        "Compare my top-performing campaigns",
+                        "How to set up automated follow-ups?"
+                    ]
+                    # Pick a random question that's not already in suggestions
+                    import random
+                    for _ in range(10):  # Try up to 10 times to find unique questions
+                        q = random.choice(fallback_questions)
+                        if q not in suggestions:
+                            suggestions.append(q)
+                            break
+                    
+                    # If we still don't have enough, add a generic one
+                    if len(suggestions) < 3:
+                        suggestions.append("How can I optimize my campaign strategy?")
+            except Exception:
+                # If parsing fails, provide default suggestions
+                suggestions = [
+                    "Show me my active campaigns",
+                    "How do I create a new targeted offer?",
+                    "Explain campaign performance metrics"
+                ]
+            
+            # Send the complete response and suggestions
+            yield json.dumps({
+                "type": "complete", 
+                "message": {"role": "assistant", "content": full_content},
+                "suggestions": suggestions
+            }) + "\n"
+            
+        except Exception as e:
+            error_msg = f"Error generating AI response: {str(e)}"
+            yield json.dumps({"type":"error", "error": error_msg}) + "\n"
+    
+    return StreamingResponse(
+        generate_response(),
+        media_type="text/event-stream"
+    )
 
 # AI Fill for Offers
 @router.post("/offers/fill", response_model=OfferFillResponse)

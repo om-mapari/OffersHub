@@ -6,6 +6,7 @@ import { BsChatDots } from 'react-icons/bs';
 import { FaLightbulb } from 'react-icons/fa';
 import { useOffers } from '../offers/context/offers-context';
 import { useTenant } from '@/context/TenantContext';
+import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/config/api';
 
 interface Message {
@@ -58,11 +59,13 @@ const ChatBot = () => {
     ]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [streamingMessage, setStreamingMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     
     // Access offers data and context
     const { primaryRole } = useOffers();
     const { currentTenant } = useTenant();
+    const { token } = useAuth();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,7 +73,7 @@ const ChatBot = () => {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, streamingMessage]);
 
     const handleSuggestionClick = (suggestion: string) => {
         setInputMessage(suggestion);
@@ -87,6 +90,7 @@ const ChatBot = () => {
         setMessages(prev => [...prev, userMessage]);
         setInputMessage('');
         setIsLoading(true);
+        setStreamingMessage('');
 
         try {
             // Prepare the conversation history
@@ -101,51 +105,163 @@ const ChatBot = () => {
                 content: userMessage.content
             });
 
-            // Call the backend AI chat API using apiClient
-            const response = await apiClient.post(`/ai/chat`, {
-                messages: conversationHistory,
-                tenant_name: currentTenant?.name
-            });
-
-            const { message, suggestions } = response.data;
+            // Use streaming endpoint with proper URL and authentication
+            const baseUrl = apiClient.defaults.baseURL || '';
             
-            setMessages(prev => [...prev, { 
-                type: 'bot', 
-                content: message.content,
-                suggestions: suggestions || []
-            }]);
+            // Use token from auth context, which should be up to date
+            if (!token) {
+                throw new Error('Authentication token not found. Please log in again.');
+            }
+            
+            // Clean up any previous EventSource
+            const fetchController = new AbortController();
+            const { signal } = fetchController;
+            
+            // Start streaming request with the valid token
+            console.log("Using token for request:", token ? "Token exists" : "No token");
+            const response = await fetch(`${baseUrl}/ai/chat/stream`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    messages: conversationHistory,
+                    tenant_name: currentTenant?.name,
+                    stream: true
+                }),
+                signal
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            
+            const reader = response.body?.getReader();
+            if (!reader) {
+                throw new Error('ReadableStream not supported');
+            }
+            
+            // Handle streaming response
+            let completeMessageReceived = false;
+            let suggestions: string[] = [];
+            
+            const processStream = async () => {
+                let accumulatedContent = '';
+                
+                try {
+                    // eslint-disable-next-line no-constant-condition
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        
+                        if (done) {
+                            break;
+                        }
+                        
+                        // Convert the chunk to text
+                        const chunk = new TextDecoder().decode(value);
+                        const lines = chunk.split('\n').filter(line => line.trim());
+                        
+                        for (const line of lines) {
+                            try {
+                                const parsed = JSON.parse(line);
+                                
+                                if (parsed.type === 'start') {
+                                    // Stream started
+                                    accumulatedContent = '';
+                                } 
+                                else if (parsed.type === 'chunk') {
+                                    // Add chunk to accumulated content and update streaming display
+                                    accumulatedContent += parsed.content;
+                                    setStreamingMessage(accumulatedContent);
+                                } 
+                                else if (parsed.type === 'complete') {
+                                    // Stream complete, finalize message
+                                    completeMessageReceived = true;
+                                    
+                                    setMessages(prev => [...prev, {
+                                        type: 'bot',
+                                        content: parsed.message.content,
+                                        suggestions: parsed.suggestions || []
+                                    }]);
+                                    
+                                    suggestions = parsed.suggestions || [];
+                                    setStreamingMessage('');
+                                }
+                                else if (parsed.type === 'error') {
+                                    throw new Error(parsed.error);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing stream chunk:', e);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Stream reading error:', e);
+                    if (!completeMessageReceived) {
+                        // If we didn't receive a complete message, use what we have
+                        if (accumulatedContent) {
+                            setMessages(prev => [...prev, {
+                                type: 'bot',
+                                content: accumulatedContent,
+                                suggestions: [
+                                    "Show me my active campaigns",
+                                    "How do I create a new targeted offer?",
+                                    "Explain campaign performance metrics"
+                                ]
+                            }]);
+                        } else {
+                            throw e; // Re-throw if we have nothing
+                        }
+                    }
+                } finally {
+                    reader.releaseLock();
+                    fetchController.abort(); // Clean up
+                }
+            };
+            
+            await processStream();
+            
         } catch (error) {
             console.error('Error calling AI service:', error);
             setMessages(prev => [...prev, { 
                 type: 'bot', 
-                content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again later.` 
+                content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again later.`,
+                suggestions: [
+                    "Show me my active campaigns",
+                    "How do I create a new targeted offer?",
+                    "Explain campaign performance metrics"
+                ]
             }]);
         } finally {
             setIsLoading(false);
+            setStreamingMessage('');
         }
     };
 
     return (
-        <div className="fixed bottom-7 right-7 z-50 ">
+        <div className="fixed bottom-5 sm:bottom-7 left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 right-auto sm:right-7 z-50">
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="absolute bottom-16 right-0 w-[450px] h-[600px] bg-white/95 dark:bg-slate-900/95 
+                        className="absolute bottom-16 left-1/2 sm:left-auto -translate-x-1/2 sm:-translate-x-[calc(100%-70px)] 
+                            max-w-[95vw] w-[95vw] sm:w-[350px] md:w-[450px] 
+                            h-[70vh] sm:h-[600px] max-h-[600px] bg-white/95 dark:bg-slate-900/95 
                             rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 
                             backdrop-blur-sm flex flex-col overflow-hidden"
                     >
-                        <div className="p-4 border-b border-slate-200 dark:border-slate-700 
+                        <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-700 
                             bg-gradient-to-r from-slate-50 to-slate-100 
                             dark:from-slate-800 dark:to-slate-800/80">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 
+                            <div className="flex items-center space-x-3">
+                                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 
                                     dark:from-slate-600 dark:to-slate-800 p-[2px]">
                                     <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 
                                         flex items-center justify-center">
-                                        <span className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                                        <span className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200">
                                             OH
                                         </span>
                                     </div>
@@ -168,7 +284,7 @@ const ChatBot = () => {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                             {messages.map((message, index) => (
                                 <div key={index} className="space-y-2">
                                     <div
@@ -183,7 +299,7 @@ const ChatBot = () => {
                                             </div>
                                         )}
                                         <div
-                                            className={`max-w-[85%] p-3 rounded-2xl ${
+                                            className={`max-w-[80%] sm:max-w-[85%] p-2 sm:p-3 rounded-2xl ${
                                                 message.type === 'user'
                                                     ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white'
                                                     : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
@@ -200,26 +316,47 @@ const ChatBot = () => {
                                                 <button
                                                     key={idx}
                                                     onClick={() => handleSuggestionClick(suggestion)}
-                                                    className="flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-800 
+                                                    className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-slate-100 dark:bg-slate-800 
                                                         hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full 
                                                         text-xs text-slate-700 dark:text-slate-300 transition-colors"
                                                 >
                                                     <FaLightbulb className="w-3 h-3 text-amber-500" />
-                                                    {suggestion}
+                                                    <span className="truncate max-w-[150px] sm:max-w-[200px]">
+                                                        {suggestion}
+                                                    </span>
                                                 </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
                             ))}
-                            {isLoading && (
+                            
+                            {/* Streaming Message Display */}
+                            {streamingMessage && (
+                                <div className="space-y-2">
+                                    <div className="flex justify-start items-end gap-2">
+                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 
+                                            dark:from-slate-600 dark:to-slate-800 flex-shrink-0 
+                                            flex items-center justify-center">
+                                            <span className="text-xs font-medium text-white">OH</span>
+                                        </div>
+                                        <div className="max-w-[80%] sm:max-w-[85%] p-2 sm:p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 
+                                            text-slate-800 dark:text-slate-200">
+                                            <p className="text-sm whitespace-pre-wrap">{streamingMessage}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Loading indicator (shown only when no streaming text yet) */}
+                            {isLoading && !streamingMessage && (
                                 <div className="flex justify-start items-end gap-2">
                                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 
                                         dark:from-slate-600 dark:to-slate-800 flex-shrink-0 
                                         flex items-center justify-center">
                                         <span className="text-xs font-medium text-white">OH</span>
                                     </div>
-                                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl">
+                                    <div className="bg-slate-100 dark:bg-slate-800 p-2 sm:p-3 rounded-2xl">
                                         <div className="flex space-x-1">
                                             <div className="w-2 h-2 bg-slate-400 dark:bg-slate-600 rounded-full animate-bounce" />
                                             <div className="w-2 h-2 bg-slate-400 dark:bg-slate-600 rounded-full animate-bounce" 
@@ -230,10 +367,11 @@ const ChatBot = () => {
                                     </div>
                                 </div>
                             )}
+                            
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-4 bg-white dark:bg-slate-900 
+                        <form onSubmit={handleSubmit} className="p-3 sm:p-4 
                             border-t border-slate-200 dark:border-slate-700">
                             <div className="flex space-x-2">
                                 <input
@@ -241,15 +379,15 @@ const ChatBot = () => {
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
                                     placeholder="Ask about offers or campaigns..."
-                                    className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 
+                                    className="flex-1 p-2 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700 
                                         bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200
-                                        placeholder-slate-400 dark:placeholder-slate-500
+                                        placeholder-slate-400 dark:placeholder-slate-500 text-sm sm:text-base
                                         focus:outline-none focus:ring-2 focus:ring-slate-500 dark:focus:ring-slate-400"
                                 />
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="p-3 rounded-xl bg-gradient-to-r from-slate-700 to-slate-800 
+                                    className="p-2 sm:p-3 rounded-xl bg-gradient-to-r from-slate-700 to-slate-800 
                                         text-white hover:from-slate-800 hover:to-slate-900
                                         disabled:opacity-50 disabled:cursor-not-allowed
                                         transition-all duration-200 ease-in-out"
@@ -266,11 +404,12 @@ const ChatBot = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-14 h-14 rounded-full bg-gradient-to-r from-slate-700 to-slate-800 
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-slate-700 to-slate-800 
                     text-white shadow-lg hover:shadow-xl hover:from-slate-800 hover:to-slate-900
                     flex items-center justify-center transition-shadow duration-200"
+                aria-label="Chat with OffersHub AI"
             >
-                <BsChatDots size={24} />
+                <BsChatDots size={20} className="sm:text-[24px]" />
             </motion.button>
         </div>
     );
