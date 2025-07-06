@@ -135,6 +135,7 @@ async def chat(
 
     # Get additional context (offers data)
     offers_data = []
+    campaigns_data = []
     tenant_name = "unknown"
     if tenant:
         tenant_name = tenant.name
@@ -153,12 +154,31 @@ async def chat(
             }
             for offer in offers
         ]
+        
+        # Fetch campaigns for this tenant (limit to 10 for context)
+        campaigns = db.query(models.Campaign).filter(
+            models.Campaign.tenant_name == tenant.name
+        ).limit(10).all()
+        
+        campaigns_data = [
+            {
+                "id": campaign.id,
+                "name": campaign.name,
+                "description": campaign.description,
+                "offer_id": campaign.offer_id,
+                "status": campaign.status,
+                "selection_criteria": campaign.selection_criteria,
+                "start_date": str(campaign.start_date),
+                "end_date": str(campaign.end_date)
+            }
+            for campaign in campaigns
+        ]
     
     # Prepare the system prompt with context
     formatted_tenant_name = tenant_name.split('_')
     formatted_tenant_name = ' '.join([part.capitalize() for part in formatted_tenant_name])
     
-    # Define system prompt with context about offers
+    # Define system prompt with context about offers and campaigns
     system_prompt = f"""You are OffersHub AI, a specialized assistant for the OffersHub platform.
 Your primary role is to help users navigate and utilize the OffersHub platform efficiently.
 
@@ -166,14 +186,30 @@ CURRENT CONTEXT:
 - Current tenant: {formatted_tenant_name}
 - User: {current_user.username}
 - Available offers: {len(offers_data)}
+- Available campaigns: {len(campaigns_data)}
 
 You can access the following data to provide specific information:
 - Offers data with details on descriptions, types, status, and attributes
-- Basic campaign information
+- Campaign data including name, description, status, selection criteria, and date ranges
+
+CAMPAIGNS DATA MODEL:
+- Campaigns are created based on offers and target specific customers
+- Campaign statuses: draft, approved, active, paused, completed
+- Each campaign has selection criteria for targeting customers, such as:
+  - credit_score (number values, operators: >, <, =)
+  - gender (values: male, female, other, operators: =, !)
+  - is_active (values: true, false, operators: =)
+  - occupation (values: salaried, self-employed, student, retired, operators: =)
+  - marital_status (values: single, married, divorced, widowed, operators: =)
+  - segment (values: premium, regular, corporate, operators: =, !)
+  - deliquency (values: true, false, operators: =)
+  - kyc_status (values: verified, pending, rejected, operators: =)
+- Campaigns have start and end dates
+- Campaign delivery statuses: pending, sent, declined, accepted
 
 When asked about offers or campaigns, provide specific information from the context data.
-For requests about listing offers, show a concise summary of available offers.
-When asked about a specific offer, provide its details including description, type, status, and attributes.
+For requests about listing campaigns, show a concise summary of available campaigns.
+When asked about a specific campaign, provide its details including name, description, status, and selection criteria.
 
 FORMATTING INSTRUCTIONS:
 - DO NOT use markdown formatting in your responses.
@@ -196,6 +232,9 @@ USER ACCESS MODEL:
 PLATFORM FLOW:
 1. Super Admin creates a tenant → this auto-creates default user groups and prepares offer configuration.
 2. Tenants have offer data stored in a common offers table with a flexible data JSONB field for custom attributes.
+3. Offers are used to create campaigns with selection criteria to target specific customer segments.
+4. Campaigns deliver offers to customers who match the selection criteria.
+5. Customers can accept, decline, or ignore offers, and their responses are tracked.
 
 Be brief, professional, and helpful. Format responses in a clear, readable manner.
 Always respect user roles and permissions. Do not expose sensitive information."""
@@ -203,10 +242,14 @@ Always respect user roles and permissions. Do not expose sensitive information."
     # Process conversation with system prompt and context
     conversation = [{"role": "system", "content": system_prompt}]
     
-    # Add context if we have offers data
+    # Add context if we have offers or campaigns data
     if offers_data:
         context_message = "Here is the current offers data:\n" + json.dumps(offers_data, indent=2)
-        conversation.append({"role": "system", "content": f"Context information: {context_message}"})
+        conversation.append({"role": "system", "content": f"Context information (offers): {context_message}"})
+    
+    if campaigns_data:
+        context_message = "Here is the current campaigns data:\n" + json.dumps(campaigns_data, indent=2)
+        conversation.append({"role": "system", "content": f"Context information (campaigns): {context_message}"})
     
     # Add user conversation history
     for msg in request.messages:
