@@ -25,6 +25,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useDashboardData } from '../context/DashboardContext'
 import { RefreshCw } from 'lucide-react'
 import { useState } from 'react'
+import ChatBot from '@/features/ai-chat'
 
 export function DashboardContent() {
   const { currentTenant } = useTenant();
@@ -286,7 +287,6 @@ export function DashboardContent() {
                   <DeliveryStatus />
                 </CardContent>
               </Card>
-
             </div>
           </TabsContent>
         </Tabs>

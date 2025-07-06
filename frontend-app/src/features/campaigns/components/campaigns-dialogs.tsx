@@ -153,7 +153,7 @@ export function CampaignsDialogs({
         setOfferError(error.message || 'Failed to load offer details')
         // Only show toast for unexpected errors, not for "not found" which is handled in the UI
         if (!error.message.includes('not found')) {
-          toast.error('Failed to load offer details', { duration: 10000 })
+          toast.error('Failed to load offer details', { duration: 4000 })
         }
       })
       .finally(() => {
@@ -296,18 +296,18 @@ export function CampaignsDialogs({
         })
         .then(response => {
           if (response.ok) {
-            toast.success(`Campaign ${data.action || 'updated'} successfully`, { duration: 10000 });
+            toast.success(`Campaign ${data.action || 'updated'} successfully`, { duration: 4000 });
             // Trigger a refresh of the campaigns list
             if (onActionComplete) {
               onActionComplete();
             }
           } else {
-            toast.error(`Failed to ${data.action || 'update'} campaign`, { duration: 10000 });
+            toast.error(`Failed to ${data.action || 'update'} campaign`, { duration: 4000 });
             console.error('API call failed:', response.statusText);
           }
         })
         .catch(error => {
-          toast.error(`Error: ${error.message}`, { duration: 10000 });
+          toast.error(`Error: ${error.message}`, { duration: 4000 });
           console.error('Error making API call:', error);
         });
       }

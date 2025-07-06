@@ -54,11 +54,11 @@ export function ChangePasswordForm() {
         current_password: data.current_password,
         new_password: data.new_password,
       })
-      toast.success('Password changed successfully.', { duration: 10000 })
+      toast.success('Password changed successfully.', { duration: 4000 })
       form.reset()
     } catch (error: any) {
       const errorMsg = error?.detail || 'Failed to change password. Please try again.'
-      toast.error(errorMsg, { duration: 10000 })
+      toast.error(errorMsg, { duration: 4000 })
     } finally {
       setIsLoading(false)
     }

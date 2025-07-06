@@ -61,7 +61,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       // For 'password' grant type, typically username is used.
       // If your API expects email, ensure 'username' field in form corresponds to that.
       await auth.login({ username: data.username, password: data.password, grant_type: 'password' })
-      toast.success('Login successful!', { duration: 10000 })
+      toast.success('Login successful!', { duration: 4000 })
       
       // Get the redirect path from the URL query parameters or default to '/'
       const searchParams = new URLSearchParams(window.location.search)
@@ -76,7 +76,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       navigate({ to: redirectPath, replace: true })
     } catch (error: any) {
       const errorMsg = error?.detail?.[0]?.msg || error?.detail || 'Login failed. Please check your credentials.'
-      toast.error(errorMsg, { duration: 10000 })
+      toast.error(errorMsg, { duration: 4000 })
     } finally {
       setIsLoading(false)
     }

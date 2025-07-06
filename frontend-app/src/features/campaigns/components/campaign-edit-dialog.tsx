@@ -176,7 +176,7 @@ export function CampaignEditDialog() {
   // Handle form submission
   const onSubmit = async (data: z.infer<typeof campaignUpdateSchema>) => {
     if (!isAuthenticated || !selectedCampaign || !currentTenant) {
-      toast.error('Authentication or campaign data error', { duration: 10000 })
+      toast.error('Authentication or campaign data error', { duration: 4000 })
       return
     }
     
@@ -200,10 +200,10 @@ export function CampaignEditDialog() {
       await campaignsApi.updateCampaign(currentTenant.name, selectedCampaign.id, campaignData)
       await fetchCampaigns()
       setIsEditDialogOpen(false)
-      toast.success('Campaign updated successfully', { duration: 10000 })
+      toast.success('Campaign updated successfully', { duration: 4000 })
     } catch (error) {
       console.error('Error updating campaign:', error)
-      toast.error('Failed to update campaign', { duration: 10000 })
+      toast.error('Failed to update campaign', { duration: 4000 })
     } finally {
       setIsLoading(false)
     }

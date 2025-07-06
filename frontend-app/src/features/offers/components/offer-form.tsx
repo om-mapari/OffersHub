@@ -250,7 +250,7 @@ export function OfferForm({ offer, onSubmit, onCancel }: OfferFormProps) {
       toast.dismiss();
       toast.error("Failed to generate data. Please try again or fill the form manually.", {
         description: error instanceof Error ? error.message : "Unknown error",
-        duration: 10000,
+        duration: 4000,
       });
     } finally {
       setIsGenerating(false);

@@ -136,7 +136,7 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
       setCampaigns(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch campaigns'));
-      toast.error('Failed to fetch campaigns', { duration: 10000 });
+      toast.error('Failed to fetch campaigns', { duration: 4000 });
       throw err;
     } finally {
       setIsLoading(false);
@@ -168,7 +168,7 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   const createCampaign = async (campaignData: CampaignCreate) => {
     if (!currentTenant) {
       console.error('No tenant selected');
-      toast.error('No tenant selected', { duration: 10000 });
+      toast.error('No tenant selected', { duration: 4000 });
       return null;
     }
 
@@ -178,11 +178,11 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
     try {
       const newCampaign = await campaignsApi.createCampaign(currentTenant.name, campaignData);
       setCampaigns(prev => [...prev, newCampaign]);
-      toast.success('Campaign created successfully', { duration: 10000 });
+      toast.success('Campaign created successfully', { duration: 4000 });
       return newCampaign;
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to create campaign'));
-      toast.error('Failed to create campaign', { duration: 10000 });
+      toast.error('Failed to create campaign', { duration: 4000 });
       return null;
     } finally {
       setIsLoading(false);

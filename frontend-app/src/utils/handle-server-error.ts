@@ -20,5 +20,5 @@ export function handleServerError(error: unknown) {
     errMsg = error.response?.data.title
   }
 
-  toast.error(errMsg, { duration: 10000 })
+  toast.error(errMsg, { duration: 4000 })
 }

@@ -88,7 +88,7 @@ export function AccountForm() {
   function onSubmit(data: AccountFormValues) {
     // In a real app, this would call an API to update the user profile
     console.log('Account form data:', data)
-    toast.success('Account details updated!', { duration: 10000 })
+    toast.success('Account details updated!', { duration: 4000 })
   }
 
   return (
