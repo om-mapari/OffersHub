@@ -62,8 +62,32 @@ const ChatBot = () => {
     const [streamingMessage, setStreamingMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     
-    // Access offers data and context
-    const { primaryRole } = useOffers();
+    // Access offers data and context - make it optional
+    let primaryRole: string | undefined;
+    try {
+        // Try to use offers context if available
+        const offersContext = useOffers();
+        primaryRole = offersContext.primaryRole;
+    } catch (e) {
+        // If not available, get role from auth context
+        const { user, hasPermission } = useAuth();
+        const { currentTenant } = useTenant();
+        
+        if (user?.isSuperAdmin) {
+            primaryRole = "super_admin";
+        } else if (currentTenant) {
+            if (hasPermission('admin', currentTenant.name)) {
+                primaryRole = "admin";
+            } else if (hasPermission('create', currentTenant.name)) {
+                primaryRole = "create";
+            } else if (hasPermission('approver', currentTenant.name)) {
+                primaryRole = "approver";
+            } else if (hasPermission('read_only', currentTenant.name)) {
+                primaryRole = "read_only";
+            }
+        }
+    }
+    
     const { currentTenant } = useTenant();
     const { token } = useAuth();
 

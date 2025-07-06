@@ -15,6 +15,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { NotificationButton } from '@/components/notification-button'
 import { Button } from '@/components/ui/button'
 import { Plus, Loader2 } from 'lucide-react'
+import ChatBot from '../ai-chat'
 
 function CampaignsContent() {
   const { campaigns, isLoading, setIsCreateDialogOpen, fetchCampaigns } = useCampaigns()
@@ -143,6 +144,7 @@ function CampaignsContent() {
         }}
         onActionComplete={fetchCampaigns}
       />
+      <ChatBot />
     </>
   )
 }

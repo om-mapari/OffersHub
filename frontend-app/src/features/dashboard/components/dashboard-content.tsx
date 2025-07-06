@@ -291,6 +291,8 @@ export function DashboardContent() {
           </TabsContent>
         </Tabs>
       </Main>
+
+      <ChatBot />
     </>
   )
 }
