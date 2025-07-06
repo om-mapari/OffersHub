@@ -30,8 +30,8 @@ fake = Faker()
 DB_PARAMS = {
     "dbname": "offer_management",
     "user": "postgres",
-    "password": "postgres",
-    "host": "127.0.0.1",
+    "password": "omom",
+    "host": "20.41.249.65",
     "port": "5432"
 }
 

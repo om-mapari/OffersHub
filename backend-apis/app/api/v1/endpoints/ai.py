@@ -178,13 +178,34 @@ async def chat(
     formatted_tenant_name = tenant_name.split('_')
     formatted_tenant_name = ' '.join([part.capitalize() for part in formatted_tenant_name])
     
+    # Get the current user's full name and role information
+    user_full_name = current_user.full_name or current_user.username
+    user_roles = []
+    
+    if tenant:
+        # Get user roles for the current tenant
+        user_tenant_roles = db.query(models.UserTenantRole).filter(
+            models.UserTenantRole.username == current_user.username,
+            models.UserTenantRole.tenant_name == tenant.name
+        ).all()
+        
+        user_roles = [utr.role for utr in user_tenant_roles]
+    
+    # Add super admin info if applicable
+    is_super_admin = current_user.is_super_admin
+    if is_super_admin:
+        user_roles.append("super_admin")
+    
+    user_role_text = ", ".join(user_roles) if user_roles else "no specific role"
+    
     # Define system prompt with context about offers and campaigns
     system_prompt = f"""You are OffersHub AI, a specialized assistant for the OffersHub platform.
 Your primary role is to help users navigate and utilize the OffersHub platform efficiently.
 
 CURRENT CONTEXT:
 - Current tenant: {formatted_tenant_name}
-- User: {current_user.username}
+- Current user: {user_full_name} (username: {current_user.username})
+- User roles: {user_role_text}
 - Available offers: {len(offers_data)}
 - Available campaigns: {len(campaigns_data)}
 
@@ -210,6 +231,11 @@ CAMPAIGNS DATA MODEL:
 When asked about offers or campaigns, provide specific information from the context data.
 For requests about listing campaigns, show a concise summary of available campaigns.
 When asked about a specific campaign, provide its details including name, description, status, and selection criteria.
+
+PERSONAL INTERACTION:
+- Always address the user by their name ({user_full_name}) in your responses
+- Tailor your responses based on the user's role: {user_role_text}
+- Be friendly but professional, use the user's name occasionally to personalize the conversation
 
 FORMATTING INSTRUCTIONS:
 - DO NOT use markdown formatting in your responses.
