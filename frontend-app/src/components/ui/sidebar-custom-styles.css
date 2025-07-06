@@ -4,6 +4,18 @@
   display: none;
 }
 
+/* Show only when sidebar is collapsed */
+.collapsed-only-block {
+  display: none;
+}
+
+.sidebar-collapsed .collapsed-only-block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 /* Ensure proper spacing in the header */
 .sidebar-header-content {
   width: 100%;

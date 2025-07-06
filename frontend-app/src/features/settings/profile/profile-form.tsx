@@ -1,8 +1,6 @@
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from '@tanstack/react-router'
-import { cn } from '@/lib/utils'
 import { showSubmittedData } from '@/utils/show-submitted-data'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,13 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { useAuth } from '@/context/AuthContext'
 
 const profileFormSchema = z.object({
   name: z
@@ -42,21 +34,23 @@ const profileFormSchema = z.object({
     }),
   email: z
     .string({
-      required_error: 'Please select an email to display.',
+      required_error: 'Please enter your email.',
     })
     .email(),
 })
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
-// This can come from your database or API.
-const defaultValues: Partial<ProfileFormValues> = {
-  name: 'John Doe',
-  username: 'johndoe',
-  email: 'm@example.com',
-}
-
 export default function ProfileForm() {
+  const { user } = useAuth();
+  
+  // Get user information
+  const defaultValues: Partial<ProfileFormValues> = {
+    name: user?.fullName || "John Doe",
+    username: user?.username || (user?.email ? user.email.split('@')[0] : "johndoe"),
+    email: user?.email || "user@example.com",
+  }
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
@@ -76,7 +70,7 @@ export default function ProfileForm() {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder='John Doe' {...field} />
+                <Input placeholder="John Doe" {...field} />
               </FormControl>
               <FormDescription>
                 This is your full name as it will appear on your profile.
@@ -92,7 +86,7 @@ export default function ProfileForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder='johndoe' {...field} />
+                <Input placeholder="johndoe" {...field} />
               </FormControl>
               <FormDescription>
                 This is your public display name. It can be your real name or a
@@ -108,21 +102,11 @@ export default function ProfileForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select a verified email to display' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value='m@example.com'>m@example.com</SelectItem>
-                  <SelectItem value='m@google.com'>m@google.com</SelectItem>
-                  <SelectItem value='m@support.com'>m@support.com</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <Input placeholder="user@example.com" {...field} />
+              </FormControl>
               <FormDescription>
-                You can manage verified email addresses in your{' '}
-                <Link to='/settings'>email settings</Link>.
+                Your email address is used for notifications and account recovery.
               </FormDescription>
               <FormMessage />
             </FormItem>

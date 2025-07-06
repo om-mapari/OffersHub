@@ -12,6 +12,7 @@ interface CampaignsContextType {
   isLoading: boolean;
   error: Error | null;
   fetchCampaigns: () => Promise<void>;
+  refreshCampaigns: () => Promise<void>;
   createCampaign: (campaignData: CampaignCreate) => Promise<Campaign | null>;
   selectedCampaign: Campaign | null;
   setSelectedCampaign: (campaign: Campaign | null) => void;
@@ -42,6 +43,9 @@ const createFallbackContext = (): CampaignsContextType => ({
   error: null,
   fetchCampaigns: async () => {
     console.error('CampaignsProvider not available - cannot fetch campaigns');
+  },
+  refreshCampaigns: async () => {
+    console.error('CampaignsProvider not available - cannot refresh campaigns');
   },
   createCampaign: async () => {
     console.error('CampaignsProvider not available - cannot create campaign');
@@ -140,6 +144,20 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
     }
   }, [currentTenant]);
 
+  // Refresh campaigns by clearing cache and fetching again
+  const refreshCampaigns = useCallback(async () => {
+    if (!currentTenant) {
+      console.error('No tenant selected');
+      return;
+    }
+    
+    // Clear the cache first
+    clearCampaignsCache(currentTenant.name);
+    
+    // Then fetch campaigns
+    return fetchCampaigns();
+  }, [currentTenant, fetchCampaigns]);
+
   // Only fetch campaigns when the tenant changes
   useEffect(() => {
     if (currentTenant) {
@@ -178,6 +196,7 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         fetchCampaigns,
+        refreshCampaigns,
         createCampaign,
         selectedCampaign,
         setSelectedCampaign,
