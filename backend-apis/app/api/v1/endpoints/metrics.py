@@ -212,3 +212,60 @@ async def get_customer_segments(
         )
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+@router.get("/campaign-delivery-status", response_model=List[schemas.CampaignDeliveryStatus], dependencies=[Depends(can_view_metrics)])
+async def get_campaign_delivery_status(
+    db: Session = Depends(deps.get_db),
+    tenant: models.Tenant = Depends(deps.get_tenant_by_name),
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> List[schemas.CampaignDeliveryStatus]:
+    """
+    Get breakdown of delivery statuses for each campaign associated with a specific tenant
+    """
+    try:
+        # Get all campaigns for the tenant
+        campaigns = db.query(
+            models.Campaign.id,
+            models.Campaign.name
+        ).filter(
+            models.Campaign.tenant_name == tenant.name
+        ).all()
+        
+        if not campaigns:
+            return []
+            
+        result = []
+        for campaign_id, campaign_name in campaigns:
+            # For each campaign, get the count of each delivery status
+            status_counts = db.query(
+                models.CampaignCustomer.delivery_status,
+                func.count().label('count')
+            ).filter(
+                models.CampaignCustomer.campaign_id == campaign_id,
+                models.CampaignCustomer.tenant_name == tenant.name
+            ).group_by(
+                models.CampaignCustomer.delivery_status
+            ).all()
+            
+            # Create a dictionary of delivery statuses
+            delivery_status = {
+                "pending": 0,
+                "sent": 0,
+                "declined": 0,
+                "accepted": 0
+            }
+            
+            # Update the dictionary with actual counts
+            for status, count in status_counts:
+                delivery_status[status] = count
+                
+            # Add campaign info to results
+            result.append(schemas.CampaignDeliveryStatus(
+                campaign_id=campaign_id,
+                campaign_name=campaign_name,
+                delivery_status=delivery_status
+            ))
+            
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")

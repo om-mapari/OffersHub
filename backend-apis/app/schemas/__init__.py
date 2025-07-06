@@ -16,5 +16,6 @@ from .metrics import (
     CampaignCustomersResponse,
     CustomerSegmentDistribution,
     CustomerSegmentsResponse,
-    DeliveryStatusResponse
+    DeliveryStatusResponse,
+    CampaignDeliveryStatus
 )

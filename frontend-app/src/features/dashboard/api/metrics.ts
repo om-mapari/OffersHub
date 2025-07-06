@@ -47,6 +47,19 @@ export interface CustomerSegmentsResponse {
   segments: CustomerSegmentDistribution[];
 }
 
+export interface DeliveryStatusBreakdown {
+  pending: number;
+  sent: number;
+  declined: number;
+  accepted: number;
+}
+
+export interface CampaignDeliveryStatus {
+  campaign_id: number;
+  campaign_name: string;
+  delivery_status: DeliveryStatusBreakdown;
+}
+
 // API functions to fetch metrics
 export const fetchDeliveryStatus = async (tenantName: string): Promise<DeliveryStatusResponse> => {
   return tenantApiRequest<DeliveryStatusResponse>(
@@ -85,5 +98,13 @@ export const fetchCustomerSegments = async (tenantName: string): Promise<Custome
     'GET',
     tenantName,
     '/metrics/customer-segments'
+  );
+};
+
+export const fetchCampaignDeliveryStatus = async (tenantName: string): Promise<CampaignDeliveryStatus[]> => {
+  return tenantApiRequest<CampaignDeliveryStatus[]>(
+    'GET',
+    tenantName,
+    '/metrics/campaign-delivery-status'
   );
 }; 

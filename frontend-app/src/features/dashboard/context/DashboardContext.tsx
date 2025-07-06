@@ -5,11 +5,13 @@ import {
   fetchDeliveryStatus,
   fetchCampaignCustomers,
   fetchCustomerSegments,
+  fetchCampaignDeliveryStatus,
   OffersMetrics,
   CampaignsMetrics,
   DeliveryStatusResponse,
   CampaignCustomersResponse,
-  CustomerSegmentsResponse
+  CustomerSegmentsResponse,
+  CampaignDeliveryStatus
 } from '../api/metrics';
 import { useTenant } from '@/context/TenantContext';
 
@@ -19,6 +21,7 @@ interface DashboardContextType {
   campaignsMetrics: CampaignsMetrics | null;
   campaignCustomers: CampaignCustomersResponse | null;
   customerSegments: CustomerSegmentsResponse | null;
+  campaignDeliveryStatus: CampaignDeliveryStatus[] | null;
   loading: boolean;
   error: string | null;
   totalCustomers: number;
@@ -50,6 +53,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [campaignsMetrics, setCampaignsMetrics] = useState<CampaignsMetrics | null>(null);
   const [campaignCustomers, setCampaignCustomers] = useState<CampaignCustomersResponse | null>(null);
   const [customerSegments, setCustomerSegments] = useState<CustomerSegmentsResponse | null>(null);
+  const [campaignDeliveryStatus, setCampaignDeliveryStatus] = useState<CampaignDeliveryStatus[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -107,7 +111,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       // Fetch all metrics in parallel using the cache
       const tenantName = currentTenant.name;
       
-      const [delivery, offers, campaigns, customers, segments] = await Promise.all([
+      const [delivery, offers, campaigns, customers, segments, campaignDelivery] = await Promise.all([
         fetchWithCache(`delivery-status-${tenantName}`, 
           () => fetchDeliveryStatus(tenantName)),
         fetchWithCache(`offers-metrics-${tenantName}`, 
@@ -125,6 +129,12 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             .catch(e => {
               console.error('Error fetching customer segments:', e);
               return { total_customers: 0, segments: [] };
+            })),
+        fetchWithCache(`campaign-delivery-status-${tenantName}`, 
+          () => fetchCampaignDeliveryStatus(tenantName)
+            .catch(e => {
+              console.error('Error fetching campaign delivery status:', e);
+              return [];
             }))
       ]);
       
@@ -136,6 +146,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setCampaignsMetrics(campaigns);
       setCampaignCustomers(customers);
       setCustomerSegments(segments);
+      setCampaignDeliveryStatus(campaignDelivery);
       setError(null);
     } catch (err) {
       console.error(`[${instanceIdRef.current}] Dashboard data fetch error:`, err);
@@ -188,6 +199,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     campaignsMetrics,
     campaignCustomers,
     customerSegments,
+    campaignDeliveryStatus,
     loading,
     error,
     totalCustomers,

@@ -19,6 +19,7 @@ import { CampaignPerformance } from './campaign-performance'
 import { CampaignMetrics } from './campaign-metrics'
 import { CustomerSegments } from './customer-segments'
 import { DeliveryStatus } from './delivery-status'
+import { CampaignDeliveryStatus } from './campaign-delivery-status'
 import { useTenant } from '@/context/TenantContext'
 import { useAuth } from '@/context/AuthContext'
 import { useDashboardData } from '../context/DashboardContext'
@@ -28,18 +29,18 @@ import { useState } from 'react'
 export function DashboardContent() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
-  const { 
-    totalCustomers, 
-    activeOffers, 
-    activeCampaigns, 
+  const {
+    totalCustomers,
+    activeOffers,
+    activeCampaigns,
     campaignEngagement,
     loading,
     error,
     refreshData
   } = useDashboardData();
-  
+
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
@@ -63,10 +64,10 @@ export function DashboardContent() {
       <Main>
         <div className='mb-2 flex items-center justify-between space-y-2'>
           <h1 className='text-2xl font-bold tracking-tight'>
-            {currentTenant 
-              ? `${currentTenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ')} Dashboard` 
-              : user?.isSuperAdmin 
-                ? "Admin Dashboard" 
+            {currentTenant
+              ? `${currentTenant.name.split('_').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ')} Dashboard`
+              : user?.isSuperAdmin
+                ? "Admin Dashboard"
                 : "Dashboard"}
           </h1>
           <div className='flex items-center space-x-2'>
@@ -79,7 +80,6 @@ export function DashboardContent() {
               <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
             </Button>
-            <Button>Download</Button>
           </div>
         </div>
         <Tabs
@@ -88,7 +88,7 @@ export function DashboardContent() {
           className='space-y-4'
         >
           <div className='w-full overflow-x-auto pb-2'>
-            <TabsList>
+            <TabsList className="w-full justify-start sm:w-auto">
               <TabsTrigger value='overview'>Overview</TabsTrigger>
               <TabsTrigger value='analytics' disabled>
                 Analytics
@@ -107,7 +107,7 @@ export function DashboardContent() {
             ) : error ? (
               <div className="flex items-center justify-center h-24 text-red-500">{error}</div>
             ) : (
-              <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+              <div className='grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'>
                 <Card>
                   <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                     <CardTitle className='text-sm font-medium'>
@@ -215,20 +215,24 @@ export function DashboardContent() {
             )}
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-7'>
               <Card className='col-span-1 lg:col-span-4'>
-                <CardHeader>
-                  <CardTitle>Offers Overview</CardTitle>
-                  <CardDescription>Distribution of offers by status</CardDescription>
+                <CardHeader className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                  <div>
+                    <CardTitle>Offers Overview</CardTitle>
+                    <CardDescription>Distribution of offers by status</CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className='pl-2'>
                   <Overview />
                 </CardContent>
               </Card>
               <Card className='col-span-1 lg:col-span-3'>
-                <CardHeader>
-                  <CardTitle>Campaign Performance</CardTitle>
-                  <CardDescription>
-                    Top campaigns by acceptance rate
-                  </CardDescription>
+                <CardHeader className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                  <div>
+                    <CardTitle>Campaign Performance</CardTitle>
+                    <CardDescription>
+                      Top campaigns by acceptance rate
+                    </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <CampaignPerformance />
@@ -237,18 +241,22 @@ export function DashboardContent() {
             </div>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
               <Card>
-                <CardHeader>
-                  <CardTitle>Campaign Status Distribution</CardTitle>
-                  <CardDescription>Overview of campaign statuses</CardDescription>
+                <CardHeader className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                  <div>
+                    <CardTitle>Campaign Status Distribution</CardTitle>
+                    <CardDescription>Overview of campaign statuses</CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <CampaignMetrics />
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
-                  <CardTitle>Customer Segments</CardTitle>
-                  <CardDescription>Distribution of customers by segment</CardDescription>
+                <CardHeader className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                  <div>
+                    <CardTitle>Customer Segments</CardTitle>
+                    <CardDescription>Distribution of customers by segment</CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <CustomerSegments />
@@ -257,14 +265,28 @@ export function DashboardContent() {
             </div>
             <div className='grid grid-cols-1 gap-4'>
               <Card>
-                <CardHeader>
-                  <CardTitle>Delivery Status</CardTitle>
-                  <CardDescription>Status of offer deliveries to customers</CardDescription>
+                <CardHeader className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                  <div>
+                    <CardTitle>Campaign Delivery Status</CardTitle>
+                    <CardDescription>Delivery status breakdown by campaign</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CampaignDeliveryStatus />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-col space-y-1 sm:flex-row sm:justify-between sm:space-y-0">
+                  <div>
+                    <CardTitle>Delivery Status</CardTitle>
+                    <CardDescription>Status of offer deliveries to customers</CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <DeliveryStatus />
                 </CardContent>
               </Card>
+
             </div>
           </TabsContent>
         </Tabs>

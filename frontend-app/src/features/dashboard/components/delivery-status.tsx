@@ -64,11 +64,11 @@ export function DeliveryStatus() {
       <div className="text-sm text-muted-foreground mb-2 text-center">
         Total Customers: {total}
       </div>
-      <ResponsiveContainer width="100%" height="90%">
+      <ResponsiveContainer width="100%" height="70%">
         <BarChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+          margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
         >
           <XAxis type="number" />
           <YAxis 
@@ -79,6 +79,7 @@ export function DeliveryStatus() {
             tickLine={false}
             axisLine={false}
             tick={{ fill: "currentColor" }}
+            width={70}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />

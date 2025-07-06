@@ -51,3 +51,9 @@ class DeliveryStatusResponse(BaseModel):
     sent: int = 0
     declined: int = 0
     accepted: int = 0
+
+
+class CampaignDeliveryStatus(BaseModel):
+    campaign_id: int
+    campaign_name: str
+    delivery_status: Dict[str, int]
